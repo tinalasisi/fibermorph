@@ -24,7 +24,7 @@ os.chdir(dname)
 fibermorph_curvature = os.path.abspath("../analyze/curvature.py")
 
 # Define the folder where your grayscale tiff images are
-tiff_directory = os.path.abspath(r'../data/curvature/validation/tiff')
+tiff_directory = os.path.abspath(r'./results_cache')
 
 # Designate where fibermorph should make the directory with all your results - this location must exist!
 os.makedirs(r'./results_cache', exist_ok=True)
@@ -37,18 +37,18 @@ main_output_name = "curvature_test"
 file_type = ".tiff"
 
 # How many pixels per mm?
-resolution = int(132)
+resolution = int(1)
 
 # What should the size do you want for the window of measurement for curvature within the hair? This value is in mm.
-window_size_mm = float(0.5)
+window_size_mm = float(66)
 
 # What is the smallest expected length of hair in mm?
-min_hair = float(1.0)
+min_hair = float(1)
 
 # How many parallel processes do you want to run?
 # Example:
 # It is recommended that jobs < CPUs on your machine
-jobs = 4
+jobs = 1
 
 # Do you want to save all intermediate images?
 # This is not necessary for the final output and might cause script to run slower

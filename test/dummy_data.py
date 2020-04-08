@@ -50,7 +50,7 @@ plus_or_minus = lambda v: v * [-1, 1][(randint(0, 100) % 2)]  # equal chance +/-
 def quadsect(rect, factor):
     """ Subdivide given rectangle into four non-overlapping rectangles.
         'factor' is an integer representing the proportion of the width or
-        height the deviatation from the center of the rectangle allowed.
+        height the deviation from the center of the rectangle allowed.
     """
     # pick a point in the interior of given rectangle
     pad = 40
@@ -94,7 +94,7 @@ def draw_rect(rect, fill=None):
                    fill=fill)
 
 
-def draw_arc(rect, fill="black", width=3):
+def draw_arc(rect, fill="black", width=10):
     start = random.randint(10, 150)
     end = random.randint(200, 350)
     pad = 40
@@ -112,21 +112,62 @@ def draw_arc(rect, fill="black", width=3):
     # width = (rect.max.x - rect.min.x), (rect.max.y - rect.min.y)
     
     radius = (maxx - minx) / 2
+    circumference = 2 * np.pi * radius
     arc_angle = end - start
-    arc_radians = 2 * np.pi * (arc_angle / 360)
-    arc_length = arc_radians * arc_angle
+    arc_radians = arc_angle / 360
+    arc_length = arc_radians * circumference
     
     return radius, arc_length
 
 
-def draw_line(rect, fill=None, width=6):
+def draw_line(rect, fill="black", thickness=10):
     pad = 40
     minx = rect.min.x + pad
     miny = rect.min.y + pad
     maxx = rect.max.x - pad
     maxy = rect.max.y - pad
     
-    draw.line([(minx, miny), (maxx, maxy)], fill="black", width=3)
+    draw.line([(minx, miny), (maxx, maxy)], fill=fill, thickness=thickness))
+    
+    width = (maxx - minx)
+    height = (maxy - miny)
+    
+    diag_length = np.sqrt((width ** 2) + (height ** 2))
+    
+    return diag_length
+
+
+def draw_ellipse(rect, fill="black", thickness=10):
+    pad = 40
+    minx = rect.min.x + pad
+    miny = rect.min.y + pad
+    maxx = rect.max.x - pad
+    maxy = rect.max.y - pad
+    
+    width = (maxx - minx)
+    height = (maxy - miny)
+    
+    ax1 = (width / 2)
+    ax2 = (height / 2)
+    
+    center1 = ax1 + minx
+    center2 = ax2 + miny
+    
+    angle = randint(0, 45)
+    
+    draw.ellipse(center=(center1, center2), axes=(ax1, ax2), angle=angle, fill=fill, thickness=thickness)
+    
+    return width, height, angle
+
+
+def draw_circle(rect, fill=None):
+    pad = 40
+    minx = rect.min.x + pad
+    miny = rect.min.y + pad
+    maxx = rect.max.x - pad
+    maxy = rect.max.y - pad
+    
+    draw.line([(minx, miny), (maxx, maxy)], fill="black", width=10)
     
     width = (maxx - minx)
     height = (maxy - miny)
