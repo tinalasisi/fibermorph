@@ -40,12 +40,12 @@ main_output_name = "ValidationSet_SectionAnalysis_Mar14_2015"
 
 # Specify your file extension as a string - this is case-sensitive.
 # Example:
-file_type = ".tif"
+file_type = ".tiff"
 # file_type = "[insert file type here]"
 
 # How many pixels per micron?
 # Example:
-resolution = float(3.07)
+resolution = float(4.25)
 # resolution = float(4.25)
 
 # How many microns is the smallest cross-sectional width you expect?

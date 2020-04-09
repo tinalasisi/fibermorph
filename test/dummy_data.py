@@ -15,6 +15,7 @@ import pathlib
 import numpy as np
 import pandas as pd
 import os
+from datetime import datetime
 
 random.seed()
 
@@ -53,9 +54,7 @@ def quadsect(rect, factor):
         height the deviation from the center of the rectangle allowed.
     """
     # pick a point in the interior of given rectangle
-    pad = 40
     w, h = rect.width, rect.height  # cache properties
-    # w, h = rect.width, rect.height  # cache properties
     center = Point(rect.min.x + (w // 2), rect.min.y + (h // 2))
     delta_x = plus_or_minus(randint(0, w // factor))
     delta_y = plus_or_minus(randint(0, h // factor))
@@ -75,7 +74,6 @@ def quadsect(rect, factor):
 
 def square_subregion(rect):
     """ Return a square rectangle centered within the given rectangle """
-    pad = 40
     w, h = rect.width, rect.height  # cache properties
     if w < h:
         offset = (h - w) // 2
@@ -94,7 +92,7 @@ def draw_rect(rect, fill=None):
                    fill=fill)
 
 
-def draw_arc(rect, fill="black", width=10):
+def draw_arc(rect, fill, width):
     start = random.randint(10, 150)
     end = random.randint(200, 350)
     pad = 40
@@ -120,14 +118,14 @@ def draw_arc(rect, fill="black", width=10):
     return radius, arc_length
 
 
-def draw_line(rect, fill="black", thickness=10):
+def draw_line(rect, fill, width):
     pad = 40
     minx = rect.min.x + pad
     miny = rect.min.y + pad
     maxx = rect.max.x - pad
     maxy = rect.max.y - pad
     
-    draw.line([(minx, miny), (maxx, maxy)], fill=fill, thickness=thickness))
+    draw.line([(minx, miny), (maxx, maxy)], fill=fill, width=width)
     
     width = (maxx - minx)
     height = (maxy - miny)
@@ -137,74 +135,110 @@ def draw_line(rect, fill="black", thickness=10):
     return diag_length
 
 
-def draw_ellipse(rect, fill="black", thickness=10):
+def draw_ellipse(rect, fill, width):
     pad = 40
     minx = rect.min.x + pad
     miny = rect.min.y + pad
     maxx = rect.max.x - pad
     maxy = rect.max.y - pad
     
-    width = (maxx - minx)
-    height = (maxy - miny)
+    draw.ellipse([(minx, miny), (maxx, maxy)], fill=fill, width=width)
     
-    ax1 = (width / 2)
-    ax2 = (height / 2)
+    width_df = (maxx - minx)
+    height_df = (maxy - miny)
     
-    center1 = ax1 + minx
-    center2 = ax2 + miny
-    
-    angle = randint(0, 45)
-    
-    draw.ellipse(center=(center1, center2), axes=(ax1, ax2), angle=angle, fill=fill, thickness=thickness)
-    
-    return width, height, angle
+    return width_df, height_df
+
+def create_data(df, image, output_directory, shape):
+    jetzt = datetime.now()
+    timestamp = jetzt.strftime("%b%d_%H%M_")
+    df.to_csv(output_directory.joinpath(timestamp + shape + "_data.csv"))
+    print(df)
+    save_path = output_directory.joinpath(timestamp + shape + "_data.tiff")
+    image.save(save_path)
+    print(save_path)
 
 
-def draw_circle(rect, fill=None):
-    pad = 40
-    minx = rect.min.x + pad
-    miny = rect.min.y + pad
-    maxx = rect.max.x - pad
-    maxy = rect.max.y - pad
+def make_subdirectory(directory, append_name=""):
+    """
+    Function to build a directory based upon the arguments passed in append. Takes a
+    directory and uses pathlib to join that to the appended string passed.
+​
+    :param directory:       The directory within which this function will make a subdirectory.
+    :param append_name:     A string to be appended to the pathlib object.
+    :return output_path:    Returns a new directory for output.
+
+​
+    """
+    # Define the path of the directory within which this function will make a subdirectory.
+    directory = pathlib.Path(directory)
+    # The name of the subdirectory.
+    append_name = str(append_name)
+    # Define the output path by the initial directory and join (i.e. "+") the appropriate text.
+    output_path = pathlib.Path(directory).joinpath(str(append_name))
     
-    draw.line([(minx, miny), (maxx, maxy)], fill="black", width=10)
+    # Use pathlib to see if the output path exists, if it is there it returns True
+    if not pathlib.Path(output_path).exists():
+        
+        # Prints a status method to the console using the format option, which fills in the {} with whatever
+        # is in the ().
+        print("This output path doesn't exist:\n            {} \n Creating...".format(output_path))
+        
+        # Use pathlib to create the folder.
+        pathlib.Path.mkdir(output_path)
+        
+        # Prints a status to let you know that the folder has been created
+        print("Output path has been created")
     
-    width = (maxx - minx)
-    height = (maxy - miny)
-    
-    diag_length = np.sqrt((width ** 2) + (height ** 2))
-    
-    return diag_length
+    # Since it's a boolean return, and True is the only other option we will simply print the output.
+    else:
+        # This will print exactly what you tell it, including the space. The backslash n means new line.
+        print("Output path already exists:\n               {}".format(output_path))
+    return output_path
 
 
 # %% User input
 USER_INPUT = 0
 
 # Are you plotting straight lines or arcs?
-# If draw_arcs == False, it will default to drawing lines
-draw_arcs = True
+# Shape options are "arc", "line", "circle", "ellipse"
+shape = "ellipse"
+
+# what are the maximum and minimum number of elements you'd like in the image
+min_elem = 1
+max_elem = 1
+
+
+# what are the dimensions of the image
+im_width = 5200
+im_height = 3900
+
+# line width (passed to all the drawing functions)
+width = 10
+# color of the line passed to functions
+fill = "black"
 
 abspath = os.path.abspath(__file__)
 dname = os.path.dirname(abspath)
 os.chdir(dname)
 
-results_folder = os.makedirs(r"./results_cache", exist_ok=True)
+results_folder = make_subdirectory(dname, append_name="results_cache")
 
 # Where would you like the data to be saved to?
-output_directory = pathlib.Path(os.path.abspath(r"./results_cache"))
+output_directory = make_subdirectory(results_folder, append_name="dummy_data")
 
 # %% Generate random bounding boxes
 SCRIPT_STARTS = 0
 
-NUM_RECTS = random.randint(10, 50)
+NUM_RECTS = random.randint(min_elem, max_elem)
 
-REGION = Rect(0, 0, 5200, 3900)  # Size of the total rectangle/image
+REGION = Rect(0, 0, im_width, im_height)  # Size of the total rectangle/image
 
 # call quadsect() until at least the number of rects wanted has been generated
 rects = [REGION]  # seed output list
 while len(rects) <= NUM_RECTS:
     rects = [subrect for rect in rects
-             for subrect in quadsect(rect, 3)]
+             for subrect in quadsect(rect, 6)]
 
 random.shuffle(rects)  # mix them up
 sample = random.sample(rects, NUM_RECTS)  # select the desired number
@@ -219,21 +253,54 @@ draw = ImageDraw.Draw(image)
 for rect in rects:
     draw_rect(rect)
 
-if not draw_arcs:
-    line_data = [draw_line(rect, fill="black") for rect in sample if (rect.width > 132 and rect.height > 132)]
-    line_df = pd.DataFrame(line_data, columns=['length'])
-    line_df.to_csv(output_directory.joinpath("line_data.csv"))
-    print(line_df)
-    save_path = output_directory.joinpath("line_data.tiff")
-    image.save(save_path)
-    print(save_path)
+if shape == "line":
+    data = [
+        draw_line(rect, fill, width)
+        for rect in sample
+        if (rect.width > 132 and rect.height > 132)]
+    df = pd.DataFrame(data, columns=['length'])
+    create_data(df, image, output_directory, shape)
+
+elif shape == "arc":
+    data = [
+        draw_arc(square_subregion(rect), fill, width)
+        for rect in sample
+        if (rect.width > 132 and rect.height > 132)]
+    df = pd.DataFrame(data, columns=['radius', 'length'])
+    create_data(df, image, output_directory, shape)
+    # df.to_csv(output_directory.joinpath("arc_data.csv"))
+    # print(df)
+    # save_path = output_directory.joinpath("arc_data.tiff")
+    # image.save(save_path)
+    # print(save_path)
+
+elif shape == "ellipse":
+    data = [
+        draw_ellipse(rect, fill, width)
+        for rect in sample
+        if (rect.width > 132 and rect.height > 132)]
+    df = pd.DataFrame(data, columns=['width', 'height'])
+    create_data(df, image, output_directory, shape)
+
+elif shape == "circle":
+    data = [
+        draw_ellipse(square_subregion(rect), fill, width)
+        for rect in sample
+        if (rect.width > 132 and rect.height > 132)]
+    df = pd.DataFrame(data, columns=['width', 'height'])
+    create_data(df, image, output_directory, shape)
 
 else:
-    arc_data = [draw_arc(square_subregion(rect), fill="black") for rect in sample if
-                (rect.width > 132 and rect.height > 132)]
-    arc_df = pd.DataFrame(arc_data, columns=['radius', 'length'])
-    arc_df.to_csv(output_directory.joinpath("arc_data.csv"))
-    print(arc_df)
-    save_path = output_directory.joinpath("arc_data.tiff")
-    image.save(save_path)
-    print(save_path)
+    print("The shape value that has been input is incorrect, check options for shape again.")
+
+# using subregion as in the arc function results in circles, so a separate circle function isn't necessary
+
+# TODO: write 2 functions 1) curvature test, 2) x-sect test
+# make sure that files are named correctly for each test and that these can run through the curvature_test and
+# section_test scripts.
+# the script here should just generate images
+# make sure to date and timestamp those images
+# include the appropriate references in the columns of the csv files
+# edit ellipse script so that the it doesn't produce such ridiculous proportions
+# fewer circles/ellipses
+#
