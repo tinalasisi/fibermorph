@@ -6,6 +6,8 @@ https://stackoverflow.com/questions/4373741/how-can-i-randomly-place-several-non
 """
 
 # %% Imports
+import sympy
+
 IMPORTS = 0
 
 from PIL import Image, ImageDraw
@@ -16,11 +18,13 @@ import numpy as np
 import pandas as pd
 import os
 from datetime import datetime
+from sympy import geometry
 
 random.seed()
 
-
 # %% Random rect generator
+FUNCTIONS = 0
+
 
 class Point(object):
     def __init__(self, x, y):
@@ -110,12 +114,13 @@ def draw_arc(rect, fill, width):
     # width = (rect.max.x - rect.min.x), (rect.max.y - rect.min.y)
     
     radius = (maxx - minx) / 2
+    curv = 1 / radius
     circumference = 2 * np.pi * radius
     arc_angle = end - start
     arc_radians = arc_angle / 360
     arc_length = arc_radians * circumference
     
-    return radius, arc_length
+    return radius, arc_length, curv
 
 
 def draw_line(rect, fill, width):
@@ -144,10 +149,18 @@ def draw_ellipse(rect, fill, width):
     
     draw.ellipse([(minx, miny), (maxx, maxy)], fill=fill, width=width)
     
+    # values for min and max and area of ellipses to pass to dataframe
     width_df = (maxx - minx)
     height_df = (maxy - miny)
+    r1 = (width_df / 2)
+    r2 = (height_df / 2)
+    p1 = geometry.Point(0, 0)
+    e1 = geometry.Ellipse(p1, r1, r2)
+    area = sympy.N(e1.area)
+    # area = np.pi * (width_df/2) * (height_df/2)
     
-    return width_df, height_df
+    return width_df, height_df, area
+
 
 def create_data(df, image, output_directory, shape):
     jetzt = datetime.now()
@@ -202,12 +215,11 @@ USER_INPUT = 0
 
 # Are you plotting straight lines or arcs?
 # Shape options are "arc", "line", "circle", "ellipse"
-shape = "ellipse"
+shape = "line"
 
 # what are the maximum and minimum number of elements you'd like in the image
-min_elem = 1
-max_elem = 1
-
+min_elem = 10
+max_elem = 30
 
 # what are the dimensions of the image
 im_width = 5200
@@ -225,7 +237,8 @@ os.chdir(dname)
 results_folder = make_subdirectory(dname, append_name="results_cache")
 
 # Where would you like the data to be saved to?
-output_directory = make_subdirectory(results_folder, append_name="dummy_data")
+# output_directory = make_subdirectory(results_folder, append_name="dummy_data")
+output_directory = make_subdirectory(results_folder, append_name="validation_data")
 
 # %% Generate random bounding boxes
 SCRIPT_STARTS = 0
@@ -266,7 +279,7 @@ elif shape == "arc":
         draw_arc(square_subregion(rect), fill, width)
         for rect in sample
         if (rect.width > 132 and rect.height > 132)]
-    df = pd.DataFrame(data, columns=['radius', 'length'])
+    df = pd.DataFrame(data, columns=['radius', 'length', 'curvature'])
     create_data(df, image, output_directory, shape)
     # df.to_csv(output_directory.joinpath("arc_data.csv"))
     # print(df)
@@ -279,7 +292,7 @@ elif shape == "ellipse":
         draw_ellipse(rect, fill, width)
         for rect in sample
         if (rect.width > 132 and rect.height > 132)]
-    df = pd.DataFrame(data, columns=['width', 'height'])
+    df = pd.DataFrame(data, columns=['width', 'height', 'area'])
     create_data(df, image, output_directory, shape)
 
 elif shape == "circle":
@@ -287,7 +300,7 @@ elif shape == "circle":
         draw_ellipse(square_subregion(rect), fill, width)
         for rect in sample
         if (rect.width > 132 and rect.height > 132)]
-    df = pd.DataFrame(data, columns=['width', 'height'])
+    df = pd.DataFrame(data, columns=['width', 'height', 'area'])
     create_data(df, image, output_directory, shape)
 
 else:
