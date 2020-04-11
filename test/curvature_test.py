@@ -24,7 +24,7 @@ os.chdir(dname)
 fibermorph_curvature = os.path.abspath("../analyze/curvature.py")
 
 # Define the folder where your grayscale tiff images are
-tiff_directory = os.path.abspath(r'./results_cache')
+tiff_directory = os.path.abspath(r'./results_cache/validation_data/curv')
 
 # Designate where fibermorph should make the directory with all your results - this location must exist!
 os.makedirs(r'./results_cache', exist_ok=True)
@@ -48,7 +48,7 @@ min_hair = float(1)
 # How many parallel processes do you want to run?
 # Example:
 # It is recommended that jobs < CPUs on your machine
-jobs = 1
+jobs = 4
 
 # Do you want to save all intermediate images?
 # This is not necessary for the final output and might cause script to run slower
