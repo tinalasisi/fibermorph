@@ -287,10 +287,10 @@ def copy_if_exist(file, directory):
     if os.path.isfile(path):
         shutil.copy(path, destination)
         print('file has been copied'.format(path))
+        return True
     else:
         print('file does not exist'.format(path))
-
-    return None
+        return False
 
 
 def convert(seconds):
