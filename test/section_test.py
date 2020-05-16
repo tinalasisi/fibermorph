@@ -27,7 +27,7 @@ fibermorph_section = os.path.join(dname, "../analyze/section.py")
 # Define the folder where your grayscale tiff images are
 # Example:
 tiff_directory = os.path.abspath(r'./results_cache/validation_data/section')
-# tiff_directory = pathlib.Path(r'/Users/tpl5158/Desktop/AfricanAmerican_Section_TIFF/tiff')
+# tiff_directory = pathlib.Path(r'/Users/tinalasisi/Desktop/ValidationSet_Section_TIFF_Mar12/tiff')
 # tiff_directory = pathlib.Path(r'[insert path here]')
 
 
@@ -40,7 +40,7 @@ output_directory = os.path.abspath(r'./results_cache')
 # Give your output directory a name
 # Example:
 main_output_name = "section_test"
-# main_output_name = "AfricanAmerican_SectionAnalysis_Feb15"
+# main_output_name = "RealDataTest_Apr11"
 # main_output_name = "[insert directory name here]"
 
 # Specify your file extension as a string - this is case-sensitive.
@@ -58,17 +58,18 @@ resolution = float(1)
 # But if your min_size is too large, you might filter out hairs, meaning no results for that image
 # Example:
 min_size = int(1)
+# min_size = int(30)
 # min_size = int("[insert minimum size here]")
 
 # How many pixels do you want to pad the cropped images
 # Example:
-pad = int(10)
+pad = int(40)
 # pad = int([insert pad size here])
 
 # How many parallel processes do you want to run?
 # Example:
 # It is recommended that jobs < CPUs on your machine
-jobs = 1
+jobs = 4
 # jobs = int([insert pad size here])
 
 # Do your images need to be cropped (e.g. if there are multiple sections in the shot)?

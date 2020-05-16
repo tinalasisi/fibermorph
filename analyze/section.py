@@ -203,49 +203,94 @@ def segment_section2(filename, input_file, cropped_binary_dir, pad, resolution):
     filename = str(os.path.basename(filename))
     
     gray_img = input_file  # ensure gray image
+
+    # Gets the unique values in the image matrix. Since it is binary, there should only be 2.
+    unique, counts = np.unique(input_file, return_counts=True)
+    print(unique)
+    print("Found this many counts:")
+    print(len(counts))
+    print(counts)
+
+    # If the length of unique is not 2 then print that the image isn't a binary.
+    if len(unique) == 2:
+        print("Image is already binarized!")
+        hair_pixels = len(counts)
+        print("There is/are {} value(s) present, but there should be 2!\n".format(hair_pixels))
+
+        label_image, num_elements = label(input_file, connectivity=2, return_num=True)
+        
+        if num_elements == 1:
+            print("There is 1 element. Segmentation was successful")
+            
+        elif num_elements == 0:
+            print("There are 0 elements. Something went wrong")
+            
+        else:
+            print("There are more than 1 elements. Segmentation was not successful, must find hair again")
+
+        region = regionprops(label_image)[0]
+
+        tempdf = tempdf_gen(region, filename, resolution)
+
+        # save binary slice
+        with pathlib.Path(cropped_binary_dir).joinpath(filename) as output_name_binary:
+            im = region.filled_image
+            im = np.pad(im, pad, mode='constant')
+            cropped_binary = np.array(im)
+            im = Image.fromarray(cropped_binary)
+            im.save(str(output_name_binary))
+            print("Saved binary slice as {}".format(output_name_binary))
+
+        print("\n")
+
+        return tempdf
+
+    else:
     
-    smooth = skimage.filters.rank.median(gray_img, selem=disk(int(resolution*8)))
-
-    # thresh = threshold_otsu(smooth)
-    thresh = threshold_minimum(smooth)
-
-    # creates binary image by applying the above threshold and replacing all
-    # init_ls = (np.where(gray_img > thresh, 0, 1)).astype('uint8')
-    init_ls = (np.where(gray_img > thresh, 0, 1)).astype('uint8')
-
-    chan = skimage.segmentation.morphological_chan_vese(smooth, 30, init_level_set=init_ls, smoothing=4, lambda1=1, lambda2=1)
-
-    bw_uint8 = (np.array(chan)).astype('uint8')  # turning image into unsigned integer (0-255, grayscale)
-
-    label_image, num_elements = label(bw_uint8, connectivity=2, return_num=True)
+        smooth = skimage.filters.rank.median(gray_img, selem=disk(int(resolution*8)))
     
-    image_center = list(np.divide(label_image.shape, 2))  # returns array of two floats
+        # thresh = threshold_otsu(smooth)
+        thresh = threshold_minimum(smooth)
     
-    center_hair, bbox_final = find_hair(label_image, image_center, minpixel)
-
-    print("\nHair found for {} is:".format(filename))
-
-    print(center_hair)
-    print(type(center_hair))
-
-    index_label = int(center_hair)
+        # creates binary image by applying the above threshold and replacing all
+        # init_ls = (np.where(gray_img > thresh, 0, 1)).astype('uint8')
+        init_ls = (np.where(gray_img > thresh, 0, 1)).astype('uint8')
     
-    region = regionprops(label_image)[index_label]
-
-    tempdf = tempdf_gen(region, filename, resolution)
+        chan = skimage.segmentation.morphological_chan_vese(smooth, 30, init_level_set=init_ls, smoothing=4, lambda1=1, lambda2=1)
     
-    # save binary slice
-    with pathlib.Path(cropped_binary_dir).joinpath(filename) as output_name_binary:
-        im = region.filled_image
-        im = np.pad(im, pad, mode='constant')
-        cropped_binary = np.array(im)
-        im = Image.fromarray(cropped_binary)
-        im.save(str(output_name_binary))
-        print("Saved binary slice as {}".format(output_name_binary))
-
-    print("\n")
+        bw_uint8 = (np.array(chan)).astype('uint8')  # turning image into unsigned integer (0-255, grayscale)
     
-    return tempdf
+        label_image, num_elements = label(bw_uint8, connectivity=2, return_num=True)
+        
+        # TODO: do NOT run thorugh find_hair again. It's inefficient and causes errors. Check whether there is 1 label (there should only be 1) then pass that label to the tempdf_gen function below
+        
+        image_center = list(np.divide(label_image.shape, 2))  # returns array of two floats
+        
+        center_hair, bbox_final = find_hair(label_image, image_center, minpixel)
+    
+        print("\nHair found for {} is:".format(filename))
+    
+        print(center_hair)
+        print(type(center_hair))
+    
+        index_label = int(center_hair)
+        
+        region = regionprops(label_image)[index_label]
+    
+        tempdf = tempdf_gen(region, filename, resolution)
+        
+        # save binary slice
+        with pathlib.Path(cropped_binary_dir).joinpath(filename) as output_name_binary:
+            im = region.filled_image
+            im = np.pad(im, pad, mode='constant')
+            cropped_binary = np.array(im)
+            im = Image.fromarray(cropped_binary)
+            im.save(str(output_name_binary))
+            print("Saved binary slice as {}".format(output_name_binary))
+    
+        print("\n")
+        
+        return tempdf
 
   
 def find_hair(label_image, image_center, minpixel):

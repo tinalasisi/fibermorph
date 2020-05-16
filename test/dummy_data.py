@@ -306,14 +306,4 @@ elif shape == "circle":
 else:
     print("The shape value that has been input is incorrect, check options for shape again.")
 
-# using subregion as in the arc function results in circles, so a separate circle function isn't necessary
 
-# TODO: write 2 functions 1) curvature test, 2) x-sect test
-# make sure that files are named correctly for each test and that these can run through the curvature_test and
-# section_test scripts.
-# the script here should just generate images
-# make sure to date and timestamp those images
-# include the appropriate references in the columns of the csv files
-# edit ellipse script so that the it doesn't produce such ridiculous proportions
-# fewer circles/ellipses
-#
