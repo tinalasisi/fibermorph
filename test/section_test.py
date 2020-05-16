@@ -26,8 +26,8 @@ fibermorph_section = os.path.join(dname, "../analyze/section.py")
 
 # Define the folder where your grayscale tiff images are
 # Example:
-tiff_directory = os.path.abspath(r'../data/section/validation/tiff')
-# tiff_directory = pathlib.Path(r'/Users/tpl5158/Desktop/AfricanAmerican_Section_TIFF/tiff')
+tiff_directory = os.path.abspath(r'./results_cache/validation_data/section')
+# tiff_directory = pathlib.Path(r'/Users/tinalasisi/Desktop/ValidationSet_Section_TIFF_Mar12/tiff')
 # tiff_directory = pathlib.Path(r'[insert path here]')
 
 
@@ -40,7 +40,7 @@ output_directory = os.path.abspath(r'./results_cache')
 # Give your output directory a name
 # Example:
 main_output_name = "section_test"
-# main_output_name = "AfricanAmerican_SectionAnalysis_Feb15"
+# main_output_name = "RealDataTest_Apr11"
 # main_output_name = "[insert directory name here]"
 
 # Specify your file extension as a string - this is case-sensitive.
@@ -50,19 +50,20 @@ file_type = ".tiff"
 
 # How many pixels per micron?
 # Example:
-resolution = float(4.25)
+resolution = float(1)
 # resolution = float(4.25)
 
 # How many microns is the smallest cross-sectional width you expect?
 # NB: If your min_size is too small, you might have more noise and this might slow down the script
 # But if your min_size is too large, you might filter out hairs, meaning no results for that image
 # Example:
-min_size = int(30)
+min_size = int(1)
+# min_size = int(30)
 # min_size = int("[insert minimum size here]")
 
 # How many pixels do you want to pad the cropped images
 # Example:
-pad = int(100)
+pad = int(40)
 # pad = int([insert pad size here])
 
 # How many parallel processes do you want to run?
