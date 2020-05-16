@@ -1,4 +1,6 @@
 import os
+import pathlib
+import pytest
 from fibermorph import fibermorph
 
 # Get current directory
@@ -13,6 +15,29 @@ def teardown_module(function):
         for file_name in teardown_files:
             if os.path.exists(os.path.join(dir, file_name)):
                 os.remove(os.path.join(dir, file_name))
+
+
+def test_pass():
+    assert 1 + 1 == 2
+
+
+# def test_fail():
+#     assert 2 + 2 == 5
+
+
+def test_make_subdirectory(tmp_path):
+    d = tmp_path / "test"
+    d.mkdir()
+    dir1 = fibermorph.make_subdirectory(tmp_path, "test")
+    assert d == dir1
+    # assert 0 == 1
+
+
+def test_pretty_time_delta():
+    # test min
+    assert fibermorph.pretty_time_delta(60) == "1m0s"
+    # test hours
+    assert fibermorph.pretty_time_delta(5400) == "1h30m0s"
 
 
 def test_analyze_hairs():

@@ -580,6 +580,33 @@ def make_all_dirs(main_output_path):
     return main_output_path, filtered_dir, binary_dir, pruned_dir, clean_dir, skeleton_dir, analysis_dir
 
 
+# def make_subdirectory(directory, append=""):
+#     """Short summary.
+#
+#     Parameters
+#     ----------
+#     directory : str or pathlib object
+#         Description of parameter `directory`.
+#     append : str
+#         Description of parameter `append`.
+#
+#     Returns
+#     -------
+#     type Posixpath
+#         Description of returned object.
+#
+#     """
+#     # with pathlib.Path(directory)/(append) as p:
+#     #     p.mkdir(parents=True, exist_ok=True)
+#     #     print(p)
+#     #     return p
+#
+#     # alternative
+#     p = pathlib.Path(directory).joinpath(append)
+#     p.mkdir(parents=True, exist_ok=True)
+#     print(p)
+#     return p
+
 def make_subdirectory(directory, append_name=""):
     """
     Function to build a directory based upon the arguments passed in append. Takes a
