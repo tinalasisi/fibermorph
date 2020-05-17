@@ -1,4 +1,3 @@
-import os
 import pathlib
 import matplotlib.pyplot as plt
 import cv2
@@ -38,3 +37,4 @@ input_file = "testdata/curv_im.tiff"
 output_path = "/Users/tinalasisi/Desktop"
 
 filter_img, im_name = filter(input_file, output_path)
+

@@ -1205,12 +1205,16 @@ def curvature(
     list.sort(file_list)  # sort the files
     print(len(file_list))  # printed the sorted files
 
-    for f in file_list: # # TODO: finish this for loop
+    for f in file_list:
+        # TODO: finish this for loop
 
         # filter
         filter_img, im_name = filter(f, filtered_dir)
 
         # binarize
+        binary_img = binarize_curv(filter_img, im_name, binary_dir, save_img=False)
+        
+        
     # remove particles
     # skeletonize
     # prune
