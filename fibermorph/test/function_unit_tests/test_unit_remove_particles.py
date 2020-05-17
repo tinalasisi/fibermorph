@@ -5,34 +5,13 @@ import matplotlib.pyplot as plt
 
 from skimage import morphology
 from skimage import io
+from fibermorph.test.function_unit_tests.test_unit_check_bin import check_bin
+
 
 def remove_particles(input_file, output_path, name, minpixel=5, prune=False, save_img=False):
     
     img_bool = np.asarray(input_file, dtype=np.bool)
-    
-    # Gets the unique values in the image matrix. Since it is binary, there should only be 2.
-    unique, counts = np.unique(img_bool, return_counts=True)
-    print(unique)
-    print("Found this many counts:")
-    print(len(counts))
-    print(counts)
-
-    # If the length of unique is not 2 then print that the image isn't a binary.
-    if len(unique) != 2:
-        print("Image is not binarized!")
-        hair_pixels = len(counts)
-        print("There is/are {} value(s) present, but there should be 2!\n".format(hair_pixels))
-    # If it is binarized, print out that is is and then get the amount of hair pixels to background pixels.
-    if counts[0] < counts[1]:
-        print("{} is not reversed".format(str(input_file)))
-        img = skimage.util.invert(img_bool)
-        print("Now {} is reversed =)".format(str(input_file)))
-
-    else:
-        print("{} is already reversed".format(str(input_file)))
-        img = img_bool
-
-        print(type(img))
+    img = check_bin(img_bool)
 
     if not prune:
         minimum = minpixel * 10  # assuming the hairs are no more than 10 pixels thick

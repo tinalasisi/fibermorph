@@ -16,6 +16,12 @@ import subprocess
 import sys
 import warnings
 
+from fibermorph.test.function_unit_tests.test_unit_binarize_curv import binarize_curv
+from fibermorph.test.function_unit_tests.test_unit_filter import filter
+from fibermorph.test.function_unit_tests.test_unit_remove_particles import remove_particles
+from fibermorph.test.function_unit_tests.test_unit_skeletonize import skeletonize
+# TODO: move the functions to separate files and import them into the test units, then re-write this
+
 from skimage import filters
 
 from datetime import datetime
@@ -221,40 +227,6 @@ def analyze_hairs(input_file, name, main_output_path, window_size_mm, minpixel):
     print("\n")
 
     return sorted_df
-
-
-@timing
-def binarize_curv(filter_img, im_name, binary_dir, save_img=False):
-    # create structuring elements of 5px radius disk and 3px
-    selem = skimage.morphology.disk(5)
-    selem2 = skimage.morphology.disk(3)
-    
-    # run a simple median filter to smooth the image
-    med_im = skimage.filters.rank.median(skimage.util.img_as_ubyte(filter_img), selem)
-    
-    # find the Otsu binary threshold
-    thresh = skimage.filters.threshold_otsu(med_im)
-    
-    # create a binary using this threshold
-    thresh_im = med_im <= thresh
-    
-    # clear the border of the image (buffer is the px width to be considered as border)
-    cleared_im = skimage.segmentation.clear_border(thresh_im, buffer_size=10)
-    
-    # dilate the hair fibers
-    binary_im = scipy.ndimage.binary_dilation(cleared_im, structure=selem2, iterations=2)
-    
-    if save_img:
-        # invert image
-        save_im = skimage.util.invert(binary_im)
-        
-        # save image
-        with pathlib.Path(binary_dir).joinpath(im_name + ".tiff") as save_name:
-            im = Image.fromarray(save_im)
-            im.save(save_name)
-        return binary_im
-    else:
-        return binary_im
 
 
 def blockPrint():
@@ -716,82 +688,6 @@ def remove_outlier(df, isdf=True, p1=float(0.1), p2=float(0.9)):
 
 
 @timing
-def ridge_filter(input_file, main_output_path):
-    # directory = make_subdirectory(main_output_path, append_name="filtered")
-
-    directory = main_output_path
-
-    print("\nFiltering {}...\n".format(str(input_file)))
-
-    name = os.path.splitext(os.path.basename(input_file))[0]
-
-    gray_img = cv2.imread(str(input_file), 0)  # read in image as numpy array, this will be in color
-    type(gray_img)  # using the above function it returns <class 'numpy.ndarray'>
-    print("Image size is:", gray_img.shape)  # returns (3904, 5200)
-
-    filter_img = skimage.filters.frangi(gray_img)
-
-    img_inv = invert(filter_img)
-    filter_output_path = pathlib.Path(directory).joinpath(name + ".tiff")
-    plt.imsave(filter_output_path, img_inv, cmap='gray')
-    print("\n Saving filtered version of: {}".format(name))
-
-    print("\n Done filtering {}".format(name))
-
-    return filter_output_path, name
-
-
-@timing
-def remove_particles(input_file, output_path, name, minpixel=5, prune=False, save_img=False):
-    img_bool = np.asarray(input_file, dtype=np.bool)
-    
-    # Gets the unique values in the image matrix. Since it is binary, there should only be 2.
-    unique, counts = np.unique(img_bool, return_counts=True)
-    print(unique)
-    print("Found this many counts:")
-    print(len(counts))
-    print(counts)
-    
-    # If the length of unique is not 2 then print that the image isn't a binary.
-    if len(unique) != 2:
-        print("Image is not binarized!")
-        hair_pixels = len(counts)
-        print("There is/are {} value(s) present, but there should be 2!\n".format(hair_pixels))
-    # If it is binarized, print out that is is and then get the amount of hair pixels to background pixels.
-    if counts[0] < counts[1]:
-        print("{} is not reversed".format(str(input_file)))
-        img = skimage.util.invert(img_bool)
-        print("Now {} is reversed =)".format(str(input_file)))
-    
-    else:
-        print("{} is already reversed".format(str(input_file)))
-        img = img_bool
-        
-        print(type(img))
-    
-    if not prune:
-        minimum = minpixel * 10  # assuming the hairs are no more than 10 pixels thick
-        # warnings.filterwarnings("ignore")  # suppress Boolean image UserWarning
-        clean = skimage.morphology.remove_small_objects(img, connectivity=2, min_size=minimum)
-    else:
-        # clean = img_bool
-        minimum = minpixel
-        clean = skimage.morphology.remove_small_objects(img, connectivity=2, min_size=minimum)
-        
-        print("\n Done cleaning {}".format(name))
-    
-    if save_img:
-        img_inv = skimage.util.invert(clean)
-        with pathlib.Path(output_path).joinpath(name + ".tiff") as savename:
-            plt.imsave(savename, img_inv, cmap='gray')
-            # im = Image.fromarray(img_inv)
-            # im.save(output_path)
-        return clean
-    else:
-        return clean
-
-
-@timing
 def safe_curv(hair_coords, resolution):
     try:
         r = TaubinSVD(hair_coords)
@@ -1187,7 +1083,8 @@ def curvature(
         
         # skeletonize
         skeleton_im = skeletonize(clean_im, im_name, skeleton_dir, save_img=True)
-    # prune
+        
+        # prune
     # remove particles
     # analyze
 

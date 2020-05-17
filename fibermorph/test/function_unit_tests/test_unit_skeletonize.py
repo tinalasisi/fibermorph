@@ -6,7 +6,7 @@ from skimage import io
 from PIL import Image
 from fibermorph.test.function_unit_tests.test_unit_check_bin import check_bin
 
-def skeletonize(clean_img, name, output_path, save_img=True):
+def skeletonize(clean_img, name, output_path, save_img=False):
     
     # check if image is binary and properly inverted
     clean_img = check_bin(clean_img)
