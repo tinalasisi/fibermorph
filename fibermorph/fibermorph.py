@@ -224,51 +224,37 @@ def analyze_hairs(input_file, name, main_output_path, window_size_mm, minpixel):
 
 
 @timing
-def binary_image(input_file, bin_out_dir, resolution, median_kernel_size=5, save_img=False, ):
-    name = os.path.splitext(os.path.basename(input_file))[0]
-
-    print("\nBinarizing {}...\n".format(str(name)))
-
-    # binary_folder = make_subdirectory(bin_out_dir, append_name="binary")
-
-    binary_folder = bin_out_dir
-
-    img = cv2.imread(str(input_file), 0)
-
-    # Get the size of the image and print it to the console
-    print("Image {} size is {}".format(str(name), img.shape))
-
-    median_kernel_adj = selem_by_res(median_kernel_size, resolution)
-
-    selem = disk(median_kernel_adj)
-
-    median_img = skimage.filters.rank.median(img, selem)
-
-    # median_img_clear = clear_border(invert(median_img), buffer_size=(median_kernel_adj + resolution))
-
-    thresh = threshold_otsu(median_img)
-
-    # creates binary image by applying the above threshold and replacing all
-    bw_uint8 = (np.where(median_img > thresh, 1, 0)).astype('uint8')
-
-    # binary_img = invert(bw_uint8)
-    binary_img = clear_border(invert(bw_uint8), buffer_size=int(10 + (resolution / 10)))
-    # remove artifacts connected to image border, needs to be inverted for this to work!
-
-    binary_img = scipy.ndimage.morphology.binary_dilation(binary_img, square(median_kernel_adj), iterations=2)
-
-    # binary_img = scipy.ndimage.morphology.binary_closing(binary_img, square(median_kernel_adj), iterations=2)
-
-    # binary_img = skimage.morphology.binary_dilation(binary_img, selem=disk(20))
-
+def binarize_curv(filter_img, im_name, binary_dir, save_img=False):
+    # create structuring elements of 5px radius disk and 3px
+    selem = skimage.morphology.disk(5)
+    selem2 = skimage.morphology.disk(3)
+    
+    # run a simple median filter to smooth the image
+    med_im = skimage.filters.rank.median(skimage.util.img_as_ubyte(filter_img), selem)
+    
+    # find the Otsu binary threshold
+    thresh = skimage.filters.threshold_otsu(med_im)
+    
+    # create a binary using this threshold
+    thresh_im = med_im <= thresh
+    
+    # clear the border of the image (buffer is the px width to be considered as border)
+    cleared_im = skimage.segmentation.clear_border(thresh_im, buffer_size=10)
+    
+    # dilate the hair fibers
+    binary_im = scipy.ndimage.binary_dilation(cleared_im, structure=selem2, iterations=2)
+    
     if save_img:
-        img_inv = invert(binary_img)
-        with pathlib.Path(binary_folder).joinpath(name + ".tiff") as binary_output_path:
-            im = Image.fromarray(img_inv)
-            im.save(binary_output_path)
-        return binary_img, name
+        # invert image
+        save_im = skimage.util.invert(binary_im)
+        
+        # save image
+        with pathlib.Path(binary_dir).joinpath(im_name + ".tiff") as save_name:
+            im = Image.fromarray(save_im)
+            im.save(save_name)
+        return binary_im
     else:
-        return binary_img, name
+        return binary_im
 
 
 def blockPrint():
@@ -1011,9 +997,9 @@ def whole_shebang(f, min_hair, window_size_mm, save_img, filtered_dir, binary_di
     # blockPrint()  # silence output
     minpixel = np.rint(min_hair * resolution)
     try:
-        filter_path, name = ridge_filter(f, filtered_dir)
-
-        binary_img, name = binary_image(filter_path, binary_dir, resolution, median_kernel_size=5, save_img=save_img)
+        # filter_path, name = ridge_filter(f, filtered_dir)
+        #
+        # binary_img, name = binary_image(filter_path, binary_dir, resolution, median_kernel_size=5, save_img=save_img)
 
         clean_img, name = remove_particles(binary_img, minpixel, clean_dir, name, prune=False, save_img=save_img)
 
@@ -1212,10 +1198,11 @@ def curvature(
         filter_img, im_name = filter(f, filtered_dir)
 
         # binarize
-        binary_img = binarize_curv(filter_img, im_name, binary_dir, save_img=False)
+        binary_img = binarize_curv(filter_img, im_name, binary_dir, save_img=True)
         
+        # remove particles
+        clean_im = remove_particles(binary_img, clean_dir, im_name, minpixel=5, prune=False, save_img=True)
         
-    # remove particles
     # skeletonize
     # prune
     # remove particles
