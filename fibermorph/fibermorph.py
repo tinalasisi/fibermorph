@@ -983,9 +983,9 @@ def whole_shebang(f, min_hair, window_size_mm, save_img, filtered_dir, binary_di
         #
         # binary_img, name = binary_image(filter_path, binary_dir, resolution, median_kernel_size=5, save_img=save_img)
 
-        clean_img, name = remove_particles(binary_img, minpixel, clean_dir, name, prune=False, save_img=save_img)
+        # clean_img, name = remove_particles(binary_img, minpixel, clean_dir, name, prune=False, save_img=save_img)
 
-        skeleton, name = skeletonize_hair(clean_img, name, skeleton_dir, save_img=save_img)
+        # skeleton, name = skeletonize_hair(clean_img, name, skeleton_dir, save_img=save_img)
 
         skeleton_bin = np.where(skeleton, 1, 0)
 
@@ -1185,7 +1185,8 @@ def curvature(
         # remove particles
         clean_im = remove_particles(binary_img, clean_dir, im_name, minpixel=5, prune=False, save_img=True)
         
-    # skeletonize
+        # skeletonize
+        skeleton_im = skeletonize(clean_im, im_name, skeleton_dir, save_img=False)
     # prune
     # remove particles
     # analyze
