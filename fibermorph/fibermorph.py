@@ -1186,7 +1186,7 @@ def curvature(
         clean_im = remove_particles(binary_img, clean_dir, im_name, minpixel=5, prune=False, save_img=True)
         
         # skeletonize
-        skeleton_im = skeletonize(clean_im, im_name, skeleton_dir, save_img=False)
+        skeleton_im = skeletonize(clean_im, im_name, skeleton_dir, save_img=True)
     # prune
     # remove particles
     # analyze
