@@ -16,6 +16,8 @@ import subprocess
 import sys
 import warnings
 
+from skimage import filters
+
 from datetime import datetime
 from functools import wraps
 from joblib import Parallel, delayed
@@ -1203,15 +1205,17 @@ def curvature(
     list.sort(file_list)  # sort the files
     print(len(file_list))  # printed the sorted files
 
-    # # Single file loop for debugging:
-    # file_list = file_list[-5:]
-    # print(len(file_list))
+    for f in file_list: # # TODO: finish this for loop
 
-    # %%
+        # filter
+        filter_img, im_name = filter(f, filtered_dir)
 
-    # curv_df = (Parallel(n_jobs=2, verbose=10)(
-    #     delayed(whole_shebang)(f, min_hair, window_size_mm, save_img, filtered_dir, binary_dir, pruned_dir, clean_dir,
-    #                            skeleton_dir, analysis_dir) for f in file_list))
+        # binarize
+    # remove particles
+    # skeletonize
+    # prune
+    # remove particles
+    # analyze
 
     curv_df = (Parallel(n_jobs=jobs, verbose=100)(
         delayed(whole_shebang)(f, min_hair, window_size_mm, save_img, filtered_dir, binary_dir, pruned_dir, clean_dir,
@@ -1254,6 +1258,33 @@ def curvature(
     print("Entire analysis took: {}.".format(convert(total_time)))
 
     return True
+
+
+def filter(input_file, output_path):
+
+    # create pathlib object for input Image
+    input_path = pathlib.Path(input_file)
+
+    # extract image name
+    im_name = input_path.stem
+
+    # read in Image
+    gray_img = cv2.imread(input_file, 0)
+    type(gray_img)
+    print("Image size is:", gray_img.shape)
+
+    # use frangi ridge filter to find hairs, the output will be inverted
+    filter_img = skimage.filters.frangi(gray_img)
+    type(filter_img)
+    print("Image size is:", filter_img.shape)
+
+    # inverting and saving the filtered image
+    img_inv = skimage.util.invert(filter_img)
+    with pathlib.Path(output_path).joinpath(im_name + ".tiff") as save_path:
+        plt.imsave(save_path, img_inv, cmap="gray")
+
+    return filter_img, im_name
+
 
 
 def section(
