@@ -1,6 +1,5 @@
 import os
-import pathlib
-import pytest
+
 from fibermorph import fibermorph
 
 # Get current directory
@@ -53,3 +52,13 @@ def test_copy_if_exist():
     assert a is True
     assert os.path.exists(os.path.join(dir, f1))
     assert fibermorph.copy_if_exist("null.txt", temp_dir) is False
+
+
+def test_filter(tmp_path):
+    # works in unit test but can't figure out how to use pytest to test it
+    input_file = "../../testdata/curv_im.tiff"
+    type(input_file)
+    output_path = "../../testdata"
+    type(output_path)
+    filter_img, im_name = fibermorph.filter(input_file, output_path)
+    assert im_name == "curv_im"

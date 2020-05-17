@@ -1264,6 +1264,7 @@ def filter(input_file, output_path):
 
     # create pathlib object for input Image
     input_path = pathlib.Path(input_file)
+    print(input_path)
 
     # extract image name
     im_name = input_path.stem

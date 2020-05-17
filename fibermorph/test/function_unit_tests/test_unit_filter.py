@@ -33,7 +33,7 @@ def filter(input_file, output_path):
     return filter_img, im_name
 
 
-input_file = "/Users/tinalasisi/Box/01_TPL5158/Box_Dissertation/HairPhenotyping_Methods/data/fibermorph_input/curvature/ValidationSet_TIFF/001.tiff"
+input_file = "testdata/curv_im.tiff"
 
 output_path = "/Users/tinalasisi/Desktop"
 
