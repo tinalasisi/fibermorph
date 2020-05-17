@@ -742,34 +742,16 @@ def ridge_filter(input_file, main_output_path):
 
 
 @timing
-def remove_particles(input_file, minpixel, main_output_path, name, prune=False, save_img=False):
-    """
-    :param main_output_path:
-    :param save_img:
-    :param name:
-    :param prune:
-    :param input_file:          string with path to binarized image
-    :param minpixel:            minimum hair size in pixels
-    :return:                    :img:           cleaned image
-                                :input_file:    input file
-                                :clean_folder:  directory where cleaned images are stored
-    """
-
+def remove_particles(input_file, output_path, name, minpixel=5, prune=False, save_img=False):
     img_bool = np.asarray(input_file, dtype=np.bool)
-    name = str(name)
-    print("\nRemoving particles from pruned image of {}...\n".format(name))
-    print(img_bool.dtype)
-    print("Image is unsigned integer 8")
-
-    output_path = main_output_path
-
+    
     # Gets the unique values in the image matrix. Since it is binary, there should only be 2.
     unique, counts = np.unique(img_bool, return_counts=True)
     print(unique)
     print("Found this many counts:")
     print(len(counts))
     print(counts)
-
+    
     # If the length of unique is not 2 then print that the image isn't a binary.
     if len(unique) != 2:
         print("Image is not binarized!")
@@ -778,16 +760,16 @@ def remove_particles(input_file, minpixel, main_output_path, name, prune=False, 
     # If it is binarized, print out that is is and then get the amount of hair pixels to background pixels.
     if counts[0] < counts[1]:
         print("{} is not reversed".format(str(input_file)))
-        img = invert(img_bool)
+        img = skimage.util.invert(img_bool)
         print("Now {} is reversed =)".format(str(input_file)))
-
+    
     else:
         print("{} is already reversed".format(str(input_file)))
         img = img_bool
-
-    print(type(img))
-
-    if prune == False:
+        
+        print(type(img))
+    
+    if not prune:
         minimum = minpixel * 10  # assuming the hairs are no more than 10 pixels thick
         # warnings.filterwarnings("ignore")  # suppress Boolean image UserWarning
         clean = skimage.morphology.remove_small_objects(img, connectivity=2, min_size=minimum)
@@ -795,18 +777,18 @@ def remove_particles(input_file, minpixel, main_output_path, name, prune=False, 
         # clean = img_bool
         minimum = minpixel
         clean = skimage.morphology.remove_small_objects(img, connectivity=2, min_size=minimum)
-
+        
         print("\n Done cleaning {}".format(name))
-
+    
     if save_img:
-        img_inv = invert(clean)
+        img_inv = skimage.util.invert(clean)
         with pathlib.Path(output_path).joinpath(name + ".tiff") as savename:
             plt.imsave(savename, img_inv, cmap='gray')
             # im = Image.fromarray(img_inv)
             # im.save(output_path)
-        return clean, name
+        return clean
     else:
-        return clean, name
+        return clean
 
 
 @timing
