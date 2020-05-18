@@ -1085,6 +1085,7 @@ def curvature(
         skeleton_im = skeletonize(clean_im, im_name, skeleton_dir, save_img=True)
         
         # prune
+        pruned_im =
     # remove particles
     # analyze
 
