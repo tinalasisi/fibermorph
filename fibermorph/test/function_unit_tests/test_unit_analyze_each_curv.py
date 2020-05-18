@@ -6,7 +6,7 @@ from fibermorph.test.function_unit_tests.test_unit_trim_outliers import trim_out
 from fibermorph.test.function_unit_tests.test_unit_taubin_curv import taubin_curv
 
 
-def analyze_each_curv(hair, window_size, img_res):
+def analyze_each_curv(hair, window_size, resolution):
     """
     Calculating curvature for hair divided into windows (as opposed to the entire hair at once)
 
@@ -16,7 +16,7 @@ def analyze_each_curv(hair, window_size, img_res):
     :param hair:
     :param min_hair:
     :param window_size:     the window size (in pixel)
-    :param img_res:      the resolution (number of pixels in a mm)
+    :param resolution:      the resolution (number of pixels in a mm)
     :return:
                             curv_mean,
                             curv_median,
@@ -26,37 +26,46 @@ def analyze_each_curv(hair, window_size, img_res):
 
     hair_label = np.array(hair.coords)
 
-    length_mm = float(hair.area / img_res)
-    print(length_mm)
+    length_mm = float(len(hair.coords) / resolution)
+    print("\nCurv length is {} mm".format(length_mm))
 
-    hair_pixel_length = hair.area  # length of hair in pixels
-    print(hair_pixel_length)
+    hair_pixel_length = len(hair.coords)  # length of hair in pixels
+    print("\nCurv length is {} pixels".format(hair_pixel_length))
 
     subset_loop = (subset_gen(hair_pixel_length, window_size, hair_label=hair_label))  # generates subset loop
 
     # Safe generator expression in case of errors
-    curv = [taubin_curv(hair_coords, img_res) for hair_coords in subset_loop]
+    curv = [taubin_curv(hair_coords, resolution) for hair_coords in subset_loop]
 
     taubin_df = pd.Series(curv).astype('float')
+    print("\nCurv dataframe is:")
     print(taubin_df)
-    print(taubin_df.min())
-    print(taubin_df.max())
+    print(type(taubin_df))
+    print("\nCurv df min is:{}".format(taubin_df.min()))
+    print("\nCurv df max is:{}".format(taubin_df.max()))
 
-    taubin_df2 = trim_outliers(taubin_df, isdf=False, p1=0.01, p2=0.99)
+    print("\nTrimming outliers...")
+    taubin_df2 = taubin_df[taubin_df.between(taubin_df.quantile(.01), taubin_df.quantile(.99))] # without outliers
 
+    
+    print("\nAfter trimming outliers...")
+    print("\nCurv dataframe is:")
     print(taubin_df2)
-    print(taubin_df2.min())
-    print(taubin_df2.max())
+    print(type(taubin_df2))
+    print("\nCurv df min is:{}".format(taubin_df2.min()))
+    print("\nCurv df max is:{}".format(taubin_df2.max()))
 
-    [curv_mean] = taubin_df2.mean().values
-    print(curv_mean)
-    [curv_median] = taubin_df2.median().values
-    print(curv_median)
+    curv_mean = taubin_df2.mean()
+    print("\nCurv mean is:{}".format(curv_mean))
+
+    curv_median = taubin_df2.median()
+    print("\nCurv median is:{}".format(curv_median))
 
     within_hair_df = [curv_mean, curv_median, length_mm]
+    print("\nThe curvature summary stats for this element are:")
     print(within_hair_df)
 
-    if within_hair_df is not None:
+    if within_hair_df is not None or np.nan:
         return within_hair_df
     else:
         pass

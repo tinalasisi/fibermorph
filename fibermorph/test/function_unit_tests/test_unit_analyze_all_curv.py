@@ -4,17 +4,18 @@ import skimage
 import numpy as np
 from skimage import measure
 import pandas as pd
+from skimage import io
 
 from fibermorph.test.function_unit_tests.test_unit_analyze_each_curv import analyze_each_curv
 from fibermorph.test.function_unit_tests.test_unit_check_bin import check_bin
-from fibermorph.test.function_unit_tests.test_unit_trim_outliers import trim_outliers
 
+import logging
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.debug('This is a log message.')
 
 # analyzes curvature for entire image (analyze_each does each hair in image)
 
 def analyze_all_curv(img, name, analysis_dir, resolution, window_size_mm=1):
-
-    window_size = int(round(window_size_mm * resolution))  # must be an integer
 
     if type(img) != 'numpy.ndarray':
         print(type)
@@ -26,11 +27,14 @@ def analyze_all_curv(img, name, analysis_dir, resolution, window_size_mm=1):
     
     img = check_bin(img)
 
-    label_image, num_elements = skimage.measure.label(img, connectivity=2, return_num=True)
-    print(num_elements)
+    label_image, num_elements = skimage.measure.label(img.astype(int), connectivity=2, return_num=True)
+    print("\n There are {} elements in the image".format(num_elements))
 
     props = skimage.measure.regionprops(label_image)
 
+    window_size = int(round(window_size_mm * resolution))  # must be an integer
+    print("\nWindow size for analysis is {} pixels".format(window_size))
+    print("Analysis of curvature for each element begins...")
     tempdf = [analyze_each_curv(hair, window_size, resolution) for hair in props]
 
     print("\nData for {} is:".format(name))
@@ -45,10 +49,19 @@ def analyze_all_curv(img, name, analysis_dir, resolution, window_size_mm=1):
     with pathlib.Path(analysis_dir).joinpath(name + ".csv") as save_path:
         within_curvdf.to_csv(save_path)
 
-    within_curv_outliers = np.asarray(trim_outliers(within_curvdf, p1=0.1, p2=0.9))
+    # remove outliers
+    q1 = within_curvdf.quantile(0.1)
+    q3 = within_curvdf.quantile(0.9)
+    iqr = q3 - q1
+
+    within_curv_outliers = within_curvdf[~((within_curvdf < (q1 - 1.5 * iqr)) | (within_curvdf > (q3 + 1.5 * iqr))).any(axis=1)]
+
     print(within_curv_outliers)
 
-    within_curvdf2 = pd.DataFrame(within_curv_outliers, columns=['curv_mean', 'curv_median', 'length'])
+    within_curvdf2 = pd.DataFrame(within_curv_outliers, columns=['curv_mean', 'curv_median', 'length']).dropna()
+    
+    print("\nDataFrame with NaN values dropped:")
+    print(within_curvdf2)
 
     curv_mean_im_mean = within_curvdf2['curv_mean'].mean()
     # print(curv_mean_im_mean)
@@ -80,3 +93,8 @@ def analyze_all_curv(img, name, analysis_dir, resolution, window_size_mm=1):
 
     return sorted_df
 
+input_file = skimage.io.imread("/Users/tinalasisi/Desktop/2019_05_17_fibermorphTestImages/pruned_curv.tiff", as_gray=True)
+
+output_path = "/Users/tinalasisi/Desktop/2019_05_17_fibermorphTestImages"
+
+sorted_df = analyze_all_curv(input_file, "testcase", output_path, resolution=132, window_size_mm=1)

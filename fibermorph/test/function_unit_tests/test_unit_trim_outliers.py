@@ -1,3 +1,5 @@
+import pandas as pd
+from sklearn.preprocessing import RobustScaler
 
 
 def trim_outliers(df, isdf=True, p1=float(0.1), p2=float(0.9)):

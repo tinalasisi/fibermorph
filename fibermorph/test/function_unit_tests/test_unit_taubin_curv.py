@@ -34,8 +34,8 @@ def taubin_curv(coords, resolution):
     # a, b = (-1 * A[1:3]) / A[0] / 2 + centroid
     r = np.sqrt(A[1] * A[1] + A[2] * A[2] - 4 * A[0] * A[3]) / abs(A[0]) / 2
 
-    if np.math.isfinite(r):
+    if np.isfinite(r):
         curv = 1 / (r / resolution)
         return curv
-    elif np.math.isfinite(r):
+    elif np.isfinite(r) or np.isnan(r):
         return 0
