@@ -60,5 +60,17 @@ def test_filter(tmp_path):
     type(input_file)
     output_path = "../../testdata"
     type(output_path)
-    filter_img, im_name = fibermorph.filter(input_file, output_path)
+    filter_img, im_name = fibermorph.filter_curv(input_file, output_path)
     assert im_name == "curv_im"
+
+from fibermorph import fibermorph
+
+tiff_directory = "/Users/tinalasisi/Box/01_TPL5158/Box_Dissertation/HairPhenotyping_Methods/data/fibermorph_input/curvature/ValidationSet_TIFF"
+output_location = "/Users/tinalasisi/Desktop"
+file_type = ".tiff"
+jobs = 1
+resolution = 132
+window_size_mm = 0.5
+save_img = True
+
+fibermorph.curvature(tiff_directory, output_location, file_type, jobs, resolution, window_size_mm, save_img)

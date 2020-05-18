@@ -1,46 +1,40 @@
 # %% Import libraries
 import argparse
-import cv2
-import math
-import numpy as np  # Main math backbone of python, lots of MatLab like functions.
 import os  # Allows python to work with the operating system.
-import pandas as pd
 import pathlib  # Makes defining pathways simple between mac, windows, linux.
+import shutil
+import sys
+import warnings
+from datetime import datetime
+from functools import wraps
+from timeit import default_timer as timer  # Timer to report how long everything is taking.
+
+import cv2
+import numpy as np  # Main math backbone of python, lots of MatLab like functions.
+import pandas as pd
 import rawpy  # Allows python to read raw image and convert to tiff
 import scipy
-import shutil
 import skimage
 import skimage.measure
 import skimage.morphology
-import subprocess
-import sys
-import warnings
-
-from fibermorph.test.function_unit_tests.test_unit_binarize_curv import binarize_curv
-from fibermorph.test.function_unit_tests.test_unit_filter import filter
-from fibermorph.test.function_unit_tests.test_unit_remove_particles import remove_particles
-from fibermorph.test.function_unit_tests.test_unit_skeletonize import skeletonize
-from fibermorph.test.function_unit_tests.test_unit_prune import prune
-# TODO: move the functions to separate files and import them into the test units, then re-write this
-
-from skimage import filters
-
-from datetime import datetime
-from functools import wraps
+from PIL import Image  # Allows conversion from RGB to grayscale and ImageChops for cropping
 from joblib import Parallel, delayed
 from matplotlib import pyplot as plt
-from PIL import Image  # Allows conversion from RGB to grayscale and ImageChops for cropping
 from scipy import ndimage
 from scipy.spatial import distance as dist
-from skimage.color import rgb2gray
+from skimage import filters, io
 from skimage.filters import threshold_minimum, threshold_otsu
 from skimage.measure import label, regionprops
-from skimage.morphology import disk, square
-# from skimage.morphology.selem import disk
+from skimage.morphology import disk
 from skimage.segmentation import clear_border
 from skimage.util import invert
-from sklearn.preprocessing import RobustScaler
-from timeit import default_timer as timer  # Timer to report how long everything is taking.
+
+# from fibermorph.test.function_unit_tests.test_unit_binarize_curv import binarize_curv
+# from fibermorph.test.function_unit_tests.test_unit_filter import filter
+# from fibermorph.test.function_unit_tests.test_unit_remove_particles import remove_particles
+# from fibermorph.test.function_unit_tests.test_unit_skeletonize import skeletonize
+# from fibermorph.test.function_unit_tests.test_unit_prune import prune
+# TODO: move the functions to separate files and import them into the test units, then re-write this
 
 
 # Grab version from _version.py in the fibermorph directory
@@ -141,94 +135,6 @@ def timing(f):
 # Rest of the functions--organized alphabetically
 
 @timing
-def analyze_hairs(input_file, name, main_output_path, window_size_mm, minpixel):
-    """
-
-    :param name:
-    :param main_output_path:
-    :param window_size_mm:
-    :param min_hair:
-    :param input_file:          string with the skeletonized image file
-    curvature
-    :return:                    hair_stats_df -    dataframe with stats for hairs in the sample
-                                analysis_folder - path where csv files are sent to
-    """
-
-    window_size = int(round(window_size_mm * resolution))  # must be an integer
-
-    # analysis_folder = make_subdirectory(main_output_path, append_name="analysis")
-
-    analysis_folder = main_output_path
-
-    output_name = name
-
-    img = input_file
-
-    if type(img) != 'numpy.ndarray':
-        print(type)
-        img = np.array(img)
-    else:
-        print(type(img))
-
-    print("Analyzing {}".format(output_name))
-
-    label_image, num_elements = skimage.measure.label(img, connectivity=2, return_num=True)
-    print(num_elements)
-
-    props = regionprops(label_image)
-
-    tempdf = [within_hair_curvature(hair, window_size, resolution) for hair in props]
-
-    # # for debugging, look for hairs that are the right size
-    # tempdf_find = [hair.label for hair in props if hair.area>minpixel]
-
-    print("\nData for {} is:".format(name))
-    print(tempdf)
-
-    within_hairdf = pd.DataFrame(tempdf, columns=['curv_mean', 'curv_median', 'length'])
-
-    print("\nDataframe for {} is:".format(name))
-    print(within_hairdf)
-    print(within_hairdf.dtypes)
-
-    with pathlib.Path(analysis_folder).joinpath(output_name + ".csv") as save_path:
-        within_hairdf.to_csv(save_path)
-
-    within_hair_outliers = np.asarray(remove_outlier(within_hairdf, p1=0.1, p2=0.9))
-    print(within_hair_outliers)
-
-    within_hairdf2 = pd.DataFrame(within_hair_outliers, columns=['curv_mean', 'curv_median', 'length'])
-
-    curv_mean_mean = within_hairdf2['curv_mean'].mean()
-    # print(curv_mean_mean)
-
-    curv_mean_median = within_hairdf2['curv_mean'].median()
-    # print(curv_mean_median)
-
-    curv_median_mean = within_hairdf2['curv_median'].mean()
-    # print(curv_median_mean)
-
-    curv_median_median = within_hairdf2['curv_median'].median()
-    # print(curv_median_median)
-
-    length_mean = within_hairdf2['length'].mean()
-    # print(length_mean)
-    length_median = within_hairdf2['length'].median()
-    # print(length_median)
-
-    hair_count = len(within_hairdf2.index)
-    # print(hair_count)
-
-    sorted_df = pd.DataFrame(
-        [output_name, curv_mean_mean, curv_mean_median, curv_median_mean, curv_median_median, length_mean,
-         length_median, hair_count]).T
-
-    print("\nDataframe for {} is:".format(name))
-    print(sorted_df)
-    print("\n")
-
-    return sorted_df
-
 
 def blockPrint():
     sys.stdout = open(os.devnull, 'w')
@@ -382,90 +288,6 @@ def crop_image(input_file, cropped_dir, cropped_binary_dir, pad, minpixel, resol
 def enablePrint():
     sys.stdout = sys.__stdout__
 
-
-@timing
-def find_branch_points(skeleton, name):
-    """
-    Starting with a morphological skeleton, creates a corresponding binary image
-    with all branch-points pixels (1) and all other pixels (0).
-    """
-
-    print("\nPruning {}...\n".format(name))
-
-    # identify 3-way branch-points through convolving the image using appropriate
-    # structure elements for an 8-connected skeleton:
-    # http://homepages.inf.ed.ac.uk/rbf/HIPR2/thin.htm
-    hit1 = np.array([[0, 1, 0],
-                     [0, 1, 0],
-                     [1, 0, 1]], dtype=np.uint8)
-    hit2 = np.array([[1, 0, 0],
-                     [0, 1, 0],
-                     [1, 0, 1]], dtype=np.uint8)
-    hit3 = np.array([[1, 0, 0],
-                     [0, 1, 1],
-                     [0, 1, 0]], dtype=np.uint8)
-    hit_list = [hit1, hit2, hit3]
-
-    # use some nifty NumPy slicing to add the three remaining rotations of each
-    # of the structure elements to the hit list
-    for ii in range(9):
-        hit_list.append(np.transpose(hit_list[-3])[::-1, ...])
-
-    # add structure elements for branch-points four 4-way branchpoints, these
-    hit3 = np.array([[0, 1, 0],
-                     [1, 1, 1],
-                     [0, 1, 0]], dtype=np.uint8)
-    hit4 = np.array([[1, 0, 1],
-                     [0, 1, 0],
-                     [1, 0, 1]], dtype=np.uint8)
-    hit_list.append(hit3)
-    hit_list.append(hit4)
-    print("Creating hit and miss list")
-
-    # create a zero np.array() of the same shape as the skeleton and use it to collect
-    # "hits" from the convolution operation
-
-    skel_image = skeleton
-    print("Converting image to binary array")
-
-    branch_points = np.zeros(skel_image.shape)
-    print("Creating empty array for branch points")
-
-    for hit in hit_list:
-        target = hit.sum()
-        curr = ndimage.convolve(skel_image, hit, mode="constant")
-        branch_points = np.logical_or(branch_points, np.where(curr == target, 1, 0))
-
-    print("Completed collection of branch points")
-
-    # pixels may "hit" multiple structure elements, ensure the output is a binary
-    # image
-    branch_points_image = np.where(branch_points, 1, 0)
-    print("Ensuring binary")
-
-    # use SciPy's ndimage module to label each contiguous foreground feature
-    # uniquely, this will locating and determining coordinates of each branch-point
-    labels, num_labels = ndimage.label(branch_points_image)
-    print("Labelling branches")
-
-    # use SciPy's ndimage module to determine the coordinates/pixel corresponding
-    # to the center of mass of each branchpoint
-    branch_points = ndimage.center_of_mass(skel_image, labels=labels, index=range(1, num_labels + 1))
-    branch_points = np.array([value for value in branch_points if not np.isnan(value[0]) or not np.isnan(value[1])],
-                             dtype=int)
-    num_branch_points = len(branch_points)
-
-    hit = np.array([[0, 0, 0],
-                    [0, 1, 0],
-                    [0, 0, 0]], dtype=np.uint8)
-
-    dilated_branches = ndimage.convolve(branch_points_image, hit, mode='constant')
-    dilated_branches_image = np.where(dilated_branches, 1, 0)
-    print("Ensuring binary dilated branches")
-    pruned_image = np.subtract(skel_image, dilated_branches_image)
-    # pruned_image = np.subtract(skel_image, branch_points_image)
-
-    return branch_points, num_branch_points, pruned_image
 
 
 def find_hair(label_image, image_center, minpixel):
@@ -634,72 +456,6 @@ def raw_to_gray(imgfile, output_directory):
     return output_name
 
 
-@timing
-def remove_outlier(df, isdf=True, p1=float(0.1), p2=float(0.9)):
-    """
-    Function to generate a filtered panda dataframe without extreme values.
-
-    :param df_in:       input dataframe (should be Pandas Dataframe, not tested with numpy, but that might work as well)
-
-    :param col_name:    a string with the column name containing the column where you'll be filtering outliers
-
-    :param p1:          float value of the percentile for the bottom cut-off of filtering (optional, defaults at 0.25)
-
-    :param p2:          float value of the percentile for the top cut-off of filtering (optional, defaults at 0.75)
-
-    :return:            returns a filtered Pandas dataframe containing only the values between the chosen percentile
-    cut-offs
-
-    """
-
-    if isdf:
-        x_val = df.values
-        print(x_val)
-        x = x_val
-        print(x)
-        # x = x_val.reshape(-1, 1)
-        scaler = RobustScaler()
-        x_scaled = scaler.fit_transform(x)
-        df_in = pd.DataFrame(x_scaled)
-        print(df_in)
-        q1 = pd.Series(df_in.quantile(p1))
-        q3 = pd.Series(df_in.quantile(p2))
-        scaled_df_out = df_in.clip(q1, q3, axis=1)
-        print(scaled_df_out)
-        array_out = scaler.inverse_transform(scaled_df_out)
-        print(array_out)
-        df_out = pd.DataFrame(array_out)
-
-        return df_out
-
-    else:
-        x_val = df.values
-        x = x_val.reshape(-1, 1)
-        scaler = RobustScaler()
-        x_scaled = scaler.fit_transform(x)
-        df_in = pd.DataFrame(x_scaled)
-
-        q1 = df_in.quantile(p1)
-        q3 = df_in.quantile(p2)
-        scaled_df_out = df_in.clip(q1, q3, axis=1)
-        array_out = scaler.inverse_transform(scaled_df_out)
-        df_out = pd.DataFrame(array_out)
-
-        return df_out
-
-
-@timing
-def safe_curv(hair_coords, resolution):
-    try:
-        r = TaubinSVD(hair_coords)
-        if math.isfinite(r):
-            curv = 1 / (r / resolution)
-            return curv
-        elif math.isfinite(r):
-            return 0
-    except ValueError or TypeError:
-        pass
-
 
 def segment_section2(filename, input_file, cropped_binary_dir, pad, resolution):
     '''
@@ -761,97 +517,6 @@ def segment_section2(filename, input_file, cropped_binary_dir, pad, resolution):
     return tempdf
 
 
-def selem_by_res(original, resolution):
-    original = int(original)
-    perc = original / 132
-    new = np.rint((perc * resolution))
-    if new > 0:
-        return int(new)
-    else:
-        return 1
-
-
-@timing
-def skeletonize_hair(clean_img, name, main_output_path, save_img=False):
-    """
-    :param clean_img:
-    :param name:
-    :param main_output_path:
-    :param save_img:
-    :return:                    :img: skeletonized image
-                                :output_name: full path of saved image
-                                :skeletonized_folder: path for image folder
-    """
-
-    # skeletonized_folder_path = make_subdirectory(main_output_path, append_name="thinned")
-
-    skeletonized_folder_path = main_output_path
-
-    name = name
-
-    print("\nSkeletonizing {}...\n".format(name))
-
-    skeleton = skimage.morphology.thin(clean_img)
-    # skeleton = skimage.morphology.medial_axis(clean_img)
-
-    if save_img:
-        img_inv = invert(skeleton)
-        with pathlib.Path(skeletonized_folder_path).joinpath(name + ".tiff") as output_path:
-            im = Image.fromarray(img_inv)
-            im.save(output_path)
-        return skeleton, name
-
-    else:
-        print("\n Done skeletonizing {}".format(name))
-
-        return skeleton, name
-
-
-@timing
-def subset_gen(hair_pixel_length, window_size, hair_label):
-    subset_start = 0
-    if window_size > 10:
-        subset_end = int(window_size)
-    else:
-        subset_end = int(hair_pixel_length)
-    while subset_end <= hair_pixel_length:
-        subset = hair_label[subset_start:subset_end]
-        yield subset
-        subset_start += 1
-        subset_end += 1
-
-@timing
-# noinspection PyPep8Naming,PyPep8Naming,PyPep8Naming,PyPep8Naming,PyTypeChecker
-def TaubinSVD(XYcoords):
-    """
-    Algebraic circle fit by Taubin
-      G. Taubin, "Estimation Of Planar Curves, Surfaces And Nonplanar
-                  Space Curves Defined By Implicit Equations, With
-                  Applications To Edge And Range Image Segmentation",
-      IEEE Trans. PAMI, Vol. 13, pages 1115-1138, (1991)
-
-    :param XYcoords:    list [[x_1, y_1], [x_2, y_2], ....]
-    :return:            a, b, r.  a and b are the center of the fitting circle, and r is the curv
-
-    """
-    warnings.filterwarnings("ignore")  # suppress RuntimeWarnings from dividing by zero
-    XY = np.array(XYcoords)
-    X = XY[:, 0] - np.mean(XY[:, 0])  # norming points by x avg
-    Y = XY[:, 1] - np.mean(XY[:, 1])  # norming points by y avg
-    centroid = [np.mean(XY[:, 0]), np.mean(XY[:, 1])]
-    Z = X * X + Y * Y
-    Zmean = np.mean(Z)
-    Z0 = ((Z - Zmean) / (2. * np.sqrt(Zmean)))  # changed from using old_div to Python 3 native division
-    ZXY = np.array([Z0, X, Y]).T
-    U, S, V = np.linalg.svd(ZXY, full_matrices=False)  #
-    V = V.transpose()
-    A = V[:, 2]
-    A[0] = (A[0]) / (2. * np.sqrt(Zmean))
-    A = np.concatenate([A, [(-1. * Zmean * A[0])]], axis=0)
-    # a, b = (-1 * A[1:3]) / A[0] / 2 + centroid
-    r = np.sqrt(A[1] * A[1] + A[2] * A[2] - 4 * A[0] * A[3]) / abs(A[0]) / 2
-    return r
-
 
 def tempdf_gen(region, filename, resolution):
 
@@ -902,8 +567,282 @@ def whole_shebang(f, min_hair, window_size_mm, save_img, filtered_dir, binary_di
         pass
 
 
-@timing
-def within_hair_curvature(hair, window_size, img_res):
+def filter_curv(input_file, output_path):
+
+    # create pathlib object for input Image
+    input_path = pathlib.Path(input_file)
+    print(input_path)
+
+    # extract image name
+    im_name = input_path.stem
+
+    # read in Image
+    gray_img = skimage.io.imread(input_path)
+    type(gray_img)
+    print("Image size is:", gray_img.shape)
+
+    # use frangi ridge filter to find hairs, the output will be inverted
+    filter_img = skimage.filters.frangi(gray_img)
+    type(filter_img)
+    print("Image size is:", filter_img.shape)
+
+    # inverting and saving the filtered image
+    img_inv = skimage.util.invert(filter_img)
+    with pathlib.Path(output_path).joinpath(im_name + ".tiff") as save_path:
+        plt.imsave(save_path, img_inv, cmap="gray")
+
+    return filter_img, im_name
+
+
+def binarize_curv(filter_img, im_name, binary_dir, save_img=False):
+    # create structuring elements of 5px radius disk and 3px
+    selem = skimage.morphology.disk(5)
+    selem2 = skimage.morphology.disk(3)
+    
+    # run a simple median filter to smooth the image
+    med_im = skimage.filters.rank.median(skimage.util.img_as_ubyte(filter_img), selem)
+    
+    # find the Otsu binary threshold
+    thresh = skimage.filters.threshold_otsu(med_im)
+    
+    # create a binary using this threshold
+    thresh_im = med_im <= thresh
+    
+    # clear the border of the image (buffer is the px width to be considered as border)
+    cleared_im = skimage.segmentation.clear_border(thresh_im, buffer_size=10)
+    
+    # dilate the hair fibers
+    binary_im = scipy.ndimage.binary_dilation(cleared_im, structure=selem2, iterations=2)
+    
+    if save_img:
+        # invert image
+        save_im = skimage.util.invert(binary_im)
+        
+        # save image
+        with pathlib.Path(binary_dir).joinpath(im_name + ".tiff") as save_name:
+            im = Image.fromarray(save_im)
+            im.save(save_name)
+        return binary_im
+    else:
+        return binary_im
+
+
+def remove_particles(input_file, output_path, name, minpixel=5, prune=False, save_img=False):
+    img_bool = np.asarray(input_file, dtype=np.bool)
+    img = check_bin(img_bool)
+    
+    if not prune:
+        minimum = minpixel * 10  # assuming the hairs are no more than 10 pixels thick
+        # warnings.filterwarnings("ignore")  # suppress Boolean image UserWarning
+        clean = skimage.morphology.remove_small_objects(img, connectivity=2, min_size=minimum)
+    else:
+        # clean = img_bool
+        minimum = minpixel
+        clean = skimage.morphology.remove_small_objects(img, connectivity=2, min_size=minimum)
+        
+        print("\n Done cleaning {}".format(name))
+    
+    if save_img:
+        img_inv = skimage.util.invert(clean)
+        with pathlib.Path(output_path).joinpath(name + ".tiff") as savename:
+            plt.imsave(savename, img_inv, cmap='gray')
+            # im = Image.fromarray(img_inv)
+            # im.save(output_path)
+        return clean
+    else:
+        return clean
+
+
+def check_bin(img):
+    img_bool = np.asarray(img, dtype=np.bool)
+    
+    # Gets the unique values in the image matrix. Since it is binary, there should only be 2.
+    unique, counts = np.unique(img_bool, return_counts=True)
+    print(unique)
+    print("Found this many counts:")
+    print(len(counts))
+    print(counts)
+    
+    # If the length of unique is not 2 then print that the image isn't a binary.
+    if len(unique) != 2:
+        print("Image is not binarized!")
+        hair_pixels = len(counts)
+        print("There is/are {} value(s) present, but there should be 2!\n".format(hair_pixels))
+    # If it is binarized, print out that is is and then get the amount of hair pixels to background pixels.
+    if counts[0] < counts[1]:
+        print("{} is not reversed".format(str(img)))
+        img = skimage.util.invert(img_bool)
+        print("Now {} is reversed =)".format(str(img)))
+        return img
+    
+    else:
+        print("{} is already reversed".format(str(img)))
+        img = img_bool
+        
+        print(type(img))
+        return img
+
+
+def skeletonize(clean_img, name, output_path, save_img=False):
+    # check if image is binary and properly inverted
+    clean_img = check_bin(clean_img)
+    
+    # skeletonize the hair
+    skeleton = skimage.morphology.thin(clean_img)
+    
+    if save_img:
+        img_inv = skimage.util.invert(skeleton)
+        with pathlib.Path(output_path).joinpath(name + ".tiff") as output_path:
+            im = Image.fromarray(img_inv)
+            im.save(output_path)
+        return skeleton, name
+    
+    else:
+        print("\n Done skeletonizing {}".format(name))
+        
+        return skeleton, name
+
+
+def prune(skeleton, name, pruned_dir, save_img=False):
+    """
+    Starting with a morphological skeleton, creates a corresponding binary image
+    with all branch-points pixels (1) and all other pixels (0).
+    """
+    
+    print("\nPruning {}...\n".format(name))
+    
+    # identify 3-way branch-points through convolving the image using appropriate
+    # structure elements for an 8-connected skeleton:
+    # http://homepages.inf.ed.ac.uk/rbf/HIPR2/thin.htm
+    hit1 = np.array([[0, 1, 0],
+                     [0, 1, 0],
+                     [1, 0, 1]], dtype=np.uint8)
+    hit2 = np.array([[1, 0, 0],
+                     [0, 1, 0],
+                     [1, 0, 1]], dtype=np.uint8)
+    hit3 = np.array([[1, 0, 0],
+                     [0, 1, 1],
+                     [0, 1, 0]], dtype=np.uint8)
+    hit_list = [hit1, hit2, hit3]
+    
+    # use some nifty NumPy slicing to add the three remaining rotations of each
+    # of the structure elements to the hit list
+    for ii in range(9):
+        hit_list.append(np.transpose(hit_list[-3])[::-1, ...])
+    
+    # add structure elements for branch-points four 4-way branchpoints, these
+    hit3 = np.array([[0, 1, 0],
+                     [1, 1, 1],
+                     [0, 1, 0]], dtype=np.uint8)
+    hit4 = np.array([[1, 0, 1],
+                     [0, 1, 0],
+                     [1, 0, 1]], dtype=np.uint8)
+    hit_list.append(hit3)
+    hit_list.append(hit4)
+    print("Creating hit and miss list")
+    
+    # create a zero np.array() of the same shape as the skeleton and use it to collect
+    # "hits" from the convolution operation
+    
+    skel_image = check_bin(skeleton)
+    print("Converting image to binary array")
+    
+    branch_points = np.zeros(skel_image.shape)
+    print("Creating empty array for branch points")
+    
+    for hit in hit_list:
+        target = hit.sum()
+        curr = ndimage.convolve(skel_image, hit, mode="constant")
+        branch_points = np.logical_or(branch_points, np.where(curr == target, 1, 0))
+    
+    print("Completed collection of branch points")
+    
+    # pixels may "hit" multiple structure elements, ensure the output is a binary
+    # image
+    branch_points_image = np.where(branch_points, 1, 0)
+    print("Ensuring binary")
+    
+    # use SciPy's ndimage module to label each contiguous foreground feature
+    # uniquely, this will locating and determining coordinates of each branch-point
+    labels, num_labels = ndimage.label(branch_points_image)
+    print("Labelling branches")
+    
+    # use SciPy's ndimage module to determine the coordinates/pixel corresponding
+    # to the center of mass of each branchpoint
+    branch_points = ndimage.center_of_mass(skel_image, labels=labels, index=range(1, num_labels + 1))
+    branch_points = np.array([value for value in branch_points if not np.isnan(value[0]) or not np.isnan(value[1])],
+                             dtype=int)
+    num_branch_points = len(branch_points)
+    
+    hit = np.array([[0, 0, 0],
+                    [0, 1, 0],
+                    [0, 0, 0]], dtype=np.uint8)
+    
+    dilated_branches = ndimage.convolve(branch_points_image, hit, mode='constant')
+    dilated_branches_image = np.where(dilated_branches, 1, 0)
+    print("Ensuring binary dilated branches")
+    pruned_image = np.subtract(skel_image, dilated_branches_image)
+    # pruned_image = np.subtract(skel_image, branch_points_image)
+    
+    pruned_image = remove_particles(pruned_image, pruned_dir, name, prune=True, save_img=save_img)
+    
+    return pruned_image
+
+
+def taubin_curv(coords, resolution):
+    """
+    Algebraic circle fit by Taubin
+      G. Taubin, "Estimation Of Planar Curves, Surfaces And Nonplanar
+                  Space Curves Defined By Implicit Equations, With
+                  Applications To Edge And Range Image Segmentation",
+      IEEE Trans. PAMI, Vol. 13, pages 1115-1138, (1991)
+
+    :param XYcoords:    list [[x_1, y_1], [x_2, y_2], ....]
+    :return:            a, b, r.  a and b are the center of the fitting circle, and r is the curv
+
+    Parameters
+    ----------
+    resolution
+
+    """
+    warnings.filterwarnings("ignore")  # suppress RuntimeWarnings from dividing by zero
+    XY = np.array(coords)
+    X = XY[:, 0] - np.mean(XY[:, 0])  # norming points by x avg
+    Y = XY[:, 1] - np.mean(XY[:, 1])  # norming points by y avg
+    centroid = [np.mean(XY[:, 0]), np.mean(XY[:, 1])]
+    Z = X * X + Y * Y
+    Zmean = np.mean(Z)
+    Z0 = ((Z - Zmean) / (2. * np.sqrt(Zmean)))  # changed from using old_div to Python 3 native division
+    ZXY = np.array([Z0, X, Y]).T
+    U, S, V = np.linalg.svd(ZXY, full_matrices=False)  #
+    V = V.transpose()
+    A = V[:, 2]
+    A[0] = (A[0]) / (2. * np.sqrt(Zmean))
+    A = np.concatenate([A, [(-1. * Zmean * A[0])]], axis=0)
+    # a, b = (-1 * A[1:3]) / A[0] / 2 + centroid
+    r = np.sqrt(A[1] * A[1] + A[2] * A[2] - 4 * A[0] * A[3]) / abs(A[0]) / 2
+
+    if np.isfinite(r):
+        curv = 1 / (r / resolution)
+        return curv
+    elif np.isfinite(r):
+        return 0
+
+
+def subset_gen(hair_pixel_length, window_size, hair_label):
+    subset_start = 0
+    if window_size > 10:
+        subset_end = int(window_size+subset_start)
+    else:
+        subset_end = int(hair_pixel_length)
+    while subset_end <= hair_pixel_length:
+        subset = hair_label[subset_start:subset_end]
+        yield subset
+        subset_start += 1
+        subset_end += 1
+
+
+def analyze_each_curv(hair, window_size, resolution):
     """
     Calculating curvature for hair divided into windows (as opposed to the entire hair at once)
 
@@ -913,56 +852,148 @@ def within_hair_curvature(hair, window_size, img_res):
     :param hair:
     :param min_hair:
     :param window_size:     the window size (in pixel)
-    :param img_res:      the resolution (number of pixels in a mm)
+    :param resolution:      the resolution (number of pixels in a mm)
     :return:
                             curv_mean,
                             curv_median,
                             curvature_mean,
                             curvature_median
     """
-
+    
     hair_label = np.array(hair.coords)
-
-    length_mm = float(hair.area / img_res)
-    print(length_mm)
-
-    hair_pixel_length = hair.area  # length of hair in pixels
-    print(hair_pixel_length)
-
+    
+    length_mm = float(len(hair.coords) / resolution)
+    print("\nCurv length is {} mm".format(length_mm))
+    
+    hair_pixel_length = len(hair.coords)  # length of hair in pixels
+    print("\nCurv length is {} pixels".format(hair_pixel_length))
+    
     subset_loop = (subset_gen(hair_pixel_length, window_size, hair_label=hair_label))  # generates subset loop
-
+    
     # Safe generator expression in case of errors
-    taubin_curv = [safe_curv(hair_coords, img_res) for hair_coords in subset_loop]
-
-    taubin_df = pd.Series(taubin_curv).astype('float')
+    curv = [taubin_curv(hair_coords, resolution) for hair_coords in subset_loop]
+    
+    taubin_df = pd.Series(curv).astype('float')
+    print("\nCurv dataframe is:")
     print(taubin_df)
-    print(taubin_df.min())
-    print(taubin_df.max())
-
-    taubin_df2 = remove_outlier(taubin_df, isdf=False, p1=0.01, p2=0.99)
-
+    print(type(taubin_df))
+    print("\nCurv df min is:{}".format(taubin_df.min()))
+    print("\nCurv df max is:{}".format(taubin_df.max()))
+    
+    print("\nTrimming outliers...")
+    taubin_df2 = taubin_df[taubin_df.between(taubin_df.quantile(.01), taubin_df.quantile(.99))]  # without outliers
+    
+    print("\nAfter trimming outliers...")
+    print("\nCurv dataframe is:")
     print(taubin_df2)
-    print(taubin_df2.min())
-    print(taubin_df2.max())
-
-    [curv_mean] = taubin_df2.mean().values
-    print(curv_mean)
-    [curv_median] = taubin_df2.median().values
-    print(curv_median)
-
-    # curv_mean = taubin_df.mean()
-    # print(curv_mean)
-    # curv_median = taubin_df.median()
-    # print(curv_median)
-
+    print(type(taubin_df2))
+    print("\nCurv df min is:{}".format(taubin_df2.min()))
+    print("\nCurv df max is:{}".format(taubin_df2.max()))
+    
+    curv_mean = taubin_df2.mean()
+    print("\nCurv mean is:{}".format(curv_mean))
+    
+    curv_median = taubin_df2.median()
+    print("\nCurv median is:{}".format(curv_median))
+    
     within_hair_df = [curv_mean, curv_median, length_mm]
+    print("\nThe curvature summary stats for this element are:")
     print(within_hair_df)
-
-    if within_hair_curvature is not None:
+    
+    if within_hair_df is not None or np.nan:
         return within_hair_df
     else:
         pass
 
+
+def analyze_all_curv(img, name, analysis_dir, resolution, window_size_mm=1):
+    if type(img) != 'numpy.ndarray':
+        print(type)
+        img = np.array(img)
+    else:
+        print(type(img))
+    
+    print("Analyzing {}".format(name))
+    
+    img = check_bin(img)
+    
+    label_image, num_elements = skimage.measure.label(img.astype(int), connectivity=2, return_num=True)
+    print("\n There are {} elements in the image".format(num_elements))
+    
+    props = skimage.measure.regionprops(label_image)
+    
+    window_size = int(round(window_size_mm * resolution))  # must be an integer
+    print("\nWindow size for analysis is {} pixels".format(window_size))
+    print("Analysis of curvature for each element begins...")
+    tempdf = [analyze_each_curv(hair, window_size, resolution) for hair in props]
+    
+    print("\nData for {} is:".format(name))
+    print(tempdf)
+    
+    within_curvdf = pd.DataFrame(tempdf, columns=['curv_mean', 'curv_median', 'length'])
+    
+    print("\nDataframe for {} is:".format(name))
+    print(within_curvdf)
+    print(within_curvdf.dtypes)
+    
+    # remove outliers
+    q1 = within_curvdf.quantile(0.1)
+    q3 = within_curvdf.quantile(0.9)
+    iqr = q3 - q1
+    
+    within_curv_outliers = within_curvdf[
+        ~((within_curvdf < (q1 - 1.5 * iqr)) | (within_curvdf > (q3 + 1.5 * iqr))).any(axis=1)]
+    
+    print(within_curv_outliers)
+    
+    within_curvdf2 = pd.DataFrame(within_curv_outliers, columns=['curv_mean', 'curv_median', 'length']).dropna()
+    
+    print("\nDataFrame with NaN values dropped:")
+    print(within_curvdf2)
+    
+    with pathlib.Path(analysis_dir).joinpath(name + ".csv") as save_path:
+        within_curvdf2.to_csv(save_path)
+    
+    curv_mean_im_mean = within_curvdf2['curv_mean'].mean()
+    curv_mean_im_median = within_curvdf2['curv_mean'].median()
+    curv_median_im_mean = within_curvdf2['curv_median'].mean()
+    curv_median_im_median = within_curvdf2['curv_median'].median()
+    length_mean = within_curvdf2['length'].mean()
+    length_median = within_curvdf2['length'].median()
+    hair_count = len(within_curvdf2.index)
+    
+    sorted_df = pd.DataFrame(
+        [name, curv_mean_im_mean, curv_mean_im_median, curv_median_im_mean, curv_median_im_median, length_mean,
+         length_median, hair_count]).T
+    
+    print("\nDataframe for {} is:".format(name))
+    print(sorted_df)
+    print("\n")
+    
+    return sorted_df
+
+def curvature_seq(input_file, filtered_dir, binary_dir, pruned_dir, clean_dir, skeleton_dir, analysis_dir,
+                  resolution, window_size_mm, save_img):
+
+    # filter
+    filter_img, im_name = filter_curv(input_file, filtered_dir)
+
+    # binarize
+    binary_img = binarize_curv(filter_img, im_name, binary_dir, save_img)
+
+    # remove particles
+    clean_im = remove_particles(binary_img, clean_dir, im_name, minpixel=5, prune=False, save_img=save_img)
+
+    # skeletonize
+    skeleton_im = skeletonize(clean_im, im_name, skeleton_dir, save_img)
+
+    # prune
+    pruned_im = prune(skeleton_im, im_name, pruned_dir, save_img)
+
+    # analyze
+    im_df = analyze_all_curv(pruned_im, im_name, analysis_dir, resolution, window_size_mm)
+
+    return im_df
 
 # Main modules (organized in order of operations: consolidate_files, raw2gray, curvature, section)
 
@@ -1049,9 +1080,7 @@ def raw2gray(
     return True
 
 
-def curvature(
-    tiff_directory, output_location, file_type, jobs,
-    window_size_mm, min_hair, save_img):
+def curvature(tiff_directory, output_location, file_type, jobs, resolution, window_size_mm, save_img):
     """
     """
     total_start = timer()
@@ -1062,42 +1091,20 @@ def curvature(
 
     # Change to the folder for reading images
     os.chdir(str(tiff_directory))
-    output_path = main_output_path
     glob_file_type = "*" + file_type
     file_list = []
     for filename in pathlib.Path(tiff_directory).rglob(glob_file_type):
         file_list.append(filename)
     list.sort(file_list)  # sort the files
     print(len(file_list))  # printed the sorted files
+    
+    im_df = [curvature_seq(input_file, filtered_dir, binary_dir, pruned_dir, clean_dir, skeleton_dir, analysis_dir, resolution, window_size_mm, save_img) for input_file in file_list]
 
-    for f in file_list:
-        # TODO: finish this for loop
-
-        # filter
-        filter_img, im_name = filter(f, filtered_dir)
-
-        # binarize
-        binary_img = binarize_curv(filter_img, im_name, binary_dir, save_img=True)
-        
-        # remove particles
-        clean_im = remove_particles(binary_img, clean_dir, im_name, minpixel=5, prune=False, save_img=True)
-        
-        # skeletonize
-        skeleton_im = skeletonize(clean_im, im_name, skeleton_dir, save_img=True)
-        
-        # prune
-        pruned_im = prune(skeleton_im, im_name, pruned_dir, save_img=True)
-
-        # analyze
-        
-
-    curv_df = (Parallel(n_jobs=jobs, verbose=100)(
-        delayed(whole_shebang)(f, min_hair, window_size_mm, save_img, filtered_dir, binary_dir, pruned_dir, clean_dir,
-                           skeleton_dir, analysis_dir) for f in file_list))
-
-    hair_summary_df = pd.concat(curv_df)
-
-    hair_summary_df.columns = [
+    # This is the old parallel jobs function
+    # im_df = (Parallel(n_jobs=jobs, verbose=100)(delayed(curvature_seq)(input_file, filtered_dir, binary_dir, pruned_dir, clean_dir, skeleton_dir, analysis_dir, resolution, window_size_mm, save_img) for input_file in file_list))
+    
+    summary_df = pd.concat(im_df)
+    summary_df.columns = [
         "ID", "curv_mean_mean", "curv_mean_median", "curv_median_mean", "curv_median_median",
         "length_mean", "length_median", "hair_count"]
 
@@ -1107,21 +1114,21 @@ def curvature(
 
     cols2 = ["length_mean", "length_median"]
 
-    hair_summary_df[cols1] = hair_summary_df[cols1].astype(float).round(5)
+    summary_df[cols1] = summary_df[cols1].astype(float).round(5)
 
-    hair_summary_df[cols2] = hair_summary_df[cols2].astype(float).round(2)
+    summary_df[cols2] = summary_df[cols2].astype(float).round(2)
 
-    hair_summary_df.set_index('ID', inplace=True)
+    summary_df.set_index('ID', inplace=True)
 
     print("You've got data...")
-    print(hair_summary_df)
+    print(summary_df)
 
     jetzt = datetime.now()
     timestamp = jetzt.strftime("_%b%d_%H%M")
 
     with pathlib.Path(main_output_path).joinpath("curvature_summary_data{}.csv".format(timestamp)) as output_path:
         # noinspection PyInterpreter
-        hair_summary_df.to_csv(output_path)
+        summary_df.to_csv(output_path)
         print(output_path)
 
     # End the timer and then print out the how long it took
@@ -1132,34 +1139,6 @@ def curvature(
     print("Entire analysis took: {}.".format(convert(total_time)))
 
     return True
-
-
-def filter(input_file, output_path):
-
-    # create pathlib object for input Image
-    input_path = pathlib.Path(input_file)
-    print(input_path)
-
-    # extract image name
-    im_name = input_path.stem
-
-    # read in Image
-    gray_img = cv2.imread(input_file, 0)
-    type(gray_img)
-    print("Image size is:", gray_img.shape)
-
-    # use frangi ridge filter to find hairs, the output will be inverted
-    filter_img = skimage.filters.frangi(gray_img)
-    type(filter_img)
-    print("Image size is:", filter_img.shape)
-
-    # inverting and saving the filtered image
-    img_inv = skimage.util.invert(filter_img)
-    with pathlib.Path(output_path).joinpath(im_name + ".tiff") as save_path:
-        plt.imsave(save_path, img_inv, cmap="gray")
-
-    return filter_img, im_name
-
 
 
 def section(
@@ -1244,7 +1223,7 @@ def main():
 
     # Run fibermorph
     if args.consolidate is True:
-        consolidate(
+        consolidate_files(
             args.input_directory, output_dir, args.file_extension, args.jobs)
     elif args.raw2gray is True:
         raw2gray(
