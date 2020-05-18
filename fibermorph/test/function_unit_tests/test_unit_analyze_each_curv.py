@@ -2,7 +2,6 @@ import numpy as np
 import pandas as pd
 
 from fibermorph.test.function_unit_tests.test_unit_subset_gen import subset_gen
-from fibermorph.test.function_unit_tests.test_unit_trim_outliers import trim_outliers
 from fibermorph.test.function_unit_tests.test_unit_taubin_curv import taubin_curv
 
 

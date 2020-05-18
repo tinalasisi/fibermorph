@@ -37,5 +37,5 @@ def taubin_curv(coords, resolution):
     if np.isfinite(r):
         curv = 1 / (r / resolution)
         return curv
-    elif np.isfinite(r) or np.isnan(r):
+    elif np.isfinite(r):
         return 0

@@ -9,10 +9,6 @@ from skimage import io
 from fibermorph.test.function_unit_tests.test_unit_analyze_each_curv import analyze_each_curv
 from fibermorph.test.function_unit_tests.test_unit_check_bin import check_bin
 
-import logging
-logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
-logging.debug('This is a log message.')
-
 # analyzes curvature for entire image (analyze_each does each hair in image)
 
 def analyze_all_curv(img, name, analysis_dir, resolution, window_size_mm=1):
@@ -46,9 +42,6 @@ def analyze_all_curv(img, name, analysis_dir, resolution, window_size_mm=1):
     print(within_curvdf)
     print(within_curvdf.dtypes)
 
-    with pathlib.Path(analysis_dir).joinpath(name + ".csv") as save_path:
-        within_curvdf.to_csv(save_path)
-
     # remove outliers
     q1 = within_curvdf.quantile(0.1)
     q3 = within_curvdf.quantile(0.9)
@@ -62,26 +55,17 @@ def analyze_all_curv(img, name, analysis_dir, resolution, window_size_mm=1):
     
     print("\nDataFrame with NaN values dropped:")
     print(within_curvdf2)
+    
+    with pathlib.Path(analysis_dir).joinpath(name + ".csv") as save_path:
+        within_curvdf2.to_csv(save_path)
 
     curv_mean_im_mean = within_curvdf2['curv_mean'].mean()
-    # print(curv_mean_im_mean)
-
     curv_mean_im_median = within_curvdf2['curv_mean'].median()
-    # print(curv_mean_im_median)
-
     curv_median_im_mean = within_curvdf2['curv_median'].mean()
-    # print(curv_median_im_mean)
-
     curv_median_im_median = within_curvdf2['curv_median'].median()
-    # print(curv_median_im_median)
-
     length_mean = within_curvdf2['length'].mean()
-    # print(length_mean)
     length_median = within_curvdf2['length'].median()
-    # print(length_median)
-
     hair_count = len(within_curvdf2.index)
-    # print(hair_count)
 
     sorted_df = pd.DataFrame(
         [name, curv_mean_im_mean, curv_mean_im_median, curv_median_im_mean, curv_median_im_median, length_mean,
