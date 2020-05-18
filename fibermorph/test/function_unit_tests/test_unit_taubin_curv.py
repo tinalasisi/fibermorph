@@ -12,6 +12,10 @@ def taubin_curv(coords, resolution):
     :param XYcoords:    list [[x_1, y_1], [x_2, y_2], ....]
     :return:            a, b, r.  a and b are the center of the fitting circle, and r is the curv
 
+    Parameters
+    ----------
+    resolution
+
     """
     warnings.filterwarnings("ignore")  # suppress RuntimeWarnings from dividing by zero
     XY = np.array(coords)

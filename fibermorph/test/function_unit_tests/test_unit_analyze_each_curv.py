@@ -1,8 +1,4 @@
-import pathlib
-import skimage
-
 import numpy as np
-from skimage import measure
 import pandas as pd
 
 from fibermorph.test.function_unit_tests.test_unit_subset_gen import subset_gen
@@ -39,9 +35,9 @@ def analyze_each_curv(hair, window_size, img_res):
     subset_loop = (subset_gen(hair_pixel_length, window_size, hair_label=hair_label))  # generates subset loop
 
     # Safe generator expression in case of errors
-    taubin_curv = [taubin_curv(hair_coords, img_res) for hair_coords in subset_loop]
+    curv = [taubin_curv(hair_coords, img_res) for hair_coords in subset_loop]
 
-    taubin_df = pd.Series(taubin_curv).astype('float')
+    taubin_df = pd.Series(curv).astype('float')
     print(taubin_df)
     print(taubin_df.min())
     print(taubin_df.max())
@@ -57,15 +53,10 @@ def analyze_each_curv(hair, window_size, img_res):
     [curv_median] = taubin_df2.median().values
     print(curv_median)
 
-    # curv_mean = taubin_df.mean()
-    # print(curv_mean)
-    # curv_median = taubin_df.median()
-    # print(curv_median)
-
     within_hair_df = [curv_mean, curv_median, length_mm]
     print(within_hair_df)
 
-    if within_hair_curvature is not None:
+    if within_hair_df is not None:
         return within_hair_df
     else:
         pass
