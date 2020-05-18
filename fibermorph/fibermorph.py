@@ -20,6 +20,7 @@ from fibermorph.test.function_unit_tests.test_unit_binarize_curv import binarize
 from fibermorph.test.function_unit_tests.test_unit_filter import filter
 from fibermorph.test.function_unit_tests.test_unit_remove_particles import remove_particles
 from fibermorph.test.function_unit_tests.test_unit_skeletonize import skeletonize
+from fibermorph.test.function_unit_tests.test_unit_prune import prune
 # TODO: move the functions to separate files and import them into the test units, then re-write this
 
 from skimage import filters
@@ -1085,9 +1086,10 @@ def curvature(
         skeleton_im = skeletonize(clean_im, im_name, skeleton_dir, save_img=True)
         
         # prune
-        pruned_im =
-    # remove particles
-    # analyze
+        pruned_im = prune(skeleton_im, im_name, pruned_dir, save_img=True)
+
+        # analyze
+        
 
     curv_df = (Parallel(n_jobs=jobs, verbose=100)(
         delayed(whole_shebang)(f, min_hair, window_size_mm, save_img, filtered_dir, binary_dir, pruned_dir, clean_dir,
