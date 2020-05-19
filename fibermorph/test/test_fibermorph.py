@@ -54,19 +54,9 @@ def test_copy_if_exist():
     assert fibermorph.copy_if_exist("null.txt", temp_dir) is False
 
 
-def test_filter(tmp_path):
-    # works in unit test but can't figure out how to use pytest to test it
-    input_file = "../../testdata/curv_im.tiff"
-    type(input_file)
-    output_path = "../../testdata"
-    type(output_path)
-    filter_img, im_name = fibermorph.filter_curv(input_file, output_path)
-    assert im_name == "curv_im"
-
-from fibermorph import fibermorph
-
-tiff_directory = "/Users/tinalasisi/Box/01_TPL5158/Box_Dissertation/HairPhenotyping_Methods/data/fibermorph_input/curvature/ValidationSet_TIFF"
-output_location = "/Users/tinalasisi/Desktop"
+# Testing fibermorph_curvature
+tiff_directory = "/Users/tinalasisi/Desktop/test_input"
+output_location = "/Users/tinalasisi/Desktop/test_output"
 file_type = ".tiff"
 jobs = 1
 resolution = 132

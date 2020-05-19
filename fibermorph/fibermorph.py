@@ -535,49 +535,16 @@ def tempdf_gen(region, filename, resolution):
     return tempdf
 
 
-@timing
-def whole_shebang(f, min_hair, window_size_mm, save_img, filtered_dir, binary_dir, pruned_dir, clean_dir, skeleton_dir,
-                  analysis_dir):
-    # blockPrint()  # silence output
-    minpixel = np.rint(min_hair * resolution)
-    try:
-        # filter_path, name = ridge_filter(f, filtered_dir)
-        #
-        # binary_img, name = binary_image(filter_path, binary_dir, resolution, median_kernel_size=5, save_img=save_img)
-
-        # clean_img, name = remove_particles(binary_img, minpixel, clean_dir, name, prune=False, save_img=save_img)
-
-        # skeleton, name = skeletonize_hair(clean_img, name, skeleton_dir, save_img=save_img)
-
-        skeleton_bin = np.where(skeleton, 1, 0)
-
-        branch_points, num_branches, pruned_img = find_branch_points(skeleton_bin, name)
-
-        pruned_bin = np.where(pruned_img, 1, 0)
-
-        clean_pruned_img, name = remove_particles(pruned_bin, minpixel, pruned_dir, name, prune=True, save_img=save_img)
-
-        analysis_output = analyze_hairs(clean_pruned_img, name, analysis_dir, window_size_mm, minpixel)
-
-        # enablePrint()  # enable print again
-
-        return analysis_output
-
-    except:
-        pass
-
-
 def filter_curv(input_file, output_path):
 
     # create pathlib object for input Image
     input_path = pathlib.Path(input_file)
-    print(input_path)
 
     # extract image name
     im_name = input_path.stem
 
     # read in Image
-    gray_img = skimage.io.imread(input_path)
+    gray_img = cv2.imread(str(input_path), 0)
     type(gray_img)
     print("Image size is:", gray_img.shape)
 
@@ -595,24 +562,16 @@ def filter_curv(input_file, output_path):
 
 
 def binarize_curv(filter_img, im_name, binary_dir, save_img=False):
-    # create structuring elements of 5px radius disk and 3px
-    selem = skimage.morphology.disk(5)
-    selem2 = skimage.morphology.disk(3)
+
+    selem = skimage.morphology.disk(3)
     
-    # run a simple median filter to smooth the image
-    med_im = skimage.filters.rank.median(skimage.util.img_as_ubyte(filter_img), selem)
-    
-    # find the Otsu binary threshold
-    thresh = skimage.filters.threshold_otsu(med_im)
-    
-    # create a binary using this threshold
-    thresh_im = med_im <= thresh
+    thresh_im = filter_img > threshold_minimum(filter_img)
     
     # clear the border of the image (buffer is the px width to be considered as border)
     cleared_im = skimage.segmentation.clear_border(thresh_im, buffer_size=10)
     
     # dilate the hair fibers
-    binary_im = scipy.ndimage.binary_dilation(cleared_im, structure=selem2, iterations=2)
+    binary_im = scipy.ndimage.binary_dilation(cleared_im, structure=selem, iterations=2)
     
     if save_img:
         # invert image
@@ -632,8 +591,7 @@ def remove_particles(input_file, output_path, name, minpixel=5, prune=False, sav
     img = check_bin(img_bool)
     
     if not prune:
-        minimum = minpixel * 10  # assuming the hairs are no more than 10 pixels thick
-        # warnings.filterwarnings("ignore")  # suppress Boolean image UserWarning
+        minimum = minpixel
         clean = skimage.morphology.remove_small_objects(img, connectivity=2, min_size=minimum)
     else:
         # clean = img_bool
@@ -695,12 +653,12 @@ def skeletonize(clean_img, name, output_path, save_img=False):
         with pathlib.Path(output_path).joinpath(name + ".tiff") as output_path:
             im = Image.fromarray(img_inv)
             im.save(output_path)
-        return skeleton, name
+        return skeleton
     
     else:
         print("\n Done skeletonizing {}".format(name))
         
-        return skeleton, name
+        return skeleton
 
 
 def prune(skeleton, name, pruned_dir, save_img=False):
@@ -997,8 +955,7 @@ def curvature_seq(input_file, filtered_dir, binary_dir, pruned_dir, clean_dir, s
 
 # Main modules (organized in order of operations: consolidate_files, raw2gray, curvature, section)
 
-def consolidate_files(
-    input_directory, output_location, file_type, jobs):
+def consolidate_files(input_directory, output_location, file_type, jobs):
     """
     """
     total_start = timer()
@@ -1026,8 +983,7 @@ def consolidate_files(
     return True
 
 
-def raw2gray(
-    input_directory, output_location, file_type, jobs):
+def raw2gray(input_directory, output_location, file_type, jobs):
     """
     """
 
@@ -1098,10 +1054,11 @@ def curvature(tiff_directory, output_location, file_type, jobs, resolution, wind
     list.sort(file_list)  # sort the files
     print(len(file_list))  # printed the sorted files
     
-    im_df = [curvature_seq(input_file, filtered_dir, binary_dir, pruned_dir, clean_dir, skeleton_dir, analysis_dir, resolution, window_size_mm, save_img) for input_file in file_list]
+    # List expression for curv df per image
+    # im_df = [curvature_seq(input_file, filtered_dir, binary_dir, pruned_dir, clean_dir, skeleton_dir, analysis_dir, resolution, window_size_mm, save_img) for input_file in file_list]
 
     # This is the old parallel jobs function
-    # im_df = (Parallel(n_jobs=jobs, verbose=100)(delayed(curvature_seq)(input_file, filtered_dir, binary_dir, pruned_dir, clean_dir, skeleton_dir, analysis_dir, resolution, window_size_mm, save_img) for input_file in file_list))
+    im_df = (Parallel(n_jobs=jobs, verbose=100)(delayed(curvature_seq)(input_file, filtered_dir, binary_dir, pruned_dir, clean_dir, skeleton_dir, analysis_dir, resolution, window_size_mm, save_img) for input_file in file_list))
     
     summary_df = pd.concat(im_df)
     summary_df.columns = [
@@ -1127,7 +1084,6 @@ def curvature(tiff_directory, output_location, file_type, jobs, resolution, wind
     timestamp = jetzt.strftime("_%b%d_%H%M")
 
     with pathlib.Path(main_output_path).joinpath("curvature_summary_data{}.csv".format(timestamp)) as output_path:
-        # noinspection PyInterpreter
         summary_df.to_csv(output_path)
         print(output_path)
 
@@ -1141,8 +1097,7 @@ def curvature(tiff_directory, output_location, file_type, jobs, resolution, wind
     return True
 
 
-def section(
-    tiff_directory, main_output_path, file_type, jobs, resolution,
+def section(tiff_directory, main_output_path, file_type, jobs, resolution,
     min_size, pad, crop, save_crop):
     """
     """
