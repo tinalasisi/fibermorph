@@ -404,6 +404,17 @@ def make_subdirectory(directory, append_name=""):
                 output_path))
     return output_path
 
+def list_images(directory, file_type):
+    # Change to the folder for reading images
+    os.chdir(str(directory))
+    glob_file_type = "*" + file_type
+    file_list = []
+    for filename in pathlib.Path(directory).rglob(glob_file_type):
+        file_list.append(filename)
+    list.sort(file_list)  # sort the files
+    print(len(file_list))  # printed the sorted files
+    
+    return file_list
 
 def pretty_time_delta(seconds):
 
@@ -863,6 +874,12 @@ def analyze_each_curv(hair, window_size, resolution):
     else:
         pass
 
+def imread(input_file):
+    input_path = pathlib.Path(str(input_file))
+    img = skimage.io.imread(str(input_path), as_gray=True)
+    
+    im_name = input_path.stem
+    return img, im_name
 
 def analyze_all_curv(img, name, analysis_dir, resolution, window_size_mm=1):
     if type(img) != 'numpy.ndarray':
@@ -1045,14 +1062,7 @@ def curvature(tiff_directory, output_location, file_type, jobs, resolution, wind
     main_output_path, filtered_dir, binary_dir, pruned_dir, clean_dir, skeleton_dir, analysis_dir = make_all_dirs(
     output_location)
 
-    # Change to the folder for reading images
-    os.chdir(str(tiff_directory))
-    glob_file_type = "*" + file_type
-    file_list = []
-    for filename in pathlib.Path(tiff_directory).rglob(glob_file_type):
-        file_list.append(filename)
-    list.sort(file_list)  # sort the files
-    print(len(file_list))  # printed the sorted files
+    file_list = list_images(tiff_directory, file_type)
     
     # List expression for curv df per image
     # im_df = [curvature_seq(input_file, filtered_dir, binary_dir, pruned_dir, clean_dir, skeleton_dir, analysis_dir, resolution, window_size_mm, save_img) for input_file in file_list]
@@ -1098,26 +1108,15 @@ def curvature(tiff_directory, output_location, file_type, jobs, resolution, wind
 
 
 def section(tiff_directory, main_output_path, file_type, jobs, resolution,
-    min_size, pad, crop, save_crop):
+    min_size, pad, crop=True, save_crop=True):
     """
     """
     total_start = timer()
 
-    # %% Crop all the tiffs
-    II_CROPPING = 0
-
     minpixel = int(min_size * resolution)
 
     # Change to the folder for reading images
-
-    os.chdir(str(tiff_directory))
-    output_path = main_output_path
-    file_type = "*" + file_type
-    cropped_list = []
-    for filename in pathlib.Path(tiff_directory).rglob(file_type):
-        cropped_list.append(filename)
-    list.sort(cropped_list)  # sort the files
-    print(len(cropped_list))  # printed the sorted files
+    cropped_list = list_images(tiff_directory, file_type)
 
     # Shows what is in the cropped_list. The backslash n prints a new line
     print("There are ", len(cropped_list), "files in the cropped_list:\n")
@@ -1126,11 +1125,6 @@ def section(tiff_directory, main_output_path, file_type, jobs, resolution,
     # Creating subdirectories for cropped images
 
     cropped_binary_dir = make_subdirectory(main_output_path, "cropped_binary")
-
-    if crop == "True":
-        crop = True
-    else:
-        crop = False
 
     if save_crop == "True":
         save_crop = True
@@ -1145,11 +1139,11 @@ def section(tiff_directory, main_output_path, file_type, jobs, resolution,
         cropped_dir = None
         save_crop = False
 
-    # generator expression for debugging
-
     # section_df = (crop_image(f, cropped_dir, cropped_binary_dir, pad, minpixel=minpixel, resolution=resolution) for f in cropped_list)
 
     section_df = (Parallel(n_jobs=jobs, verbose=100)(delayed(crop_image)(f, cropped_dir, cropped_binary_dir, pad, minpixel, resolution, crop, save_image=save_crop) for f in cropped_list))
+    
+    
 
     section_df = pd.concat(section_df)
     section_df.columns = ['ID', 'area', 'max', 'min', 'eccentricity', 'perimeter']

@@ -55,7 +55,7 @@ def test_copy_if_exist():
 
 
 # Testing fibermorph_curvature
-tiff_directory = "/Users/tinalasisi/Desktop/test_input"
+tiff_directory = "/Users/tinalasisi/Desktop/2020-05-19_fibermorphTesting/test_input/curv"
 output_location = "/Users/tinalasisi/Desktop/test_output"
 file_type = ".tiff"
 jobs = 1
@@ -64,3 +64,6 @@ window_size_mm = 0.5
 save_img = True
 
 fibermorph.curvature(tiff_directory, output_location, file_type, jobs, resolution, window_size_mm, save_img)
+
+# Testing fibermorph section
+
