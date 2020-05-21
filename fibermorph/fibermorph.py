@@ -134,8 +134,6 @@ def timing(f):
 
 # Rest of the functions--organized alphabetically
 
-@timing
-
 def blockPrint():
     sys.stdout = open(os.devnull, 'w')
 
@@ -166,185 +164,8 @@ def convert(seconds):
     return "%dh: %02dm: %02ds" % (hour, min, sec)
 
 
-def crop_image(input_file, cropped_dir, cropped_binary_dir, pad, minpixel, resolution, crop, save_image):
-    """
-    :param crop:
-    :param save_image:          Default is to not save cropped grayscale in order to speed up computation of results
-    :param input_file:          The image file to be read in.
-    :param output_path:         The output path where the subfolders resulting from this function are to be made
-    :param pad:                 The number of pixels you want to pad the segmented image of the hair
-    :param minpixel:            The minimum number of pixels representing a hair
-    :return:                    returns cropped grayscale image and directory
-    """
-
-    filename = str(os.path.basename(input_file))
-
-    if not crop:
-
-        gray_img = cv2.imread(str(input_file), 0)  # read in image as numpy array, this will be in color
-        type(gray_img)  # using the above function it returns <class 'numpy.ndarray'>
-        print("Image size is:", gray_img.shape)  # returns (3904, 5200)
-
-        seg_input_file = np.array(gray_img)
-        seg_cropped_binary_dir = cropped_binary_dir
-        seg_pad = pad
-        seg_resolution = resolution
-
-        tempdf_section = segment_section2(filename, seg_input_file, seg_cropped_binary_dir, seg_pad, seg_resolution)
-
-        print("\n Created temporary dataframe for {}: \n {}".format(filename, tempdf_section))
-
-        return tempdf_section
-    else:
-
-        try:
-            cropped_dir = cropped_dir
-            pad = pad
-
-            gray_img = cv2.imread(str(input_file), 0)  # read in image as numpy array, this will be in color
-            type(gray_img)  # using the above function it returns <class 'numpy.ndarray'>
-            print("Image size is:", gray_img.shape)  # returns (3904, 5200)
-
-            smooth = skimage.filters.rank.median(gray_img, selem=disk(int(resolution * 8)))
-
-            thresh = threshold_otsu(smooth)
-
-            # creates binary image by applying the above threshold and replacing all
-            init_ls = (np.where(gray_img > thresh, 0, 1)).astype('uint8')
-
-            chan = skimage.segmentation.morphological_chan_vese(smooth, 10, init_level_set=init_ls, smoothing=1, lambda1=1, lambda2=0.6)
-
-            bw_uint8 = (np.array(chan)).astype('uint8')  # turning image into unsigned integer (0-255, grayscale)
-
-            cleared = clear_border(bw_uint8)
-            # remove artifacts connected to image border, needs to be inverted for this to work!
-
-            radius = minpixel/2
-
-            min_area = np.pi*(radius**2)
-
-            # # remove small objects before labeling
-            # skimage.morphology.remove_small_objects(cleared, min_area, in_place=True)
-
-            # label image regions
-            label_image, num_elements = label(cleared, connectivity=2, return_num=True)
-
-            image_center = list(np.divide(label_image.shape, 2))  # returns array of two floats
-
-            print("generating bounding box for image {}'\n\n".format(filename))
-
-            minpixel = minpixel
-
-            bbox_pad = None
-
-            try:
-                center_hair, bbox = find_hair(label_image, image_center, minpixel)
-
-                minr = bbox[0] - pad
-                minc = bbox[1] - pad
-                maxr = bbox[2] + pad
-                maxc = bbox[3] + pad
-
-                bbox_pad = [minc, minr, maxc, maxr]
-                print("\nFound bbox for {} \n It is: {}".format(filename, str(bbox_pad)))
-
-            except:
-                minr = int(image_center[0] / 2)
-                minc = int(image_center[1] / 2)
-                maxr = int(image_center[0] * 1.5)
-                maxc = int(image_center[1] * 1.5)
-
-                bbox_pad = [minc, minr, maxc, maxr]
-                print("Error: \n Found no bbox for {} \n Used center 25% of image instead: {}".format(filename, str(bbox_pad)))
-
-            finally:
-
-                gray_crop = Image.fromarray(gray_img)
-                cropped_grayscale = gray_crop.crop(bbox_pad)
-
-                output_name_gray = pathlib.Path(cropped_dir).joinpath(filename)
-
-                if save_image == True:
-
-                    cropped_grayscale.save(output_name_gray)
-                    print("\nSaved cropped grayscale as {}".format(output_name_gray))
-                else:
-                    pass
-
-                seg_input_file = np.array(cropped_grayscale)
-                seg_cropped_binary_dir = cropped_binary_dir
-                seg_pad = pad
-                seg_resolution = resolution
-
-                tempdf_section = segment_section2(filename, seg_input_file, seg_cropped_binary_dir, seg_pad, seg_resolution)
-
-                print("\n Created temporary dataframe for {}: \n {}".format(filename, tempdf_section))
-
-            return tempdf_section
-        except:
-            pass
-
-
 def enablePrint():
     sys.stdout = sys.__stdout__
-
-
-
-def find_hair(label_image, image_center, minpixel):
-
-    props = regionprops(label_image)
-
-    center_hair = None
-
-    try:
-        hairs = [[region.label, region.centroid, dist.euclidean(image_center, region.centroid)] for region in props if region.minor_axis_length > minpixel]
-
-        lst = pd.DataFrame(hairs, columns=['label', 'centroid', 'distance'])
-        print("\n")
-        print("These are the elements with minor axis length larger than minpixel:")
-        print(lst)
-
-        center_hair_idx = lst['distance'].idxmin()
-        print("\n\n Row containing smallest distance:")
-        print(center_hair_idx)
-        print(type(center_hair_idx))
-
-        center_hair = lst.at[center_hair_idx, 'label'].item()
-    except TypeError:
-        try:
-            hairs = [[region.label, region.centroid, dist.euclidean(image_center, region.centroid)] for region in props if
-                     region.equivalent_diameter > minpixel]
-
-            lst = pd.DataFrame(hairs, columns=['label', 'centroid', 'distance'])
-            print("\n")
-            print("These are the elements with minor axis length larger than minpixel:")
-            print(lst)
-
-            center_hair_idx = lst['distance'].idxmin()
-            print("\n\n Row containing smallest distance:")
-            print(center_hair_idx)
-            print(type(center_hair_idx))
-            center_hair = lst.at[center_hair_idx, 'label'].item()
-        except:
-            print("\n\nCan't find hair in this image :( \n")
-            pass
-
-    print("\n\nLabel for shortest distance:")
-    print(center_hair)
-    print(type(center_hair))
-    if center_hair < 1:
-        center_hair = 0
-    elif center_hair >= 1:
-        center_hair = int(center_hair-1)
-    else:
-        center_hair = None
-        print("\nThere's been a problem - no hair found!\n")
-
-    print("\nThis is the label for the hair of interest: {}\n".format(center_hair))
-
-    bbox_final = list(props[center_hair].bbox)
-
-    return center_hair, bbox_final
 
 
 def make_all_dirs(main_output_path):
@@ -467,83 +288,58 @@ def raw_to_gray(imgfile, output_directory):
     return output_name
 
 
+def analyze_section(input_file, output_path, minsize=20, maxsize=150, resolution=1.0):
+    
+    # segment the image first
+    img, im_name = imread(input_file)
+    
+    seg_im = segment_section(img)
+    
+    # label the image
+    label_im, num_elem = skimage.measure.label(seg_im, connectivity=2, return_num=True)
+    
+    # find center of image
+    im_center = list(np.divide(label_im.shape, 2))  # returns array of two floats
+    
+    minpixel = np.pi * (((minsize / 2) * resolution) ** 2)
+    maxpixel = np.pi * (((maxsize / 2) * resolution) ** 2)
+    
+    props = skimage.measure.regionprops(label_image=label_im, intensity_image=img)
+    
+    props_df = [[region.label, region.centroid, scipy.spatial.distance.euclidean(im_center, region.centroid)] for region
+                in props if region.area >= minpixel and region.area <= maxpixel]
+    
+    props_df = pd.DataFrame(props_df, columns=['label', 'centroid', 'distance'])
+    
+    section_id = props_df['distance'].idxmin()
+    
+    section = props[section_id]
+    
+    section_data = [section.filled_area, section.minor_axis_length, section.major_axis_length, section.eccentricity]
+    
+    section_data = pd.DataFrame([x / resolution for x in section_data]).T
+    section_data.columns = ['area', 'min', 'max', 'eccentricity']
+    section_data['ID'] = im_name
+    
+    cropped_bin = props[section_id].filled_image
 
-def segment_section2(filename, input_file, cropped_binary_dir, pad, resolution):
-    '''
-
-    :param filename:
-    :param input_file:
-    :param cropped_binary_dir:
-    :param pad:
-    :param resolution:
-    :return:
-    '''
-
-    # filename = str(input_file)
-    filename = str(os.path.basename(filename))
-
-    gray_img = input_file  # ensure gray image
-
-    smooth = skimage.filters.rank.median(gray_img, selem=disk(int(resolution*8)))
-
-    # thresh = threshold_otsu(smooth)
-    thresh = threshold_minimum(smooth)
-
-    # creates binary image by applying the above threshold and replacing all
-    # init_ls = (np.where(gray_img > thresh, 0, 1)).astype('uint8')
-    init_ls = (np.where(gray_img > thresh, 0, 1)).astype('uint8')
-
-    chan = skimage.segmentation.morphological_chan_vese(smooth, 30, init_level_set=init_ls, smoothing=4, lambda1=1, lambda2=1)
-
-    bw_uint8 = (np.array(chan)).astype('uint8')  # turning image into unsigned integer (0-255, grayscale)
-
-    label_image, num_elements = label(bw_uint8, connectivity=2, return_num=True)
-
-    image_center = list(np.divide(label_image.shape, 2))  # returns array of two floats
-
-    center_hair, bbox_final = find_hair(label_image, image_center, minpixel)
-
-    print("\nHair found for {} is:".format(filename))
-
-    print(center_hair)
-    print(type(center_hair))
-
-    index_label = int(center_hair)
-
-    region = regionprops(label_image)[index_label]
-
-    tempdf = tempdf_gen(region, filename, resolution)
-
-    # save binary slice
-    with pathlib.Path(cropped_binary_dir).joinpath(filename) as output_name_binary:
-        im = region.filled_image
-        im = np.pad(im, pad, mode='constant')
-        cropped_binary = np.array(im)
-        im = Image.fromarray(cropped_binary)
-        im.save(str(output_name_binary))
-        print("Saved binary slice as {}".format(output_name_binary))
-
-    print("\n")
-
-    return tempdf
+    img_inv = skimage.util.invert(cropped_bin)
+    with pathlib.Path(output_path).joinpath(im_name + ".tiff") as savename:
+        plt.imsave(savename, img_inv, cmap='gray')
+    
+    return section_data
 
 
+def segment_section(img):
 
-def tempdf_gen(region, filename, resolution):
+    # thresh = skimage.filters.threshold_otsu(img)
+    thresh = skimage.filters.threshold_minimum(img)
 
-    section_area = round(float(region.filled_area / (resolution * resolution)), 2)
-    section_max = round(float(region.major_axis_length / resolution), 2)
-    section_min = round(float(region.minor_axis_length / resolution), 2)
-    section_eccentricity = region.eccentricity
-    section_perimeter = round(float(region.perimeter / resolution), 2)
-    section_id = (str(os.path.basename(filename)).rstrip('.tiff'))
+    init_ls = skimage.segmentation.clear_border(img < thresh)
 
-    tempdf = pd.DataFrame(
-        [section_id, section_area, section_max, section_min, section_eccentricity, section_perimeter]).T
+    seg_im = skimage.segmentation.morphological_chan_vese(img, 30, init_level_set=init_ls, smoothing=4, lambda1=1, lambda2=1)
 
-    print("\nThe data for {}, are:\n {}".format(filename, tempdf))
-
-    return tempdf
+    return seg_im
 
 
 def filter_curv(input_file, output_path):
@@ -1107,50 +903,33 @@ def curvature(tiff_directory, output_location, file_type, jobs, resolution, wind
     return True
 
 
-def section(tiff_directory, main_output_path, file_type, jobs, resolution,
-    min_size, pad, crop=True, save_crop=True):
+def section(input_directory, main_output_path, file_type, jobs, resolution,
+    minsize=20, maxsize=150):
     """
     """
     total_start = timer()
 
-    minpixel = int(min_size * resolution)
-
     # Change to the folder for reading images
-    cropped_list = list_images(tiff_directory, file_type)
+    file_list = list_images(input_directory, file_type)
 
-    # Shows what is in the cropped_list. The backslash n prints a new line
-    print("There are ", len(cropped_list), "files in the cropped_list:\n")
-    print(cropped_list, "\n\n")
+    # Shows what is in the file_list. The backslash n prints a new line
+    print("There are ", len(file_list), "files in the cropped_list:\n")
+    print(file_list, "\n\n")
 
     # Creating subdirectories for cropped images
 
-    cropped_binary_dir = make_subdirectory(main_output_path, "cropped_binary")
+    output_dir = make_subdirectory(main_output_path, "cropped_binary")
 
-    if save_crop == "True":
-        save_crop = True
-    else:
-        save_crop = False
+    # section_df = [analyze_section(f, output_dir, minsize, maxsize, resolution) for f in file_list]
 
-    if save_crop:
-        cropped_dir = make_subdirectory(main_output_path, "cropped")
-        save_crop = True
-        print("\nYou will have a folder of cropped grayscale images\n")
-    else:
-        cropped_dir = None
-        save_crop = False
-
-    # section_df = (crop_image(f, cropped_dir, cropped_binary_dir, pad, minpixel=minpixel, resolution=resolution) for f in cropped_list)
-
-    section_df = (Parallel(n_jobs=jobs, verbose=100)(delayed(crop_image)(f, cropped_dir, cropped_binary_dir, pad, minpixel, resolution, crop, save_image=save_crop) for f in cropped_list))
+    section_df = (Parallel(n_jobs=jobs, verbose=100)(delayed(analyze_section)(f, output_dir, minsize, maxsize, resolution) for f in file_list))
     
-    
-
     section_df = pd.concat(section_df)
-    section_df.columns = ['ID', 'area', 'max', 'min', 'eccentricity', 'perimeter']
-    section_index = section_df.set_index('ID')
+    section_df.columns = ['area', 'min', 'max', 'eccentricity', 'ID']
+    section_df.set_index('ID', inplace=True)
 
     with pathlib.Path(main_output_path).joinpath("section_data.csv") as df_output_path:
-        section_index.to_csv(df_output_path)
+        section_df.to_csv(df_output_path)
 
     # End the timer and then print out the how long it took
     total_end = timer()

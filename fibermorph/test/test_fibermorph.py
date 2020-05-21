@@ -67,3 +67,8 @@ fibermorph.curvature(tiff_directory, output_location, file_type, jobs, resolutio
 
 # Testing fibermorph section
 
+input_directory = "/Users/tinalasisi/Box/01_TPL5158/Box_Dissertation/HairPhenotyping_Methods/data/fibermorph_input/section/ValidationSet_section_TIFF/TIFF"
+
+output_dir = "/Users/tinalasisi/Desktop"
+
+fibermorph.section(input_directory, output_dir, file_type="tiff", jobs=4, resolution=1.06)
