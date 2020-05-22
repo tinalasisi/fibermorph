@@ -152,6 +152,19 @@ def copy_if_exist(file, directory):
 
 
 def convert(seconds):
+    """Converts seconds into readable format (hours, mins, seconds).
+
+    Parameters
+    ----------
+    seconds : int
+        Number of seconds to convert to final format.
+
+    Returns
+    -------
+    str
+        A string with the input seconds converted to a readable format.
+
+    """
     min, sec = divmod(seconds, 60)
     hour, min = divmod(min, 60)
     return "%dh: %02dm: %02ds" % (hour, min, sec)
@@ -159,22 +172,6 @@ def convert(seconds):
 
 def enablePrint():
     sys.stdout = sys.__stdout__
-
-
-def make_all_dirs(main_output_path):
-    filtered_dir = make_subdirectory(main_output_path, append_name="filtered")
-
-    binary_dir = make_subdirectory(main_output_path, append_name="binary")
-
-    pruned_dir = make_subdirectory(main_output_path, append_name="pruned")
-
-    clean_dir = make_subdirectory(main_output_path, append_name="clean")
-
-    skeleton_dir = make_subdirectory(main_output_path, append_name="skeletonized")
-
-    analysis_dir = make_subdirectory(main_output_path, append_name="analysis")
-
-    return main_output_path, filtered_dir, binary_dir, pruned_dir, clean_dir, skeleton_dir, analysis_dir
 
 
 def make_subdirectory(directory, append_name=""):
@@ -225,7 +222,7 @@ def list_images(directory):
 
     list.sort(file_list)  # sort the files
     print(len(file_list))  # printed the sorted files
-    
+
     return file_list
 
 def pretty_time_delta(seconds):
@@ -280,47 +277,47 @@ def raw_to_gray(imgfile, output_directory):
 
 
 def analyze_section(input_file, output_path, minsize=20, maxsize=150, resolution=1.0):
-    
+
     # segment the image first
     img, im_name = imread(input_file)
-    
+
     seg_im = segment_section(img)
-    
+
     # label the image
     label_im, num_elem = skimage.measure.label(seg_im, connectivity=2, return_num=True)
-    
+
     # find center of image
     im_center = list(np.divide(label_im.shape, 2))  # returns array of two floats
-    
+
     minpixel = np.pi * (((minsize / 2) * resolution) ** 2)
     maxpixel = np.pi * (((maxsize / 2) * resolution) ** 2)
-    
+
     props = skimage.measure.regionprops(label_image=label_im, intensity_image=img)
-    
+
     props_df = [[region.label, region.centroid, scipy.spatial.distance.euclidean(im_center, region.centroid)] for region
                 in props if region.area >= minpixel and region.area <= maxpixel]
-    
+
     props_df = pd.DataFrame(props_df, columns=['label', 'centroid', 'distance'])
-    
+
     print(props_df)
-    
+
     section_id = props_df['distance'].astype(float).idxmin()
     print(section_id)
-    
+
     section = props[section_id]
-    
+
     section_data = [section.filled_area, section.minor_axis_length, section.major_axis_length, section.eccentricity]
-    
+
     section_data = pd.DataFrame([x / resolution for x in section_data]).T
     section_data.columns = ['area', 'min', 'max', 'eccentricity']
     section_data['ID'] = im_name
-    
+
     cropped_bin = props[section_id].filled_image
 
     img_inv = skimage.util.invert(cropped_bin)
     with pathlib.Path(output_path).joinpath(im_name + ".tiff") as savename:
         plt.imsave(savename, img_inv, cmap='gray')
-    
+
     return section_data
 
 
@@ -365,19 +362,19 @@ def filter_curv(input_file, output_path):
 def binarize_curv(filter_img, im_name, binary_dir, save_img=False):
 
     selem = skimage.morphology.disk(3)
-    
+
     thresh_im = filter_img > threshold_minimum(filter_img)
-    
+
     # clear the border of the image (buffer is the px width to be considered as border)
     cleared_im = skimage.segmentation.clear_border(thresh_im, buffer_size=10)
-    
+
     # dilate the hair fibers
     binary_im = scipy.ndimage.binary_dilation(cleared_im, structure=selem, iterations=2)
-    
+
     if save_img:
         # invert image
         save_im = skimage.util.invert(binary_im)
-        
+
         # save image
         with pathlib.Path(binary_dir).joinpath(im_name + ".tiff") as save_name:
             im = Image.fromarray(save_im)
@@ -390,7 +387,7 @@ def binarize_curv(filter_img, im_name, binary_dir, save_img=False):
 def remove_particles(input_file, output_path, name, minpixel=5, prune=False, save_img=False):
     img_bool = np.asarray(input_file, dtype=np.bool)
     img = check_bin(img_bool)
-    
+
     if not prune:
         minimum = minpixel
         clean = skimage.morphology.remove_small_objects(img, connectivity=2, min_size=minimum)
@@ -398,9 +395,9 @@ def remove_particles(input_file, output_path, name, minpixel=5, prune=False, sav
         # clean = img_bool
         minimum = minpixel
         clean = skimage.morphology.remove_small_objects(img, connectivity=2, min_size=minimum)
-        
+
         print("\n Done cleaning {}".format(name))
-    
+
     if save_img:
         img_inv = skimage.util.invert(clean)
         with pathlib.Path(output_path).joinpath(name + ".tiff") as savename:
@@ -414,14 +411,14 @@ def remove_particles(input_file, output_path, name, minpixel=5, prune=False, sav
 
 def check_bin(img):
     img_bool = np.asarray(img, dtype=np.bool)
-    
+
     # Gets the unique values in the image matrix. Since it is binary, there should only be 2.
     unique, counts = np.unique(img_bool, return_counts=True)
     print(unique)
     print("Found this many counts:")
     print(len(counts))
     print(counts)
-    
+
     # If the length of unique is not 2 then print that the image isn't a binary.
     if len(unique) != 2:
         print("Image is not binarized!")
@@ -433,11 +430,11 @@ def check_bin(img):
         img = skimage.util.invert(img_bool)
         print("Now {} is reversed =)".format(str(img)))
         return img
-    
+
     else:
         print("{} is already reversed".format(str(img)))
         img = img_bool
-        
+
         print(type(img))
         return img
 
@@ -445,20 +442,20 @@ def check_bin(img):
 def skeletonize(clean_img, name, output_path, save_img=False):
     # check if image is binary and properly inverted
     clean_img = check_bin(clean_img)
-    
+
     # skeletonize the hair
     skeleton = skimage.morphology.thin(clean_img)
-    
+
     if save_img:
         img_inv = skimage.util.invert(skeleton)
         with pathlib.Path(output_path).joinpath(name + ".tiff") as output_path:
             im = Image.fromarray(img_inv)
             im.save(output_path)
         return skeleton
-    
+
     else:
         print("\n Done skeletonizing {}".format(name))
-        
+
         return skeleton
 
 
@@ -467,9 +464,9 @@ def prune(skeleton, name, pruned_dir, save_img=False):
     Starting with a morphological skeleton, creates a corresponding binary image
     with all branch-points pixels (1) and all other pixels (0).
     """
-    
+
     print("\nPruning {}...\n".format(name))
-    
+
     # identify 3-way branch-points through convolving the image using appropriate
     # structure elements for an 8-connected skeleton:
     # http://homepages.inf.ed.ac.uk/rbf/HIPR2/thin.htm
@@ -483,12 +480,12 @@ def prune(skeleton, name, pruned_dir, save_img=False):
                      [0, 1, 1],
                      [0, 1, 0]], dtype=np.uint8)
     hit_list = [hit1, hit2, hit3]
-    
+
     # use some nifty NumPy slicing to add the three remaining rotations of each
     # of the structure elements to the hit list
     for ii in range(9):
         hit_list.append(np.transpose(hit_list[-3])[::-1, ...])
-    
+
     # add structure elements for branch-points four 4-way branchpoints, these
     hit3 = np.array([[0, 1, 0],
                      [1, 1, 1],
@@ -499,52 +496,52 @@ def prune(skeleton, name, pruned_dir, save_img=False):
     hit_list.append(hit3)
     hit_list.append(hit4)
     print("Creating hit and miss list")
-    
+
     # create a zero np.array() of the same shape as the skeleton and use it to collect
     # "hits" from the convolution operation
-    
+
     skel_image = check_bin(skeleton)
     print("Converting image to binary array")
-    
+
     branch_points = np.zeros(skel_image.shape)
     print("Creating empty array for branch points")
-    
+
     for hit in hit_list:
         target = hit.sum()
         curr = ndimage.convolve(skel_image, hit, mode="constant")
         branch_points = np.logical_or(branch_points, np.where(curr == target, 1, 0))
-    
+
     print("Completed collection of branch points")
-    
+
     # pixels may "hit" multiple structure elements, ensure the output is a binary
     # image
     branch_points_image = np.where(branch_points, 1, 0)
     print("Ensuring binary")
-    
+
     # use SciPy's ndimage module to label each contiguous foreground feature
     # uniquely, this will locating and determining coordinates of each branch-point
     labels, num_labels = ndimage.label(branch_points_image)
     print("Labelling branches")
-    
+
     # use SciPy's ndimage module to determine the coordinates/pixel corresponding
     # to the center of mass of each branchpoint
     branch_points = ndimage.center_of_mass(skel_image, labels=labels, index=range(1, num_labels + 1))
     branch_points = np.array([value for value in branch_points if not np.isnan(value[0]) or not np.isnan(value[1])],
                              dtype=int)
     num_branch_points = len(branch_points)
-    
+
     hit = np.array([[0, 0, 0],
                     [0, 1, 0],
                     [0, 0, 0]], dtype=np.uint8)
-    
+
     dilated_branches = ndimage.convolve(branch_points_image, hit, mode='constant')
     dilated_branches_image = np.where(dilated_branches, 1, 0)
     print("Ensuring binary dilated branches")
     pruned_image = np.subtract(skel_image, dilated_branches_image)
     # pruned_image = np.subtract(skel_image, branch_points_image)
-    
+
     pruned_image = remove_particles(pruned_image, pruned_dir, name, prune=True, save_img=save_img)
-    
+
     return pruned_image
 
 
@@ -618,47 +615,47 @@ def analyze_each_curv(hair, window_size, resolution):
                             curvature_mean,
                             curvature_median
     """
-    
+
     hair_label = np.array(hair.coords)
-    
+
     length_mm = float(len(hair.coords) / resolution)
     print("\nCurv length is {} mm".format(length_mm))
-    
+
     hair_pixel_length = len(hair.coords)  # length of hair in pixels
     print("\nCurv length is {} pixels".format(hair_pixel_length))
-    
+
     subset_loop = (subset_gen(hair_pixel_length, window_size, hair_label=hair_label))  # generates subset loop
-    
+
     # Safe generator expression in case of errors
     curv = [taubin_curv(hair_coords, resolution) for hair_coords in subset_loop]
-    
+
     taubin_df = pd.Series(curv).astype('float')
     print("\nCurv dataframe is:")
     print(taubin_df)
     print(type(taubin_df))
     print("\nCurv df min is:{}".format(taubin_df.min()))
     print("\nCurv df max is:{}".format(taubin_df.max()))
-    
+
     print("\nTrimming outliers...")
     taubin_df2 = taubin_df[taubin_df.between(taubin_df.quantile(.01), taubin_df.quantile(.99))]  # without outliers
-    
+
     print("\nAfter trimming outliers...")
     print("\nCurv dataframe is:")
     print(taubin_df2)
     print(type(taubin_df2))
     print("\nCurv df min is:{}".format(taubin_df2.min()))
     print("\nCurv df max is:{}".format(taubin_df2.max()))
-    
+
     curv_mean = taubin_df2.mean()
     print("\nCurv mean is:{}".format(curv_mean))
-    
+
     curv_median = taubin_df2.median()
     print("\nCurv median is:{}".format(curv_median))
-    
+
     within_hair_df = [curv_mean, curv_median, length_mm]
     print("\nThe curvature summary stats for this element are:")
     print(within_hair_df)
-    
+
     if within_hair_df is not None or np.nan:
         return within_hair_df
     else:
@@ -676,48 +673,48 @@ def analyze_all_curv(img, name, analysis_dir, resolution, window_size_mm=1):
         img = np.array(img)
     else:
         print(type(img))
-    
+
     print("Analyzing {}".format(name))
-    
+
     img = check_bin(img)
-    
+
     label_image, num_elements = skimage.measure.label(img.astype(int), connectivity=2, return_num=True)
     print("\n There are {} elements in the image".format(num_elements))
-    
+
     props = skimage.measure.regionprops(label_image)
-    
+
     window_size = int(round(window_size_mm * resolution))  # must be an integer
     print("\nWindow size for analysis is {} pixels".format(window_size))
     print("Analysis of curvature for each element begins...")
     tempdf = [analyze_each_curv(hair, window_size, resolution) for hair in props]
-    
+
     print("\nData for {} is:".format(name))
     print(tempdf)
-    
+
     within_curvdf = pd.DataFrame(tempdf, columns=['curv_mean', 'curv_median', 'length'])
-    
+
     print("\nDataframe for {} is:".format(name))
     print(within_curvdf)
     print(within_curvdf.dtypes)
-    
+
     # remove outliers
     q1 = within_curvdf.quantile(0.1)
     q3 = within_curvdf.quantile(0.9)
     iqr = q3 - q1
-    
+
     within_curv_outliers = within_curvdf[
         ~((within_curvdf < (q1 - 1.5 * iqr)) | (within_curvdf > (q3 + 1.5 * iqr))).any(axis=1)]
-    
+
     print(within_curv_outliers)
-    
+
     within_curvdf2 = pd.DataFrame(within_curv_outliers, columns=['curv_mean', 'curv_median', 'length']).dropna()
-    
+
     print("\nDataFrame with NaN values dropped:")
     print(within_curvdf2)
-    
+
     with pathlib.Path(analysis_dir).joinpath(name + ".csv") as save_path:
         within_curvdf2.to_csv(save_path)
-    
+
     curv_mean_im_mean = within_curvdf2['curv_mean'].mean()
     curv_mean_im_median = within_curvdf2['curv_mean'].median()
     curv_median_im_mean = within_curvdf2['curv_median'].mean()
@@ -725,15 +722,15 @@ def analyze_all_curv(img, name, analysis_dir, resolution, window_size_mm=1):
     length_mean = within_curvdf2['length'].mean()
     length_median = within_curvdf2['length'].median()
     hair_count = len(within_curvdf2.index)
-    
+
     sorted_df = pd.DataFrame(
         [name, curv_mean_im_mean, curv_mean_im_median, curv_median_im_mean, curv_median_im_median, length_mean,
          length_median, hair_count]).T
-    
+
     print("\nDataframe for {} is:".format(name))
     print(sorted_df)
     print("\n")
-    
+
     return sorted_df
 
 def curvature_seq(input_file, filtered_dir, binary_dir, pruned_dir, clean_dir, skeleton_dir, analysis_dir,
@@ -842,23 +839,27 @@ def raw2gray(input_directory, output_location, file_type, jobs):
     return True
 
 
-def curvature(input_directory, output_location, jobs, resolution, window_size_mm, save_img):
+def curvature(input_directory, main_output_path, jobs, resolution, window_size_mm, save_img):
     """
     """
     total_start = timer()
 
     # create an output directory for the analyses
-    main_output_path, filtered_dir, binary_dir, pruned_dir, clean_dir, skeleton_dir, analysis_dir = make_all_dirs(
-    output_location)
+    filtered_dir = make_subdirectory(main_output_path, append_name="filtered")
+    binary_dir = make_subdirectory(main_output_path, append_name="binary")
+    pruned_dir = make_subdirectory(main_output_path, append_name="pruned")
+    clean_dir = make_subdirectory(main_output_path, append_name="clean")
+    skeleton_dir = make_subdirectory(main_output_path, append_name="skeletonized")
+    analysis_dir = make_subdirectory(main_output_path, append_name="analysis")
 
     file_list = list_images(input_directory)
-    
+
     # List expression for curv df per image
     # im_df = [curvature_seq(input_file, filtered_dir, binary_dir, pruned_dir, clean_dir, skeleton_dir, analysis_dir, resolution, window_size_mm, save_img) for input_file in file_list]
 
     # This is the old parallel jobs function
     im_df = (Parallel(n_jobs=jobs, verbose=100)(delayed(curvature_seq)(input_file, filtered_dir, binary_dir, pruned_dir, clean_dir, skeleton_dir, analysis_dir, resolution, window_size_mm, save_img) for input_file in file_list))
-    
+
     summary_df = pd.concat(im_df)
     summary_df.columns = [
         "ID", "curv_mean_mean", "curv_mean_median", "curv_median_mean", "curv_median_median",
@@ -916,7 +917,7 @@ def section(input_directory, main_output_path, jobs, resolution,
     # section_df = [analyze_section(f, output_dir, minsize, maxsize, resolution) for f in file_list]
 
     section_df = (Parallel(n_jobs=jobs, verbose=100)(delayed(analyze_section)(f, output_dir, minsize, maxsize, resolution) for f in file_list))
-    
+
     section_df = pd.concat(section_df)
     section_df.columns = ['area', 'min', 'max', 'eccentricity', 'ID']
     section_df.set_index('ID', inplace=True)
