@@ -23,17 +23,10 @@ from matplotlib import pyplot as plt
 from scipy import ndimage
 from scipy.spatial import distance as dist
 from skimage import filters, io
-from skimage.filters import threshold_minimum, threshold_otsu
-from skimage.measure import label, regionprops
-from skimage.morphology import disk
+from skimage.filters import threshold_minimum
 from skimage.segmentation import clear_border
 from skimage.util import invert
 
-# from fibermorph.test.function_unit_tests.test_unit_binarize_curv import binarize_curv
-# from fibermorph.test.function_unit_tests.test_unit_filter import filter
-# from fibermorph.test.function_unit_tests.test_unit_remove_particles import remove_particles
-# from fibermorph.test.function_unit_tests.test_unit_skeletonize import skeletonize
-# from fibermorph.test.function_unit_tests.test_unit_prune import prune
 # TODO: move the functions to separate files and import them into the test units, then re-write this
 
 
@@ -225,13 +218,11 @@ def make_subdirectory(directory, append_name=""):
                 output_path))
     return output_path
 
-def list_images(directory, file_type):
-    # Change to the folder for reading images
-    os.chdir(str(directory))
-    glob_file_type = "*" + file_type
-    file_list = []
-    for filename in pathlib.Path(directory).rglob(glob_file_type):
-        file_list.append(filename)
+def list_images(directory):
+    exts = [".tif", ".tiff"]
+    mainpath = pathlib.Path(directory)
+    file_list = [p for p in pathlib.Path(mainpath).rglob('*') if p.suffix in exts]
+
     list.sort(file_list)  # sort the files
     print(len(file_list))  # printed the sorted files
     
@@ -311,7 +302,10 @@ def analyze_section(input_file, output_path, minsize=20, maxsize=150, resolution
     
     props_df = pd.DataFrame(props_df, columns=['label', 'centroid', 'distance'])
     
-    section_id = props_df['distance'].idxmin()
+    print(props_df)
+    
+    section_id = props_df['distance'].astype(float).idxmin()
+    print(section_id)
     
     section = props[section_id]
     
@@ -671,9 +665,8 @@ def analyze_each_curv(hair, window_size, resolution):
         pass
 
 def imread(input_file):
-    input_path = pathlib.Path(str(input_file))
-    img = skimage.io.imread(str(input_path), as_gray=True)
-    
+    input_path = pathlib.Path(input_file)
+    img = np.array(Image.open(str(input_path)).convert('L'))
     im_name = input_path.stem
     return img, im_name
 
@@ -849,7 +842,7 @@ def raw2gray(input_directory, output_location, file_type, jobs):
     return True
 
 
-def curvature(tiff_directory, output_location, file_type, jobs, resolution, window_size_mm, save_img):
+def curvature(input_directory, output_location, jobs, resolution, window_size_mm, save_img):
     """
     """
     total_start = timer()
@@ -858,7 +851,7 @@ def curvature(tiff_directory, output_location, file_type, jobs, resolution, wind
     main_output_path, filtered_dir, binary_dir, pruned_dir, clean_dir, skeleton_dir, analysis_dir = make_all_dirs(
     output_location)
 
-    file_list = list_images(tiff_directory, file_type)
+    file_list = list_images(input_directory)
     
     # List expression for curv df per image
     # im_df = [curvature_seq(input_file, filtered_dir, binary_dir, pruned_dir, clean_dir, skeleton_dir, analysis_dir, resolution, window_size_mm, save_img) for input_file in file_list]
@@ -903,14 +896,14 @@ def curvature(tiff_directory, output_location, file_type, jobs, resolution, wind
     return True
 
 
-def section(input_directory, main_output_path, file_type, jobs, resolution,
+def section(input_directory, main_output_path, jobs, resolution,
     minsize=20, maxsize=150):
     """
     """
     total_start = timer()
 
     # Change to the folder for reading images
-    file_list = list_images(input_directory, file_type)
+    file_list = list_images(input_directory)
 
     # Shows what is in the file_list. The backslash n prints a new line
     print("There are ", len(file_list), "files in the cropped_list:\n")
@@ -958,12 +951,12 @@ def main():
             args.input_directory, output_dir, args.file_extension, args.jobs)
     elif args.curvature is True:
         curvature(
-            args.input_directory, output_dir, args.file_extension, args.jobs,
-            args.window_size, args.min_size, args.save_image)
+            args.input_directory, output_dir, args.jobs,
+            args.window_size, args.minsize, args.save_image)
     elif args.section is True:
         section(
-            args.input_directory, output_dir, args.file_extension, args.jobs,
-            args.resolution, args.min_size, args.pad, args.crop, args.save_crop)
+            args.input_directory, output_dir, args.jobs,
+            args.resolution, args.minsize, args.maxsize)
     else:
         sys.exit("Error. Tim didn't exhaust all module options")
 
