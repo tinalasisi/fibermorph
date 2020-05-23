@@ -55,10 +55,18 @@ def parse_args():
         "--input_directory", required=True,
         help="Required. Full path to and name of desired directory containing "
              "input files.")
+
+    parser.add_argument(
+        "--resolution_mm", required=True, type=int,
+        help="Integer. Number of pixels per mm.")
+
+    parser.add_argument(
+        "--resolution_mu", required=True, type=float,
+        help="Float. Number of pixels per micron.")
     
     parser.add_argument(
-        "--file_extension", required=False,
-        help="Optional. String. Extension of input files to use in input_directory when using raw2gray function")
+        "--file_extension", type=str, default=".RW2",
+        help="Optional. String. Extension of input files to use in input_directory when using raw2gray function. Default is .RW2.")
     
     parser.add_argument(
         "--jobs", type=int, default=1,
@@ -69,8 +77,12 @@ def parse_args():
         help="Float. Desired size for window of measurement in mm. Default is 1.0.")
     
     parser.add_argument(
-        "--min_size", type=int, default=20,
+        "--minsize", type=int, default=20,
         help="Integer. Minimum diameter in microns for sections. Default is 20.")
+
+    parser.add_argument(
+        "--maxsize", type=int, default=150,
+        help="Integer. Maximum diameter in microns for sections. Default is 150.")
     
     parser.add_argument(
         "--save_image", type=bool, default=False,
@@ -1219,7 +1231,7 @@ def main():
     elif args.curvature is True:
         curvature(
             args.input_directory, output_dir, args.jobs,
-            args.window_size, args.minsize, args.save_image)
+            args.resolution_mm, args.window_size, args.save_image)
     elif args.section is True:
         section(
             args.input_directory, output_dir, args.jobs,
