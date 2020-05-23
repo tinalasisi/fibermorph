@@ -32,15 +32,11 @@ def test_make_subdirectory(tmp_path):
     # assert 0 == 1
 
 
-def test_pretty_time_delta():
+def convert():
     # test min
-    assert fibermorph.pretty_time_delta(60) == "1m0s"
+    assert fibermorph.convert(60) == "1m0s"
     # test hours
-    assert fibermorph.pretty_time_delta(5400) == "1h30m0s"
-
-
-def test_analyze_hairs():
-    pass
+    assert fibermorph.convert(5400) == "1h30m0s"
 
 
 def test_copy_if_exist():
@@ -53,30 +49,34 @@ def test_copy_if_exist():
     assert os.path.exists(os.path.join(dir, f1))
     assert fibermorph.copy_if_exist("null.txt", temp_dir) is False
 
+def test_analyze_each_curv():
+    fibermorph.analyze_each_curv()
+    pass
 
-# Testing fibermorph_curvature
-input_directory = "/Users/tinalasisi/Desktop/2020-05-19_fibermorphTest/test_input/curv"
-output_location = "/Users/tinalasisi/Desktop/2020-05-19_fibermorphTest/test_output/curv"
-jobs = 1
-resolution = 132
-window_size_mm = 0.5
-save_img = True
+def test_analyze_all_curv():
+    fibermorph.analyze_all_curv()
+    pass
 
-fibermorph.curvature(input_directory, output_location, jobs, resolution, window_size_mm, save_img)
+def test_analyze_section():
+    fibermorph.analyze_section()
+    pass
 
-# Testing fibermorph section
-from fibermorph import fibermorph
+def test_():
+    pass
 
-input_directory = "/Users/tinalasisi/Desktop/2020-05-19_fibermorphTest/test_input/section"
-# input_directory = "/Users/tinalasisi/Box/01_TPL5158/Box_Dissertation/HairPhenotyping_Methods/data/fibermorph_input/section/ValidationSet_section_TIFF/TIFF/"
+def test_():
+    pass
 
-# input_file = "/Users/tinalasisi/Box/01_TPL5158/Box_Dissertation/HairPhenotyping_Methods/data/fibermorph_input/section/ValidationSet_section_TIFF/TIFF/140918_A_1.tiff"
+def test_():
+    pass
+
+def test_():
+    pass
+
+def test_():
+    pass
+
+def test_():
+    pass
 
 
-output_dir = "/Users/tinalasisi/Desktop/2020-05-19_fibermorphTest/test_output/section"
-
-fibermorph.section(input_directory, output_dir, jobs=4, resolution=1.06)
-
-# note: throws error if the resolution is 4.25 because none of the images/elements in the image fit the criteria
-
-fibermorph.list_images(input_directory)
