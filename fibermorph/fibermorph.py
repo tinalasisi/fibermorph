@@ -793,8 +793,8 @@ def analyze_each_curv(element, window_size, resolution):
 
     Parameters
     ----------
-    element : list of RegionProperties (scikit-image regionprops)
-        A list of RegionProperties (most importantly, coordinates) from regionprops function.
+    element : list of RegionProperties
+        A list of RegionProperties (most importantly, coordinates) from scikit-image regionprops function.
     window_size : int
         Number of pixels to be used for window of measurement.
     resolution : float
@@ -815,7 +815,7 @@ def analyze_each_curv(element, window_size, resolution):
     element_pixel_length = len(element.coords)  # length of element in pixels
     print("\nCurv length is {} pixels".format(element_pixel_length))
 
-    subset_loop = (subset_gen(element_pixel_length, window_size, element_label=element_label))  # generates subset loop
+    subset_loop = (subset_gen(element_pixel_length, window_size, element_label))  # generates subset loop
 
     # Safe generator expression in case of errors
     curv = [taubin_curv(element_coords, resolution) for element_coords in subset_loop]
