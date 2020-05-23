@@ -1190,7 +1190,7 @@ def section(input_directory, main_output_path, jobs, resolution, minsize=20, max
     file_list = list_images(input_directory)
     
     # Shows what is in the file_list. The backslash n prints a new line
-    print("There are {} files in the cropped_list:\n").format(len(file_list))
+    print("There are {} files in the cropped_list:".format(len(file_list)))
     print(file_list, "\n\n")
     
     # Creating subdirectories for cropped images
