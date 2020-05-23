@@ -1,23 +1,23 @@
 # %% Import libraries
 import argparse
-import os  # Allows python to work with the operating system.
-import pathlib  # Makes defining pathways simple between mac, windows, linux.
+import os
+import pathlib
 import shutil
 import sys
 import warnings
 from datetime import datetime
 from functools import wraps
-from timeit import default_timer as timer  # Timer to report how long everything is taking.
+from timeit import default_timer as timer
 
 import cv2
-import numpy as np  # Main math backbone of python, lots of MatLab like functions.
+import numpy as np
 import pandas as pd
-import rawpy  # Allows python to read raw image and convert to tiff
+import rawpy
 import scipy
 import skimage
 import skimage.measure
 import skimage.morphology
-from PIL import Image  # Allows conversion from RGB to grayscale and ImageChops for cropping
+from PIL import Image
 from joblib import Parallel, delayed
 from matplotlib import pyplot as plt
 from scipy import ndimage
@@ -26,8 +26,6 @@ from skimage import filters, io
 from skimage.filters import threshold_minimum
 from skimage.segmentation import clear_border
 from skimage.util import invert
-
-# TODO: move the functions to separate files and import them into the test units, then re-write this
 
 
 # Grab version from _version.py in the fibermorph directory
@@ -132,12 +130,21 @@ def blockPrint():
 
 
 def copy_if_exist(file, directory):
-    '''
+    """Copies files to destination directory.
 
-    :param file:        file to be copied
-    :param directory:   location of destination directory
-    :return:            None
-    '''
+    Parameters
+    ----------
+    file : str
+        Path for file to be copied.
+    directory : str
+        Path for destination directory.
+
+    Returns
+    -------
+    bool
+        True or false depending on whether copying was successful.
+
+    """
 
     path = pathlib.Path(file)
     destination = directory
@@ -175,16 +182,22 @@ def enablePrint():
 
 
 def make_subdirectory(directory, append_name=""):
-    """
-    Function to build a directory based upon the arguments passed in append. Takes a
-    directory and uses pathlib to join that to the appended string passed.
-​
-    :param directory:       The directory within which this function will make a subdirectory.
-    :param append_name:     A string to be appended to the pathlib object.
-    :return output_path:    Returns a new directory for output.
+    """Makes subdirectories.
 
-​
+    Parameters
+    ----------
+    directory : str
+        A string with the path of directory where subdirectories should be created.
+    append_name : str
+        A string to be appended to the directory path (name of the subdirectory created).
+
+    Returns
+    -------
+    pathlib object
+        A pathlib object for the subdirectory created.
+
     """
+
     # Define the path of the directory within which this function will make a subdirectory.
     directory = pathlib.Path(directory)
     # The name of the subdirectory.
@@ -215,7 +228,21 @@ def make_subdirectory(directory, append_name=""):
                 output_path))
     return output_path
 
+
 def list_images(directory):
+    """Generates a list of all .tif and/or .tiff files in a directory.
+
+    Parameters
+    ----------
+    directory : str
+        The directory in which the function will recursively search for .tif and .tiff files.
+
+    Returns
+    -------
+    list
+        A list of pathlib objects with the paths to the image files.
+
+    """
     exts = [".tif", ".tiff"]
     mainpath = pathlib.Path(directory)
     file_list = [p for p in pathlib.Path(mainpath).rglob('*') if p.suffix in exts]
@@ -225,7 +252,11 @@ def list_images(directory):
 
     return file_list
 
+
 def pretty_time_delta(seconds):
+    """Deprecated
+
+    """
 
     seconds = int(seconds)
     days, seconds = divmod(seconds, 86400)
@@ -242,18 +273,22 @@ def pretty_time_delta(seconds):
 
 
 def raw_to_gray(imgfile, output_directory):
+    """Function to convert raw image file into tiff file.
+
+    Parameters
+    ----------
+    imgfile : str
+        Path to raw image file.
+    output_directory : str
+        String with the path where the converted images should be created.
+
+    Returns
+    -------
+    pathlib object
+        A pathlib object with the path to the converted image file.
+
     """
 
-    Function to convert raw files to gray tiff files
-
-    :param imgfile:             raw image file
-    :param output_directory:    output directory where tiff folder will be created
-    :return:
-            - img: PIL image object
-            - tiff_output_path: pathlib object with image path
-
-
-    """
     imgfile = os.path.abspath(imgfile)
     output_directory = output_directory
     basename = os.path.basename(imgfile)
@@ -277,6 +312,27 @@ def raw_to_gray(imgfile, output_directory):
 
 
 def analyze_section(input_file, output_path, minsize=20, maxsize=150, resolution=1.0):
+    """This function executes a series of functions on the input file to segment and analyze the cross-section found in the image.
+
+    Parameters
+    ----------
+    input_file : str or pathlib object
+        Path to the input file (should be .tif or .tiff).
+    output_path : str or pathlib object
+        Path where the output should be created.
+    minsize : int
+        An integer describing the minimum diameter a section is expected to have.
+    maxsize : int
+        An integer describing the maximum diameter a section is expected to have.
+    resolution : float
+        A float describing the number of pixels per micron in the input image.
+
+    Returns
+    -------
+    type
+        Description of returned object.
+
+    """
 
     # segment the image first
     img, im_name = imread(input_file)
@@ -294,8 +350,7 @@ def analyze_section(input_file, output_path, minsize=20, maxsize=150, resolution
 
     props = skimage.measure.regionprops(label_image=label_im, intensity_image=img)
 
-    props_df = [[region.label, region.centroid, scipy.spatial.distance.euclidean(im_center, region.centroid)] for region
-                in props if region.area >= minpixel and region.area <= maxpixel]
+    props_df = [[region.label, region.centroid, scipy.spatial.distance.euclidean(im_center, region.centroid)] for region in props if region.area >= minpixel and region.area <= maxpixel]
 
     props_df = pd.DataFrame(props_df, columns=['label', 'centroid', 'distance'])
 
@@ -322,6 +377,19 @@ def analyze_section(input_file, output_path, minsize=20, maxsize=150, resolution
 
 
 def segment_section(img):
+    """Segments the input image to isolate the section(s).
+
+    Parameters
+    ----------
+    img : ndarray uint8
+        Image to be segmented.
+
+    Returns
+    -------
+    ndarray uint8
+        An ndarray of the segmented (binary) image.
+
+    """
 
     # thresh = skimage.filters.threshold_otsu(img)
     thresh = skimage.filters.threshold_minimum(img)
@@ -334,6 +402,23 @@ def segment_section(img):
 
 
 def filter_curv(input_file, output_path):
+    """Uses a ridge filter to extract the curved (or straight) lines from the background noise.
+
+    Parameters
+    ----------
+    input_file : str
+        A string path to the input image.
+    output_path : str
+        A string path to the output directory.
+
+    Returns
+    -------
+    filter_img: ndarray float64
+        The filtered image.
+    im_name: str
+        A string with the image name.
+
+    """
 
     # create pathlib object for input Image
     input_path = pathlib.Path(input_file)
@@ -360,6 +445,25 @@ def filter_curv(input_file, output_path):
 
 
 def binarize_curv(filter_img, im_name, binary_dir, save_img=False):
+    """Binarizes the filtered output of the fibermorph.filter_curv function.
+
+    Parameters
+    ----------
+    filter_img : ndarray float64
+        Image after ridge filter.
+    im_name : str
+        Image name.
+    binary_dir : str or pathlib object
+        Output directory path.
+    save_img : bool
+        True or false for saving image.
+
+    Returns
+    -------
+    ndarray uint8
+        An array with the binarized image.
+
+    """
 
     selem = skimage.morphology.disk(3)
 
@@ -384,8 +488,31 @@ def binarize_curv(filter_img, im_name, binary_dir, save_img=False):
         return binary_im
 
 
-def remove_particles(input_file, output_path, name, minpixel=5, prune=False, save_img=False):
-    img_bool = np.asarray(input_file, dtype=np.bool)
+def remove_particles(img, output_path, name, minpixel=5, prune=False, save_img=False):
+    """Removes particles under a particular size in the images.
+
+    Parameters
+    ----------
+    img : ndarray uint8
+        Binary image to be cleaned.
+    output_path : str or pathlib object
+        A path to the output directory.
+    name : str
+        Input image name.
+    minpixel : int
+        Minimum pixel size below which elements should be removed.
+    prune : bool
+        True or false for whether the input is a pruned skeleton.
+    save_img : bool
+        True or false for saving image.
+
+    Returns
+    -------
+    ndarray
+        An array with the noise particles removed.
+
+    """
+    img_bool = np.asarray(img, dtype=np.bool)
     img = check_bin(img_bool)
 
     if not prune:
@@ -410,6 +537,19 @@ def remove_particles(input_file, output_path, name, minpixel=5, prune=False, sav
 
 
 def check_bin(img):
+    """Checks whether image has been properly binarized. NB: works on the assumption that there should be more background pixels than element pixels.
+
+    Parameters
+    ----------
+    img : type
+        Description of parameter `img`.
+
+    Returns
+    -------
+    ndarray bool
+        A binary array of the image.
+
+    """
     img_bool = np.asarray(img, dtype=np.bool)
 
     # Gets the unique values in the image matrix. Since it is binary, there should only be 2.
@@ -440,6 +580,25 @@ def check_bin(img):
 
 
 def skeletonize(clean_img, name, output_path, save_img=False):
+    """Reduces curves and lines to 1 pixel width (skeletons).
+
+    Parameters
+    ----------
+    clean_img : ndarray bool
+        Binary array.
+    name : str
+        Image name.
+    output_path : str or pathlib object.
+        Output directory path.
+    save_img : type
+        True or false for saving image.
+
+    Returns
+    -------
+    ndarray bool
+        Boolean array of skeletonized image.
+
+    """
     # check if image is binary and properly inverted
     clean_img = check_bin(clean_img)
 
@@ -460,16 +619,30 @@ def skeletonize(clean_img, name, output_path, save_img=False):
 
 
 def prune(skeleton, name, pruned_dir, save_img=False):
-    """
-    Starting with a morphological skeleton, creates a corresponding binary image
-    with all branch-points pixels (1) and all other pixels (0).
+    """Prunes branches from skeletonized image.
+    Adapted from: "http://homepages.inf.ed.ac.uk/rbf/HIPR2/thin.htm"
+
+    Parameters
+    ----------
+    skeleton : ndarray bool
+        Boolean array.
+    name : str
+        Image name.
+    pruned_dir : str or pathlib object
+        Output directory path.
+    save_img : bool
+        True or false for saving image.
+
+    Returns
+    -------
+    ndarray
+        Boolean array of pruned skeleton image.
+
     """
 
     print("\nPruning {}...\n".format(name))
 
-    # identify 3-way branch-points through convolving the image using appropriate
-    # structure elements for an 8-connected skeleton:
-    # http://homepages.inf.ed.ac.uk/rbf/HIPR2/thin.htm
+    # identify 3-way branch-points
     hit1 = np.array([[0, 1, 0],
                      [0, 1, 0],
                      [1, 0, 1]], dtype=np.uint8)
@@ -481,12 +654,11 @@ def prune(skeleton, name, pruned_dir, save_img=False):
                      [0, 1, 0]], dtype=np.uint8)
     hit_list = [hit1, hit2, hit3]
 
-    # use some nifty NumPy slicing to add the three remaining rotations of each
-    # of the structure elements to the hit list
+    # numpy slicing to create 3 remaining rotations
     for ii in range(9):
         hit_list.append(np.transpose(hit_list[-3])[::-1, ...])
 
-    # add structure elements for branch-points four 4-way branchpoints, these
+    # add structure elements for branch-points four 4-way branchpoints
     hit3 = np.array([[0, 1, 0],
                      [1, 1, 1],
                      [0, 1, 0]], dtype=np.uint8)
@@ -496,9 +668,6 @@ def prune(skeleton, name, pruned_dir, save_img=False):
     hit_list.append(hit3)
     hit_list.append(hit4)
     print("Creating hit and miss list")
-
-    # create a zero np.array() of the same shape as the skeleton and use it to collect
-    # "hits" from the convolution operation
 
     skel_image = check_bin(skeleton)
     print("Converting image to binary array")
@@ -513,22 +682,18 @@ def prune(skeleton, name, pruned_dir, save_img=False):
 
     print("Completed collection of branch points")
 
-    # pixels may "hit" multiple structure elements, ensure the output is a binary
-    # image
+    # pixels may "hit" multiple structure elements, ensure the output is a binary image
     branch_points_image = np.where(branch_points, 1, 0)
     print("Ensuring binary")
 
-    # use SciPy's ndimage module to label each contiguous foreground feature
-    # uniquely, this will locating and determining coordinates of each branch-point
+    # use SciPy's ndimage module for locating and determining coordinates of each branch-point
     labels, num_labels = ndimage.label(branch_points_image)
     print("Labelling branches")
 
-    # use SciPy's ndimage module to determine the coordinates/pixel corresponding
-    # to the center of mass of each branchpoint
+    # use SciPy's ndimage module to determine the coordinates/pixel corresponding to the center of mass of each branchpoint
     branch_points = ndimage.center_of_mass(skel_image, labels=labels, index=range(1, num_labels + 1))
-    branch_points = np.array([value for value in branch_points if not np.isnan(value[0]) or not np.isnan(value[1])],
-                             dtype=int)
-    num_branch_points = len(branch_points)
+    branch_points = np.array([value for value in branch_points if not np.isnan(value[0]) or not np.isnan(value[1])],dtype=int)
+    # num_branch_points = len(branch_points)
 
     hit = np.array([[0, 0, 0],
                     [0, 1, 0],
@@ -546,37 +711,45 @@ def prune(skeleton, name, pruned_dir, save_img=False):
 
 
 def taubin_curv(coords, resolution):
-    """
-    Algebraic circle fit by Taubin
-      G. Taubin, "Estimation Of Planar Curves, Surfaces And Nonplanar
-                  Space Curves Defined By Implicit Equations, With
-                  Applications To Edge And Range Image Segmentation",
-      IEEE Trans. PAMI, Vol. 13, pages 1115-1138, (1991)
-
-    :param XYcoords:    list [[x_1, y_1], [x_2, y_2], ....]
-    :return:            a, b, r.  a and b are the center of the fitting circle, and r is the curv
+    """Curvature calculation based on algebraic circle fit by Taubin.
+    Adapted from: "https://github.com/PmagPy/PmagPy/blob/2efd4a92ddc19c26b953faaa5c08e3d8ebd305c9/SPD/lib/lib_curvature.py"
+    G. Taubin, "Estimation Of Planar Curves, Surfaces And Nonplanar
+                Space Curves Defined By Implicit Equations, With
+                Applications To Edge And Range Image Segmentation",
+    IEEE Trans. PAMI, Vol. 13, pages 1115-1138, (1991)
 
     Parameters
     ----------
-    resolution
+    coords : list
+        Nested list of paired x and y coordinates for each point of the line where a curve needs to be fited.
+        [[x_1, y_1], [x_2, y_2], ....]
+    resolution : float or int
+        Number of pixels per mm in original image.
+
+    Returns
+    -------
+    float or int(0)
+        If the radius of the fitted circle is finite, it will return the curvature (1/radius).
+        If the radius is infinite, it will return 0.
 
     """
+
     warnings.filterwarnings("ignore")  # suppress RuntimeWarnings from dividing by zero
-    XY = np.array(coords)
-    X = XY[:, 0] - np.mean(XY[:, 0])  # norming points by x avg
-    Y = XY[:, 1] - np.mean(XY[:, 1])  # norming points by y avg
-    centroid = [np.mean(XY[:, 0]), np.mean(XY[:, 1])]
-    Z = X * X + Y * Y
-    Zmean = np.mean(Z)
-    Z0 = ((Z - Zmean) / (2. * np.sqrt(Zmean)))  # changed from using old_div to Python 3 native division
-    ZXY = np.array([Z0, X, Y]).T
-    U, S, V = np.linalg.svd(ZXY, full_matrices=False)  #
-    V = V.transpose()
-    A = V[:, 2]
-    A[0] = (A[0]) / (2. * np.sqrt(Zmean))
-    A = np.concatenate([A, [(-1. * Zmean * A[0])]], axis=0)
-    # a, b = (-1 * A[1:3]) / A[0] / 2 + centroid
-    r = np.sqrt(A[1] * A[1] + A[2] * A[2] - 4 * A[0] * A[3]) / abs(A[0]) / 2
+    xy = np.array(coords)
+    x = xy[:, 0] - np.mean(xy[:, 0])  # norming points by x avg
+    y = xy[:, 1] - np.mean(xy[:, 1])  # norming points by y avg
+    # centroid = [np.mean(xy[:, 0]), np.mean(xy[:, 1])]
+    z = x * x + y * y
+    zmean = np.mean(z)
+    z0 = ((z - zmean) / (2. * np.sqrt(zmean)))  # changed from using old_div to Python 3 native division
+    zxy = np.array([z0, x, y]).T
+    u, s, v = np.linalg.svd(zxy, full_matrices=False)  #
+    v = v.transpose()
+    a = v[:, 2]
+    a[0] = (a[0]) / (2. * np.sqrt(zmean))
+    a = np.concatenate([a, [(-1. * zmean * a[0])]], axis=0)
+    # a, b = (-1 * a[1:3]) / a[0] / 2 + centroid
+    r = np.sqrt(a[1] * a[1] + a[2] * a[2] - 4 * a[0] * a[3]) / abs(a[0]) / 2
 
     if np.isfinite(r):
         curv = 1 / (r / resolution)
@@ -585,49 +758,67 @@ def taubin_curv(coords, resolution):
         return 0
 
 
-def subset_gen(hair_pixel_length, window_size, hair_label):
+def subset_gen(pixel_length, window_size, label):
+    """Generator function for start and end indices of the window of measurement.
+
+    Parameters
+    ----------
+    pixel_length : int
+        Number of pixels in input curve/line.
+    window_size : int
+        The size of window of measurement.
+    label : list
+        Nested list of coordinates for the input curve/line.
+
+    Returns
+    -------
+    list
+        Nested list of coordinates for the window of measurement in the input curve/line.
+
+    """
     subset_start = 0
     if window_size > 10:
         subset_end = int(window_size+subset_start)
     else:
-        subset_end = int(hair_pixel_length)
-    while subset_end <= hair_pixel_length:
-        subset = hair_label[subset_start:subset_end]
+        subset_end = int(pixel_length)
+    while subset_end <= pixel_length:
+        subset = label[subset_start:subset_end]
         yield subset
         subset_start += 1
         subset_end += 1
 
 
-def analyze_each_curv(hair, window_size, resolution):
+def analyze_each_curv(element, window_size, resolution):
+    """Calculates curvature for each labeled element in an array.
+
+    Parameters
+    ----------
+    element : list of RegionProperties (scikit-image regionprops)
+        A list of RegionProperties (most importantly, coordinates) from regionprops function.
+    window_size : int
+        Number of pixels to be used for window of measurement.
+    resolution : float
+        Number of pixels per mm in original image.
+
+    Returns
+    -------
+    lst
+        A list of the mean and median curvatures and the element length.
+
     """
-    Calculating curvature for hair divided into windows (as opposed to the entire hair at once)
 
-    Moving 1 pixel at a time, the loop uses 'start' and 'end' to define the window-length with which curvature is
-    calculated.
+    element_label = np.array(element.coords)
 
-    :param hair:
-    :param min_hair:
-    :param window_size:     the window size (in pixel)
-    :param resolution:      the resolution (number of pixels in a mm)
-    :return:
-                            curv_mean,
-                            curv_median,
-                            curvature_mean,
-                            curvature_median
-    """
-
-    hair_label = np.array(hair.coords)
-
-    length_mm = float(len(hair.coords) / resolution)
+    length_mm = float(len(element.coords) / resolution)
     print("\nCurv length is {} mm".format(length_mm))
 
-    hair_pixel_length = len(hair.coords)  # length of hair in pixels
-    print("\nCurv length is {} pixels".format(hair_pixel_length))
+    element_pixel_length = len(element.coords)  # length of element in pixels
+    print("\nCurv length is {} pixels".format(element_pixel_length))
 
-    subset_loop = (subset_gen(hair_pixel_length, window_size, hair_label=hair_label))  # generates subset loop
+    subset_loop = (subset_gen(element_pixel_length, window_size, element_label=element_label))  # generates subset loop
 
     # Safe generator expression in case of errors
-    curv = [taubin_curv(hair_coords, resolution) for hair_coords in subset_loop]
+    curv = [taubin_curv(element_coords, resolution) for element_coords in subset_loop]
 
     taubin_df = pd.Series(curv).astype('float')
     print("\nCurv dataframe is:")
@@ -652,22 +843,60 @@ def analyze_each_curv(hair, window_size, resolution):
     curv_median = taubin_df2.median()
     print("\nCurv median is:{}".format(curv_median))
 
-    within_hair_df = [curv_mean, curv_median, length_mm]
+    within_element_df = [curv_mean, curv_median, length_mm]
     print("\nThe curvature summary stats for this element are:")
-    print(within_hair_df)
+    print(within_element_df)
 
-    if within_hair_df is not None or np.nan:
-        return within_hair_df
+    if within_element_df is not None or np.nan:
+        return within_element_df
     else:
         pass
 
+
 def imread(input_file):
+    """Reads in image as grayscale array.
+
+    Parameters
+    ----------
+    input_file : str
+        String with path to input file.
+
+    Returns
+    -------
+    img: array uint8
+        A grayscale array based on the input image.
+    im_name: str
+        A string with the image name.
+
+    """
     input_path = pathlib.Path(input_file)
     img = np.array(Image.open(str(input_path)).convert('L'))
     im_name = input_path.stem
     return img, im_name
 
+
 def analyze_all_curv(img, name, analysis_dir, resolution, window_size_mm=1):
+    """Analyzes curvature for all elements in an image.
+
+    Parameters
+    ----------
+    img : ndarray uint8
+        Pruned skeleton of curves/lines as a uint8 ndarray.
+    name : str
+        Image name.
+    analysis_dir : str or pathlib object
+        Output directory.
+    resolution : float
+        Number of pixels per mm in original image.
+    window_size_mm : type
+        Desired size for window of measurement in mm.
+
+    Returns
+    -------
+    pd DataFrame
+        Pandas DataFrame with summary data for all elements in image.
+
+    """
     if type(img) != 'numpy.ndarray':
         print(type)
         img = np.array(img)
@@ -691,50 +920,82 @@ def analyze_all_curv(img, name, analysis_dir, resolution, window_size_mm=1):
     print("\nData for {} is:".format(name))
     print(tempdf)
 
-    within_curvdf = pd.DataFrame(tempdf, columns=['curv_mean', 'curv_median', 'length'])
+    within_im_curvdf = pd.DataFrame(tempdf, columns=['curv_mean', 'curv_median', 'length'])
 
     print("\nDataframe for {} is:".format(name))
-    print(within_curvdf)
-    print(within_curvdf.dtypes)
+    print(within_im_curvdf)
+    print(within_im_curvdf.dtypes)
 
     # remove outliers
-    q1 = within_curvdf.quantile(0.1)
-    q3 = within_curvdf.quantile(0.9)
+    q1 = within_im_curvdf.quantile(0.1)
+    q3 = within_im_curvdf.quantile(0.9)
     iqr = q3 - q1
 
-    within_curv_outliers = within_curvdf[
-        ~((within_curvdf < (q1 - 1.5 * iqr)) | (within_curvdf > (q3 + 1.5 * iqr))).any(axis=1)]
+    within_im_curv_outliers = within_im_curvdf[
+        ~((within_im_curvdf < (q1 - 1.5 * iqr)) | (within_im_curvdf > (q3 + 1.5 * iqr))).any(axis=1)]
 
-    print(within_curv_outliers)
+    print(within_im_curv_outliers)
 
-    within_curvdf2 = pd.DataFrame(within_curv_outliers, columns=['curv_mean', 'curv_median', 'length']).dropna()
+    within_im_curvdf2 = pd.DataFrame(within_im_curv_outliers, columns=['curv_mean', 'curv_median', 'length']).dropna()
 
     print("\nDataFrame with NaN values dropped:")
-    print(within_curvdf2)
+    print(within_im_curvdf2)
 
     with pathlib.Path(analysis_dir).joinpath(name + ".csv") as save_path:
-        within_curvdf2.to_csv(save_path)
+        within_im_curvdf2.to_csv(save_path)
 
-    curv_mean_im_mean = within_curvdf2['curv_mean'].mean()
-    curv_mean_im_median = within_curvdf2['curv_mean'].median()
-    curv_median_im_mean = within_curvdf2['curv_median'].mean()
-    curv_median_im_median = within_curvdf2['curv_median'].median()
-    length_mean = within_curvdf2['length'].mean()
-    length_median = within_curvdf2['length'].median()
-    hair_count = len(within_curvdf2.index)
+    curv_mean_im_mean = within_im_curvdf2['curv_mean'].mean()
+    curv_mean_im_median = within_im_curvdf2['curv_mean'].median()
+    curv_median_im_mean = within_im_curvdf2['curv_median'].mean()
+    curv_median_im_median = within_im_curvdf2['curv_median'].median()
+    length_mean = within_im_curvdf2['length'].mean()
+    length_median = within_im_curvdf2['length'].median()
+    hair_count = len(within_im_curvdf2.index)
 
-    sorted_df = pd.DataFrame(
+    im_sumdf = pd.DataFrame(
         [name, curv_mean_im_mean, curv_mean_im_median, curv_median_im_mean, curv_median_im_median, length_mean,
          length_median, hair_count]).T
 
     print("\nDataframe for {} is:".format(name))
-    print(sorted_df)
+    print(im_sumdf)
     print("\n")
 
-    return sorted_df
+    return im_sumdf
+
 
 def curvature_seq(input_file, filtered_dir, binary_dir, pruned_dir, clean_dir, skeleton_dir, analysis_dir,
                   resolution, window_size_mm, save_img):
+    """Sequence of functions to be executed for calculatign curvature in fibermorph.
+
+    Parameters
+    ----------
+    input_file : str or pathlib Path object
+        Path to image that needs to be analyzed.
+    filtered_dir : str or pathlib Path object
+        Output directory for images after ridge filter.
+    binary_dir : str or pathlib Path object
+        Output directory for binary images.
+    pruned_dir : str or pathlib Path object
+        Output directory for pruned skeletonized images.
+    clean_dir : str or pathlib Path object
+        Output directory for binary images after particles are removed.
+    skeleton_dir : str or pathlib Path object
+        Output directory for skeletonized images.
+    analysis_dir : str or pathlib Path object
+        Output directory for curvature data csv files.
+    resolution : float
+        Number of pixels per mm in original image.
+    window_size_mm : float
+        Desired size for window of measurement in mm.
+    save_img : bool
+        True or false for saving images.
+
+    Returns
+    -------
+    pd DataFrame
+        Pandas DataFrame with curvature summary data for all images.
+
+    """
 
     # filter
     filter_img, im_name = filter_curv(input_file, filtered_dir)
@@ -756,77 +1017,44 @@ def curvature_seq(input_file, filtered_dir, binary_dir, pruned_dir, clean_dir, s
 
     return im_df
 
-# Main modules (organized in order of operations: consolidate_files, raw2gray, curvature, section)
-
-def consolidate_files(input_directory, output_location, file_type, jobs):
-    """
-    """
-    total_start = timer()
-
-    # Changing directory to where the raw images are
-    os.chdir(input_directory)
-    glob_file_type = "*{}".format(file_type)  # find all files with the file_type extension
-
-    file_list = []
-    for filename in pathlib.Path(input_directory).rglob(glob_file_type):
-        file_list.append(filename)
-    list.sort(file_list)  # sort the files
-    print(len(file_list))  # printed the sorted files
-
-    output_directory = make_subdirectory(output_location, append_name="Raw")
-
-    Parallel(n_jobs=jobs, verbose=100)(delayed(copy_if_exist)(f, output_directory) for f in file_list)
-
-    total_end = timer()
-    total_time = str(pretty_time_delta(total_end - total_start))
-
-    # This will print out the minutes to the console, with 2 decimal places.
-    print("Entire consolidation took: {}.".format(total_time))
-
-    return True
+# Main modules (organized in order of operations: raw2gray, curvature, section)
 
 
 def raw2gray(input_directory, output_location, file_type, jobs):
-    """
+    """Convert raw files to grayscale tiff files.
+
+    Parameters
+    ----------
+    input_directory : str or pathlib object
+        String or pathlib object for input directory containing raw files.
+    output_location : str or pathlib object
+        String or pathlib object for output directory where converted files should be created.
+    file_type : str
+        The extension for the raw files (e.g. ".RW2").
+    jobs : int
+        Number of jobs to run in parallel.
+
+    Returns
+    -------
+    bool
+        True
+
     """
 
     total_start = timer()
 
-    # Convert raw files to tiff or copy TIFFs into new directory
-
-    # Changing directory to where the raw images are
-    os.chdir(input_directory)
-    glob_file_type = "*{}".format(file_type)  # find all files with the file_type extension
-
-    file_list = []
-    for f in pathlib.Path(input_directory).rglob(glob_file_type):
-        file = pathlib.Path(f)
-        filename = os.path.abspath(file)
-        file_list.append(filename)
-
-    # file_list = glob.glob((str(glob_file_type)), recursive=True)  # find all the raw files in that directory
+    file_list = [p for p in pathlib.Path(input_directory).rglob('*') if p.suffix in file_type]
     list.sort(file_list)  # sort the files
     print(file_list)  # printed the sorted files
 
     print("There are {} files to convert".format(len(file_list)))
     print("\n\n")
 
-    # %% Converting files
-    # A loop for turning all raw files into grayscale tiffs
-
     print("Converting raw files into grayscale tiff files...\n")
 
     tiff_directory = make_subdirectory(output_location, append_name="tiff")
 
     Parallel(n_jobs=jobs, verbose=100)(delayed(raw_to_gray)(f, tiff_directory) for f in file_list)
-
-    # # for debugging
-    # file_list = file_list[:3]
-    # f = file_list[0]
-    # output_directory = tiff_directory
-    # imgfile = f
-    #
-    # [raw_to_gray(f, tiff_directory) for f in file_list]
 
     # End the timer and then print out the how long it took
     total_end = timer()
@@ -840,8 +1068,30 @@ def raw2gray(input_directory, output_location, file_type, jobs):
 
 
 def curvature(input_directory, main_output_path, jobs, resolution, window_size_mm, save_img):
+    """Takes directory of grayscale tiff images and analyzes curvature for each curve/line in the image.
+
+    Parameters
+    ----------
+    input_directory : str or pathlib object
+        Input directory path as str or pathlib object.
+    main_output_path : str or pathlib object
+        Main output path as str or pathlib object.
+    jobs : int
+        Number of jobs to run in parallel.
+    resolution : float
+        Number of pixels per mm in original image.
+    window_size_mm : float
+        Desired window of measurement in mm.
+    save_img : bool
+        True or false for saving images for image processing steps.
+
+    Returns
+    -------
+    bool
+        True.
+
     """
-    """
+
     total_start = timer()
 
     # create an output directory for the analyses
@@ -897,10 +1147,31 @@ def curvature(input_directory, main_output_path, jobs, resolution, window_size_m
     return True
 
 
-def section(input_directory, main_output_path, jobs, resolution,
-    minsize=20, maxsize=150):
+def section(input_directory, main_output_path, jobs, resolution, minsize=20, maxsize=150):
+    """Takes directory of grayscale images (and locates central section where necessary) and analyzes cross-sectional properties for each image.
+
+    Parameters
+    ----------
+    input_directory : str or pathlib object
+        Input directory path as str or pathlib object.
+    main_output_path : str or pathlib object
+        Main output path as str or pathlib object.
+    jobs : int
+        Number of jobs to run in parallel.
+    resolution : float
+        Number of pixels per micrometer in the image.
+    minsize : int
+        Minimum diameter for sections.
+    maxsize : int
+        Maximum diameter for sections.
+
+    Returns
+    -------
+    bool
+        True.
+
     """
-    """
+
     total_start = timer()
 
     # Change to the folder for reading images
@@ -935,8 +1206,6 @@ def section(input_directory, main_output_path, jobs, resolution,
 
 
 def main():
-    """
-    """
 
     args = parse_args()
 
