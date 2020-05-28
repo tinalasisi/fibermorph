@@ -378,8 +378,11 @@ def segment_section(img):
 
     """
     
-    # thresh = skimage.filters.threshold_otsu(img)
-    thresh = skimage.filters.threshold_minimum(img)
+    try:
+        # thresh = skimage.filters.threshold_otsu(img)
+        thresh = skimage.filters.threshold_minimum(img)
+    except:
+        thresh = img
     
     init_ls = skimage.segmentation.clear_border(img < thresh)
     

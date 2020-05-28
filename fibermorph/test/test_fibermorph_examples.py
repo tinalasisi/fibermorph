@@ -1,6 +1,6 @@
 from fibermorph import fibermorph
 
-# Testing fibermorph_curvature
+# %% Testing fibermorph_curvature
 input_directory = "/Users/tinalasisi/Desktop/2020-05-19_fibermorphTest/test_input/curv"
 output_location = "/Users/tinalasisi/Desktop/2020-05-19_fibermorphTest/test_output/curv"
 jobs = 1
@@ -10,7 +10,7 @@ save_img = True
 
 fibermorph.curvature(input_directory, output_location, jobs, resolution, window_size_mm, save_img)
 
-# Testing fibermorph section
+# %% Testing fibermorph section
 from fibermorph import fibermorph
 
 input_directory = "/Users/tinalasisi/Desktop/2020-05-19_fibermorphTest/test_input/section"
@@ -26,3 +26,44 @@ fibermorph.section(input_directory, output_dir, jobs=4, resolution=1.06)
 # note: throws error if the resolution is 4.25 because none of the images/elements in the image fit the criteria
 
 fibermorph.list_images(input_directory)
+
+# %% Testing with dummy data
+
+from fibermorph import dummy_data
+from fibermorph import fibermorph
+
+dummy_data.dummy_data_gen(
+    output_directory="/Users/tinalasisi/Desktop/DummyDataTest",
+    shape="arc",
+    min_elem=10,
+    max_elem=20,
+    im_width=5200,
+    im_height=3900,
+    width=10)
+
+input_directory = "/Users/tinalasisi/Desktop/DummyDataTest"
+
+output_location = "/Users/tinalasisi/Desktop/"
+
+fibermorph.curvature(input_directory, output_location, jobs=1, resolution=1, window_size_mm=100, save_img=True)
+
+
+# %% Testing with dummy data section
+
+from fibermorph import dummy_data
+from fibermorph import fibermorph
+
+dummy_data.dummy_data_gen(
+    output_directory="/Users/tinalasisi/Desktop/DummyDataTest/section",
+    shape="ellipse",
+    min_elem=1,
+    max_elem=1,
+    im_width=5200,
+    im_height=3900,
+    width=10)
+
+input_directory = "/Users/tinalasisi/Desktop/DummyDataTest"
+
+output_location = "/Users/tinalasisi/Desktop/"
+
+fibermorph.section(input_directory, output_location, jobs=1, resolution=1.0)

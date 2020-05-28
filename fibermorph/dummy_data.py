@@ -8,8 +8,6 @@ https://stackoverflow.com/questions/4373741/how-can-i-randomly-place-several-non
 # %% Imports
 import sympy
 
-IMPORTS = 0
-
 from PIL import Image, ImageDraw
 import random
 from random import randint
