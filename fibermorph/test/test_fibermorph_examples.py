@@ -14,9 +14,11 @@ fibermorph.curvature(input_directory, output_location, jobs, resolution, window_
 from fibermorph import fibermorph
 
 input_directory = "/Users/tinalasisi/Desktop/2020-05-19_fibermorphTest/test_input/section"
-# input_directory = "/Users/tinalasisi/Box/01_TPL5158/Box_Dissertation/HairPhenotyping_Methods/data/fibermorph_input/section/ValidationSet_section_TIFF/TIFF/"
+# input_directory = "/Users/tinalasisi/Box/01_TPL5158/Box_Dissertation/HairPhenotyping_Methods/data/fibermorph_input
+# /section/ValidationSet_section_TIFF/TIFF/"
 
-# input_file = "/Users/tinalasisi/Box/01_TPL5158/Box_Dissertation/HairPhenotyping_Methods/data/fibermorph_input/section/ValidationSet_section_TIFF/TIFF/140918_A_1.tiff"
+# input_file = "/Users/tinalasisi/Box/01_TPL5158/Box_Dissertation/HairPhenotyping_Methods/data/fibermorph_input
+# /section/ValidationSet_section_TIFF/TIFF/140918_A_1.tiff"
 
 
 output_dir = "/Users/tinalasisi/Desktop/2020-05-19_fibermorphTest/test_output/section"
@@ -32,22 +34,27 @@ fibermorph.list_images(input_directory)
 from fibermorph import dummy_data
 from fibermorph import fibermorph
 
-dummy_data.dummy_data_gen(
-    output_directory="/Users/tinalasisi/Desktop/DummyDataTest/curvature/input",
-    shape="line",
-    # shape="arc",
-    min_elem=10,
-    max_elem=20,
-    im_width=5200,
-    im_height=3900,
-    width=10)
+dummy_dir = "/Users/tinalasisi/Desktop/DummyDataTest/curvature/input"
+shape_list = ["arc", "line"]
+
+for shapes in shape_list:
+    print(shapes)
+    df, img = dummy_data.dummy_data_gen(
+        output_directory=dummy_dir,
+        shape=shapes,
+        min_elem=10,
+        max_elem=20,
+        im_width=5200,
+        im_height=3900,
+        width=10)
+    print(df)
+    print(img)
 
 input_directory = "/Users/tinalasisi/Desktop/DummyDataTest/curvature/input"
 
 output_location = "/Users/tinalasisi/Desktop/DummyDataTest/curvature/output"
 
 fibermorph.curvature(input_directory, output_location, jobs=1, resolution=1, window_size_mm=10, save_img=False)
-
 
 # %% Testing with dummy data section
 

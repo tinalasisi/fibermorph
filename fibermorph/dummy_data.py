@@ -211,7 +211,8 @@ def dummy_data_gen(output_directory, shape="arc", min_elem=10, max_elem=20, im_w
             for rect in sample
             if (rect.width > 132 and rect.height > 132)]
         df = pd.DataFrame(data, columns=['length'])
-        create_data(df, image, output_directory, shape)
+        df, img = create_data(df, image, output_directory, shape)
+        return df, img
     
     elif shape == "arc":
         data = [

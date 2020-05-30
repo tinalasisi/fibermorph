@@ -937,18 +937,20 @@ def analyze_all_curv(img, name, analysis_dir, resolution, window_size_mm=1):
     print(within_im_curvdf)
     print(within_im_curvdf.dtypes)
     
-    # remove outliers
-    q1 = within_im_curvdf.quantile(0.1)
-    q3 = within_im_curvdf.quantile(0.9)
-    iqr = q3 - q1
+    # # remove outliers
+    # q1 = within_im_curvdf.quantile(0.01)
+    # q3 = within_im_curvdf.quantile(0.99)
+    # iqr = q3 - q1
+    #
+    # # TODO: check if outlier calculation is correct
+    # within_im_curv_outliers = within_im_curvdf[
+    #     ~((within_im_curvdf < (q1 - 1.5 * iqr)) | (within_im_curvdf > (q3 + 1.5 * iqr))).any(axis=1)]
+    #
+    # print(within_im_curv_outliers)
+    #
+    # within_im_curvdf2 = pd.DataFrame(within_im_curv_outliers, columns=['curv_mean', 'curv_median', 'length']).dropna()
     
-    # TODO: check if outlier calculation is correct
-    within_im_curv_outliers = within_im_curvdf[
-        ~((within_im_curvdf < (q1 - 1.5 * iqr)) | (within_im_curvdf > (q3 + 1.5 * iqr))).any(axis=1)]
-    
-    print(within_im_curv_outliers)
-    
-    within_im_curvdf2 = pd.DataFrame(within_im_curv_outliers, columns=['curv_mean', 'curv_median', 'length']).dropna()
+    within_im_curvdf2 = pd.DataFrame(within_im_curvdf, columns=['curv_mean', 'curv_median', 'length']).dropna()
     
     print("\nDataFrame with NaN values dropped:")
     print(within_im_curvdf2)
