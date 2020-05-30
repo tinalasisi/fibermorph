@@ -813,7 +813,12 @@ def analyze_each_curv(element, window_size, resolution):
     
     element_label = np.array(element.coords)
     
-    length_mm = float(len(element.coords) / resolution)
+    # Due to the differences in distance for vertically and horizontally vs. diagonally adjacent pixels, a correction is applied of a factor of 1.12. See literature below:
+    # Smit AL, Sprangers JFCM, Sablik PW, Groenwold J. Automated measurement of root length with a three-dimensional high-resolution scanner and image analysis. Plant Soil. 1994 Jan 1;158(1):145–9.
+    # Smit AL, Bengough AG, Engels C, van Noordwijk M, Pellerin S, van de Geijn SC. Root Methods: A Handbook. Springer Science & Business Media; 2013. 594 p.323
+    
+    length_mm = float(element.area * 1.12 / resolution)
+    # length_mm = float(len(element.coords) / resolution)
     print("\nCurv length is {} mm".format(length_mm))
     
     element_pixel_length = len(element.coords)  # length of element in pixels

@@ -33,19 +33,20 @@ from fibermorph import dummy_data
 from fibermorph import fibermorph
 
 dummy_data.dummy_data_gen(
-    output_directory="/Users/tinalasisi/Desktop/DummyDataTest",
-    shape="arc",
+    output_directory="/Users/tinalasisi/Desktop/DummyDataTest/curvature/input",
+    shape="line",
+    # shape="arc",
     min_elem=10,
     max_elem=20,
     im_width=5200,
     im_height=3900,
     width=10)
 
-input_directory = "/Users/tinalasisi/Desktop/DummyDataTest"
+input_directory = "/Users/tinalasisi/Desktop/DummyDataTest/curvature/input"
 
-output_location = "/Users/tinalasisi/Desktop/"
+output_location = "/Users/tinalasisi/Desktop/DummyDataTest/curvature/output"
 
-fibermorph.curvature(input_directory, output_location, jobs=1, resolution=1, window_size_mm=100, save_img=True)
+fibermorph.curvature(input_directory, output_location, jobs=1, resolution=1, window_size_mm=10, save_img=False)
 
 
 # %% Testing with dummy data section
@@ -54,7 +55,7 @@ from fibermorph import dummy_data
 from fibermorph import fibermorph
 
 dummy_data.dummy_data_gen(
-    output_directory="/Users/tinalasisi/Desktop/DummyDataTest/section",
+    output_directory="/Users/tinalasisi/Desktop/DummyDataTest/section/input",
     shape="ellipse",
     min_elem=1,
     max_elem=1,
@@ -62,8 +63,8 @@ dummy_data.dummy_data_gen(
     im_height=3900,
     width=10)
 
-input_directory = "/Users/tinalasisi/Desktop/DummyDataTest"
+input_directory = "/Users/tinalasisi/Desktop/DummyDataTest/section/input"
 
-output_location = "/Users/tinalasisi/Desktop/"
+output_location = "/Users/tinalasisi/Desktop/DummyDataTest/section/output"
 
 fibermorph.section(input_directory, output_location, jobs=1, resolution=1.0)

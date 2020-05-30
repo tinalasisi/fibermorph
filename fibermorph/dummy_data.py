@@ -172,36 +172,6 @@ def create_data(df, image, output_directory, shape):
     return df, image
 
 
-# # %% User input
-# USER_INPUT = 0
-#
-# # Are you plotting straight lines or arcs?
-# # Shape options are "arc", "line", "circle", "ellipse"
-# shape = "line"
-#
-# # what are the maximum and minimum number of elements you'd like in the image
-# min_elem = 10
-# max_elem = 30
-#
-# # what are the dimensions of the image
-# im_width = 5200
-# im_height = 3900
-#
-# # line width (passed to all the drawing functions)
-# width = 10
-# # color of the line passed to functions
-# fill = "black"
-#
-# abspath = os.path.abspath(__file__)
-# dname = os.path.dirname(abspath)
-# os.chdir(dname)
-#
-# results_folder = make_subdirectory(dname, append_name="results_cache")
-#
-# # Where would you like the data to be saved to?
-# # output_directory = make_subdirectory(results_folder, append_name="dummy_data")
-# output_directory = make_subdirectory(results_folder, append_name="validation_data")
-
 # %% Generate random bounding boxes
 
 def bounding_box(min_elem, max_elem, im_width, im_height):
