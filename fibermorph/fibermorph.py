@@ -980,7 +980,7 @@ def analyze_all_curv(img, name, analysis_dir, resolution, window_size_mm=1):
 @timing
 def curvature_seq(input_file, filtered_dir, binary_dir, pruned_dir, clean_dir, skeleton_dir, analysis_dir,
                   resolution, window_size_mm, save_img):
-    """Sequence of functions to be executed for calculatign curvature in fibermorph.
+    """Sequence of functions to be executed for calculating curvature in fibermorph.
 
     Parameters
     ----------

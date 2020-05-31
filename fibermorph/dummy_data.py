@@ -163,13 +163,13 @@ def draw_ellipse(draw, rect, width):
 def create_data(df, image, output_directory, shape):
     jetzt = datetime.now()
     timestamp = jetzt.strftime("%b%d_%H%M_")
-    df.to_csv(pathlib.Path(output_directory).joinpath(timestamp + shape + "_data.csv"))
+    df_path = df.to_csv(pathlib.Path(output_directory).joinpath(timestamp + shape + "_data.csv"))
     print(df)
-    save_path = pathlib.Path(output_directory).joinpath(timestamp + shape + "_data.tiff")
-    image.save(save_path)
-    print(save_path)
+    im_path = pathlib.Path(output_directory).joinpath(timestamp + shape + "_data.tiff")
+    image.save(im_path)
+    print(im_path)
     
-    return df, image
+    return df, image, im_path, df_path
 
 
 # %% Generate random bounding boxes
@@ -211,8 +211,8 @@ def dummy_data_gen(output_directory, shape="arc", min_elem=10, max_elem=20, im_w
             for rect in sample
             if (rect.width > 132 and rect.height > 132)]
         df = pd.DataFrame(data, columns=['length'])
-        df, img = create_data(df, image, output_directory, shape)
-        return df, img
+        df, img, im_path, df_path = create_data(df, image, output_directory, shape)
+        return df, img, im_path, df_path
     
     elif shape == "arc":
         data = [
@@ -220,8 +220,8 @@ def dummy_data_gen(output_directory, shape="arc", min_elem=10, max_elem=20, im_w
             for rect in sample
             if (rect.width > 132 and rect.height > 132)]
         df = pd.DataFrame(data, columns=['radius', 'length', 'curvature'])
-        df, img = create_data(df, image, output_directory, shape)
-        return df, img
+        df, img, im_path, df_path = create_data(df, image, output_directory, shape)
+        return df, img, im_path, df_path
     
     elif shape == "ellipse":
         data = [
@@ -229,8 +229,8 @@ def dummy_data_gen(output_directory, shape="arc", min_elem=10, max_elem=20, im_w
             for rect in sample
             if (rect.width > 132 and rect.height > 132)]
         df = pd.DataFrame(data, columns=['width', 'height', 'area'])
-        df, img = create_data(df, image, output_directory, shape)
-        return df, img
+        df, img, im_path, df_path = create_data(df, image, output_directory, shape)
+        return df, img, im_path, df_path
     
     elif shape == "circle":
         data = [
@@ -238,8 +238,8 @@ def dummy_data_gen(output_directory, shape="arc", min_elem=10, max_elem=20, im_w
             for rect in sample
             if (rect.width > 132 and rect.height > 132)]
         df = pd.DataFrame(data, columns=['width', 'height', 'area'])
-        df, img = create_data(df, image, output_directory, shape)
-        return df, img
+        df, img, im_path, df_path = create_data(df, image, output_directory, shape)
+        return df, img, im_path, df_path
     
     else:
         print("The shape value that has been input is incorrect, check options for shape again.")

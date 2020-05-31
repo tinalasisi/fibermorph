@@ -37,9 +37,11 @@ from fibermorph import fibermorph
 dummy_dir = "/Users/tinalasisi/Desktop/DummyDataTest/curvature/input"
 shape_list = ["arc", "line"]
 
+output_location = "/Users/tinalasisi/Desktop/DummyDataTest/curvature/output"
+
 for shapes in shape_list:
     print(shapes)
-    df, img = dummy_data.dummy_data_gen(
+    df, img, im_path, df_path = dummy_data.dummy_data_gen(
         output_directory=dummy_dir,
         shape=shapes,
         min_elem=10,
@@ -47,14 +49,12 @@ for shapes in shape_list:
         im_width=5200,
         im_height=3900,
         width=10)
+    
+    fibermorph.curvature(dummy_dir, output_location, jobs=1, resolution=1, window_size_mm=10, save_img=False)
+    
+    
     print(df)
     print(img)
-
-input_directory = "/Users/tinalasisi/Desktop/DummyDataTest/curvature/input"
-
-output_location = "/Users/tinalasisi/Desktop/DummyDataTest/curvature/output"
-
-fibermorph.curvature(input_directory, output_location, jobs=1, resolution=1, window_size_mm=10, save_img=False)
 
 # %% Testing with dummy data section
 
