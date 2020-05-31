@@ -1,6 +1,6 @@
+# %% Testing fibermorph_curvature
 from fibermorph import fibermorph
 
-# %% Testing fibermorph_curvature
 input_directory = "/Users/tinalasisi/Desktop/2020-05-19_fibermorphTest/test_input/curv"
 output_location = "/Users/tinalasisi/Desktop/2020-05-19_fibermorphTest/test_output/curv"
 jobs = 1

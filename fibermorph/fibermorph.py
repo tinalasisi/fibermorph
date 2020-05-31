@@ -393,7 +393,7 @@ def segment_section(img):
 
 
 @timing
-def filter_curv(input_file, output_path):
+def filter_curv(input_file, output_path, save_img=False):
     """Uses a ridge filter to extract the curved (or straight) lines from the background noise.
 
     Parameters
@@ -402,6 +402,8 @@ def filter_curv(input_file, output_path):
         A string path to the input image.
     output_path : str
         A string path to the output directory.
+    save_img : bool
+        True or False for saving filtered image.
 
     Returns
     -------
@@ -428,16 +430,18 @@ def filter_curv(input_file, output_path):
     type(filter_img)
     print("Image size is:", filter_img.shape)
     
-    # inverting and saving the filtered image
-    img_inv = skimage.util.invert(filter_img)
-    with pathlib.Path(output_path).joinpath(im_name + ".tiff") as save_path:
-        plt.imsave(save_path, img_inv, cmap="gray")
+    if save_img:
+        output_path = make_subdirectory(output_path, append_name="filtered")
+        # inverting and saving the filtered image
+        img_inv = skimage.util.invert(filter_img)
+        with pathlib.Path(output_path).joinpath(im_name + ".tiff") as save_path:
+            plt.imsave(save_path, img_inv, cmap="gray")
     
     return filter_img, im_name
 
 
 @timing
-def binarize_curv(filter_img, im_name, binary_dir, save_img=False):
+def binarize_curv(filter_img, im_name, output_path, save_img=False):
     """Binarizes the filtered output of the fibermorph.filter_curv function.
 
     Parameters
@@ -446,7 +450,7 @@ def binarize_curv(filter_img, im_name, binary_dir, save_img=False):
         Image after ridge filter (float64).
     im_name : str
         Image name.
-    binary_dir : str or pathlib object
+    output_path : str or pathlib object
         Output directory path.
     save_img : bool
         True or false for saving image.
@@ -469,14 +473,16 @@ def binarize_curv(filter_img, im_name, binary_dir, save_img=False):
     binary_im = scipy.ndimage.binary_dilation(cleared_im, structure=selem, iterations=2)
     
     if save_img:
+        output_path = make_subdirectory(output_path, append_name="binarized")
         # invert image
         save_im = skimage.util.invert(binary_im)
         
         # save image
-        with pathlib.Path(binary_dir).joinpath(im_name + ".tiff") as save_name:
+        with pathlib.Path(output_path).joinpath(im_name + ".tiff") as save_name:
             im = Image.fromarray(save_im)
             im.save(save_name)
         return binary_im
+    
     else:
         return binary_im
 
@@ -512,22 +518,27 @@ def remove_particles(img, output_path, name, minpixel=5, prune=False, save_img=F
     if not prune:
         minimum = minpixel
         clean = skimage.morphology.remove_small_objects(img, connectivity=2, min_size=minimum)
+        if save_img:
+            output_path = make_subdirectory(output_path, append_name="clean")
+            img_inv = skimage.util.invert(clean)
+            with pathlib.Path(output_path).joinpath(name + ".tiff") as savename:
+                plt.imsave(savename, img_inv, cmap='gray')
+
+            return clean
+        else:
+            return clean
     else:
         # clean = img_bool
         minimum = minpixel
         clean = skimage.morphology.remove_small_objects(img, connectivity=2, min_size=minimum)
-        
-        print("\n Done cleaning {}".format(name))
-    
-    if save_img:
-        img_inv = skimage.util.invert(clean)
-        with pathlib.Path(output_path).joinpath(name + ".tiff") as savename:
-            plt.imsave(savename, img_inv, cmap='gray')
-            # im = Image.fromarray(img_inv)
-            # im.save(output_path)
-        return clean
-    else:
-        return clean
+        if save_img:
+            output_path = make_subdirectory(output_path, append_name="pruned")
+            img_inv = skimage.util.invert(clean)
+            with pathlib.Path(output_path).joinpath(name + ".tiff") as savename:
+                plt.imsave(savename, img_inv, cmap='gray')
+            return clean
+        else:
+            return clean
 
 
 @timing
@@ -603,6 +614,7 @@ def skeletonize(clean_img, name, output_path, save_img=False):
     skeleton = skimage.morphology.thin(clean_img)
     
     if save_img:
+        output_path = make_subdirectory(output_path, append_name="skeletonized")
         img_inv = skimage.util.invert(skeleton)
         with pathlib.Path(output_path).joinpath(name + ".tiff") as output_path:
             im = Image.fromarray(img_inv)
@@ -886,7 +898,7 @@ def imread(input_file):
 
 
 @timing
-def analyze_all_curv(img, name, analysis_dir, resolution, window_size_mm=1):
+def analyze_all_curv(img, name, output_path, resolution, window_size_mm=1):
     """Analyzes curvature for all elements in an image.
 
     Parameters
@@ -954,8 +966,9 @@ def analyze_all_curv(img, name, analysis_dir, resolution, window_size_mm=1):
     
     print("\nDataFrame with NaN values dropped:")
     print(within_im_curvdf2)
-    
-    with pathlib.Path(analysis_dir).joinpath(name + ".csv") as save_path:
+
+    output_path = make_subdirectory(output_path, append_name="analysis")
+    with pathlib.Path(output_path).joinpath(name + ".csv") as save_path:
         within_im_curvdf2.to_csv(save_path)
     
     curv_mean_im_mean = within_im_curvdf2['curv_mean'].mean()
@@ -978,26 +991,15 @@ def analyze_all_curv(img, name, analysis_dir, resolution, window_size_mm=1):
 
 
 @timing
-def curvature_seq(input_file, filtered_dir, binary_dir, pruned_dir, clean_dir, skeleton_dir, analysis_dir,
-                  resolution, window_size_mm, save_img):
+def curvature_seq(input_file, output_path, resolution, window_size_mm, save_img):
     """Sequence of functions to be executed for calculating curvature in fibermorph.
 
     Parameters
     ----------
     input_file : str or pathlib Path object
         Path to image that needs to be analyzed.
-    filtered_dir : str or pathlib Path object
-        Output directory for images after ridge filter.
-    binary_dir : str or pathlib Path object
-        Output directory for binary images.
-    pruned_dir : str or pathlib Path object
-        Output directory for pruned skeletonized images.
-    clean_dir : str or pathlib Path object
-        Output directory for binary images after particles are removed.
-    skeleton_dir : str or pathlib Path object
-        Output directory for skeletonized images.
-    analysis_dir : str or pathlib Path object
-        Output directory for curvature data csv files.
+    output_path : str or pathlib Path object
+        Output directory
     resolution : float
         Number of pixels per mm in original image.
     window_size_mm : float
@@ -1013,22 +1015,22 @@ def curvature_seq(input_file, filtered_dir, binary_dir, pruned_dir, clean_dir, s
     """
     
     # filter
-    filter_img, im_name = filter_curv(input_file, filtered_dir)
+    filter_img, im_name = filter_curv(input_file, output_path)
     
     # binarize
-    binary_img = binarize_curv(filter_img, im_name, binary_dir, save_img)
+    binary_img = binarize_curv(filter_img, im_name, output_path, save_img)
     
     # remove particles
-    clean_im = remove_particles(binary_img, clean_dir, im_name, minpixel=5, prune=False, save_img=save_img)
+    clean_im = remove_particles(binary_img, output_path, im_name, minpixel=5, prune=False, save_img=save_img)
     
     # skeletonize
-    skeleton_im = skeletonize(clean_im, im_name, skeleton_dir, save_img)
+    skeleton_im = skeletonize(clean_im, im_name, output_path, save_img)
     
     # prune
-    pruned_im = prune(skeleton_im, im_name, pruned_dir, save_img)
+    pruned_im = prune(skeleton_im, im_name, output_path, save_img)
     
     # analyze
-    im_df = analyze_all_curv(pruned_im, im_name, analysis_dir, resolution, window_size_mm)
+    im_df = analyze_all_curv(pruned_im, im_name, output_path, resolution, window_size_mm)
     
     return im_df
 
@@ -1112,12 +1114,10 @@ def curvature(input_directory, main_output_path, jobs, resolution, window_size_m
     total_start = timer()
     
     # create an output directory for the analyses
-    filtered_dir = make_subdirectory(main_output_path, append_name="filtered")
-    binary_dir = make_subdirectory(main_output_path, append_name="binary")
-    pruned_dir = make_subdirectory(main_output_path, append_name="pruned")
-    clean_dir = make_subdirectory(main_output_path, append_name="clean")
-    skeleton_dir = make_subdirectory(main_output_path, append_name="skeletonized")
-    analysis_dir = make_subdirectory(main_output_path, append_name="analysis")
+    jetzt = datetime.now()
+    timestamp = jetzt.strftime("%b%d_%H%M_")
+    dir_name = str(timestamp + "fibermorph_curvature")
+    output_path = make_subdirectory(main_output_path, append_name=dir_name)
     
     file_list = list_images(input_directory)
     
@@ -1127,7 +1127,7 @@ def curvature(input_directory, main_output_path, jobs, resolution, window_size_m
     
     # This is the old parallel jobs function
     im_df = (Parallel(n_jobs=jobs, verbose=100)(
-        delayed(curvature_seq)(input_file, filtered_dir, binary_dir, pruned_dir, clean_dir, skeleton_dir, analysis_dir,
+        delayed(curvature_seq)(input_file, output_path,
                                resolution, window_size_mm, save_img) for input_file in file_list))
     
     summary_df = pd.concat(im_df)
@@ -1153,7 +1153,7 @@ def curvature(input_directory, main_output_path, jobs, resolution, window_size_m
     jetzt = datetime.now()
     timestamp = jetzt.strftime("_%b%d_%H%M")
     
-    with pathlib.Path(main_output_path).joinpath("curvature_summary_data{}.csv".format(timestamp)) as output_path:
+    with pathlib.Path(output_path).joinpath("curvature_summary_data{}.csv".format(timestamp)) as output_path:
         summary_df.to_csv(output_path)
         print(output_path)
     
@@ -1204,19 +1204,24 @@ def section(input_directory, main_output_path, jobs, resolution, minsize=20, max
     print(file_list, "\n\n")
     
     # Creating subdirectories for cropped images
+
+    jetzt = datetime.now()
+    timestamp = jetzt.strftime("%b%d_%H%M_")
+    dir_name = str(timestamp + "fibermorph_section")
+    output_path = make_subdirectory(main_output_path, append_name=dir_name)
     
-    output_dir = make_subdirectory(main_output_path, "cropped_binary")
+    output_im_path = make_subdirectory(output_path, "cropped_binary")
     
-    # section_df = [analyze_section(f, output_dir, minsize, maxsize, resolution) for f in file_list]
+    # section_df = [analyze_section(f, output_im_path, minsize, maxsize, resolution) for f in file_list]
     
     section_df = (Parallel(n_jobs=jobs, verbose=100)(
-        delayed(analyze_section)(f, output_dir, minsize, maxsize, resolution) for f in file_list))
+        delayed(analyze_section)(f, output_im_path, minsize, maxsize, resolution) for f in file_list))
     
     section_df = pd.concat(section_df)
     section_df.columns = ['area', 'min', 'max', 'eccentricity', 'ID']
     section_df.set_index('ID', inplace=True)
     
-    with pathlib.Path(main_output_path).joinpath("section_data.csv") as df_output_path:
+    with pathlib.Path(output_path).joinpath("section_data.csv") as df_output_path:
         section_df.to_csv(df_output_path)
     
     # End the timer and then print out the how long it took
