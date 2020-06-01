@@ -69,11 +69,6 @@ def quadsect(rect, factor):
             Rect(interior.x, interior.y, rect.max.x, rect.max.y),
             Rect(interior.x, interior.y, rect.min.x, rect.max.y)]
     
-    # return [Rect(interior.x, interior.y, rect.min.x, rect.min.y),
-    #         Rect(interior.x, interior.y, rect.max.x, rect.min.y),
-    #         Rect(interior.x, interior.y, rect.max.x, rect.max.y),
-    #         Rect(interior.x, interior.y, rect.min.x, rect.max.y)]
-
 
 def square_subregion(rect):
     """ Return a square rectangle centered within the given rectangle """
@@ -95,7 +90,7 @@ def draw_rect(draw, rect):
 
 
 def draw_arc(draw, rect, width):
-    start = random.randint(10, 150)
+    start = random.randint(50, 150)
     end = random.randint(200, 350)
     pad = 40
     minx = rect.min.x + pad
@@ -105,11 +100,6 @@ def draw_arc(draw, rect, width):
     
     draw.arc([(minx, miny), (maxx, maxy)], start=start, end=end, fill="black", width=width)
     
-    # If you wanted to calculate the bounding box you could use the box variable below:
-    # box = [(rect.min.x, rect.min.y), (rect.max.x, rect.max.y)]
-    
-    # The width of the square in which the arc is drawn can be accessed with the variable width below:
-    # width = (rect.max.x - rect.min.x), (rect.max.y - rect.min.y)
     
     radius = (maxx - minx) / 2
     curv = 1 / radius
@@ -155,7 +145,6 @@ def draw_ellipse(draw, rect, width):
     p1 = geometry.Point(0, 0)
     e1 = geometry.Ellipse(p1, r1, r2)
     area = sympy.N(e1.area)
-    # area = np.pi * (width_df/2) * (height_df/2)
     
     return width_df, height_df, area
 
@@ -210,7 +199,7 @@ def dummy_data_gen(output_directory, shape="arc", min_elem=10, max_elem=20, im_w
             draw_line(draw, rect, width)
             for rect in sample
             if (rect.width > 132 and rect.height > 132)]
-        df = pd.DataFrame(data, columns=['length'])
+        df = pd.DataFrame(data, columns=['ref_length'])
         df, img, im_path, df_path = create_data(df, image, output_directory, shape)
         return df, img, im_path, df_path
     
@@ -219,7 +208,7 @@ def dummy_data_gen(output_directory, shape="arc", min_elem=10, max_elem=20, im_w
             draw_arc(draw, square_subregion(rect), width)
             for rect in sample
             if (rect.width > 132 and rect.height > 132)]
-        df = pd.DataFrame(data, columns=['radius', 'length', 'curvature'])
+        df = pd.DataFrame(data, columns=['ref_radius', 'ref_length', 'ref_curvature'])
         df, img, im_path, df_path = create_data(df, image, output_directory, shape)
         return df, img, im_path, df_path
     
@@ -228,7 +217,7 @@ def dummy_data_gen(output_directory, shape="arc", min_elem=10, max_elem=20, im_w
             draw_ellipse(draw, rect, width)
             for rect in sample
             if (rect.width > 132 and rect.height > 132)]
-        df = pd.DataFrame(data, columns=['width', 'height', 'area'])
+        df = pd.DataFrame(data, columns=['ref_width', 'ref_height', 'ref_area'])
         df, img, im_path, df_path = create_data(df, image, output_directory, shape)
         return df, img, im_path, df_path
     
@@ -237,21 +226,10 @@ def dummy_data_gen(output_directory, shape="arc", min_elem=10, max_elem=20, im_w
             draw_ellipse(draw, square_subregion(rect), width)
             for rect in sample
             if (rect.width > 132 and rect.height > 132)]
-        df = pd.DataFrame(data, columns=['width', 'height', 'area'])
+        df = pd.DataFrame(data, columns=['ref_width', 'ref_height', 'ref_area'])
         df, img, im_path, df_path = create_data(df, image, output_directory, shape)
         return df, img, im_path, df_path
     
     else:
         print("The shape value that has been input is incorrect, check options for shape again.")
 
-# using subregion as in the arc function results in circles, so a separate circle function isn't necessary
-
-# TODO: write 2 functions 1) curvature test, 2) x-sect test
-# make sure that files are named correctly for each test and that these can run through the curvature_test and
-# section_test scripts.
-# the script here should just generate images
-# make sure to date and timestamp those images
-# include the appropriate references in the columns of the csv files
-# edit ellipse script so that the it doesn't produce such ridiculous proportions
-# fewer circles/ellipses
-#

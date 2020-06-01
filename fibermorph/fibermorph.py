@@ -767,8 +767,11 @@ def taubin_curv(coords, resolution):
     
     if np.isfinite(r):
         curv = 1 / (r / resolution)
-        return curv
-    elif np.isfinite(r):
+        if curv >= 0.00001:
+            return curv
+        else:
+            return 0
+    else:
         return 0
 
 
@@ -898,7 +901,7 @@ def imread(input_file):
 
 
 @timing
-def analyze_all_curv(img, name, output_path, resolution, window_size_mm=1):
+def analyze_all_curv(img, name, output_path, resolution, window_size_mm=1, test=False):
     """Analyzes curvature for all elements in an image.
 
     Parameters
@@ -913,6 +916,8 @@ def analyze_all_curv(img, name, output_path, resolution, window_size_mm=1):
         Number of pixels per mm in original image.
     window_size_mm : float
         Desired size for window of measurement in mm.
+    test : bool
+        True or False for whether this is being run for validation tests
 
     Returns
     -------
@@ -987,11 +992,13 @@ def analyze_all_curv(img, name, output_path, resolution, window_size_mm=1):
     print(im_sumdf)
     print("\n")
     
-    return im_sumdf
-
+    if test:
+        return within_im_curvdf2
+    else:
+        return im_sumdf
 
 @timing
-def curvature_seq(input_file, output_path, resolution, window_size_mm, save_img):
+def curvature_seq(input_file, output_path, resolution, window_size_mm, save_img, test=False):
     """Sequence of functions to be executed for calculating curvature in fibermorph.
 
     Parameters
@@ -1006,6 +1013,8 @@ def curvature_seq(input_file, output_path, resolution, window_size_mm, save_img)
         Desired size for window of measurement in mm.
     save_img : bool
         True or false for saving images.
+    test : bool
+        True or false for whether this is being run for validation tests.
 
     Returns
     -------
@@ -1030,7 +1039,7 @@ def curvature_seq(input_file, output_path, resolution, window_size_mm, save_img)
     pruned_im = prune(skeleton_im, im_name, output_path, save_img)
     
     # analyze
-    im_df = analyze_all_curv(pruned_im, im_name, output_path, resolution, window_size_mm)
+    im_df = analyze_all_curv(pruned_im, im_name, output_path, resolution, window_size_mm, test)
     
     return im_df
 
