@@ -151,7 +151,7 @@ def draw_ellipse(draw, rect, width):
 
 def create_data(df, image, output_directory, shape):
     jetzt = datetime.now()
-    timestamp = jetzt.strftime("%b%d_%H%M_")
+    timestamp = jetzt.strftime("%b%d_%H%M_%S_%f_")
     df_path = df.to_csv(pathlib.Path(output_directory).joinpath(timestamp + shape + "_data.csv"))
     print(df)
     im_path = pathlib.Path(output_directory).joinpath(timestamp + shape + "_data.tiff")

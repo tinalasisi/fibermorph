@@ -314,15 +314,24 @@ def analyze_section(input_file, output_path, minsize=20, maxsize=150, resolution
 
     Returns
     -------
-    type
-        Description of returned object.
+    pd Dataframe
+        Pandas Dataframe with section information for image.
 
     """
     
     # segment the image first
     img, im_name = imread(input_file)
+
+    img_bool = np.asarray(img, dtype=np.bool)
+
+    # Gets the unique values in the image matrix. Since it is binary, there should only be 2.
+    unique, counts = np.unique(img_bool, return_counts=True)
     
-    seg_im = segment_section(img)
+    if len(unique) != 2:
+        print("Image is not binarized!")
+        seg_im = segment_section(img)
+    else:
+        seg_im = skimage.util.invert(img_bool)
     
     # label the image
     label_im, num_elem = skimage.measure.label(seg_im, connectivity=2, return_num=True)
