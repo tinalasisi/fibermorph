@@ -11,8 +11,6 @@ import pandas as pd
 from fibermorph import dummy_data
 from fibermorph import fibermorph
 
-
-
 # %% functions
 
 def create_results_cache():
