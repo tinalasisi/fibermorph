@@ -1,8 +1,11 @@
 from setuptools import setup
 
+version_py = "fibermorph/_version.py"
+exec(open(version_py).read())
+
 setup(
     name='fibermorph',
-    version='0.1.0',
+    version=__version__,
     packages=['test', 'analyze', 'preprocessing'],
     url='https://github.com/tinalasisi/fibermorph',
     license='MIT',
