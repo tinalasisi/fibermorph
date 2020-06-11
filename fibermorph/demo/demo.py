@@ -1,5 +1,5 @@
 # %% import
-
+import argparse
 import os
 import pathlib
 import shutil
@@ -12,6 +12,55 @@ from fibermorph import dummy_data
 from fibermorph import fibermorph
 
 # %% functions
+
+# Grab version from _version.py in the fibermorph directory
+dir = os.path.dirname(__file__)
+version_py = os.path.join(dir, "_version.py")
+exec(open(version_py).read())
+
+
+# parse_args() and timing() listed first for easy updating/access
+
+def parse_args():
+    """
+    Parse command-line arguments
+    Returns
+    -------
+    Parser argument namespace
+    """
+    parser = argparse.ArgumentParser(description="FibermorphDemo")
+    
+    parser.add_argument(
+        "--output_directory", required=True,
+        help="Required. Full path to and name of desired output directory. "
+             "Will be created if it doesn't exist.")
+    
+    parser.add_argument(
+        "--input_directory", required=True,
+        help="Required. Full path to and name of desired directory containing "
+             "input files.")
+    
+    parser.add_argument(
+        "--resolution_mm", required=True, type=int,
+        help="Integer. Number of pixels per mm.")
+
+    # Create mutually exclusive flags for each of fibermorph's modules
+    module_group = parser.add_mutually_exclusive_group(required=True)
+
+    module_group.add_argument(
+        "--raw2gray", action="store_true", default=False,
+        help="")
+
+    module_group.add_argument(
+        "--curvature", action="store_true", default=False,
+        help="")
+
+    module_group.add_argument(
+        "--section", action="store_true", default=False,
+        help="")
+
+    args = parser.parse_args()
+    return args
 
 def create_results_cache():
     abspath = os.path.abspath(__file__)
@@ -161,18 +210,21 @@ def validation_section(output_location, repeats=12):
 
 # %% Testing fibermorph_curvature
 
-input_directory = "/Users/tinalasisi/Desktop/2020-05-19_fibermorphTest/test_input/curv"
-
-jetzt = datetime.now()
-timestamp = jetzt.strftime("%b%d_%H%M_")
-testname = str(timestamp + "DemoTest_Curv")
-
-output_location = fibermorph.make_subdirectory(create_results_cache(), append_name=testname)
-
-fibermorph.curvature(input_directory, output_location, jobs=1, resolution=132, window_size_mm=0.5, save_img=True)
+def curv_real():
+    
+    jetzt = datetime.now()
+    timestamp = jetzt.strftime("%b%d_%H%M_")
+    testname = str(timestamp + "DemoTest_Curv")
+    
+    output_location = fibermorph.make_subdirectory(create_results_cache(), append_name=testname)
+    
+    fibermorph.curvature(input_directory, output_location, jobs=1, resolution=132, window_size_mm=0.5, save_img=True)
+    
+    return True
 
 # %% Testing fibermorph section
 
+def section_real()
 input_directory = "/Users/tinalasisi/Desktop/2020-05-19_fibermorphTest/test_input/section"
 # input_directory = "/Users/tinalasisi/Box/01_TPL5158/Box_Dissertation/HairPhenotyping_Methods/data/fibermorph_input/section/ValidationSet_section_TIFF/TIFF/"
 
