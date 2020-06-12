@@ -5,14 +5,15 @@ import pathlib
 import requests
 import shutil
 import sys
-from datetime import datetime
-
 import numpy as np
 import pandas as pd
-
-sys.path.append(os.path.join(os.path.dirname(__file__), '../'))
+from datetime import datetime
 from fibermorph import dummy_data
 from fibermorph import fibermorph
+
+
+sys.path.append(os.path.join(os.path.dirname(__file__), '../'))
+
 
 # %% functions
 
@@ -39,31 +40,34 @@ def delete_results_cache():
 
     return True
 
+
 def url_files(im_type):
-    
+
     if im_type == "curv":
-        
+
         demo_url = [
             "https://github.com/tinalasisi/fibermorph_DemoData/raw/master/test_input/curv/004_demo_curv.tiff",
             "https://github.com/tinalasisi/fibermorph_DemoData/raw/master/test_input/curv/027_demo_nocurv.tiff"]
 
         return demo_url
-    
+
     elif im_type == "section":
-        
+
         demo_url = [
             "https://github.com/tinalasisi/fibermorph_DemoData/raw/master/test_input/section/140918_demo_section.tiff",
             "https://github.com/tinalasisi/fibermorph_DemoData/raw/master/test_input/section/140918_demo_section2.tiff"]
-        
+
         return demo_url
 
+
 def download_im(tmpdir, demo_url):
-    
+
     for u in demo_url:
         r = requests.get(u, allow_redirects=True)
         open(str(tmpdir.joinpath(pathlib.Path(u).name)), "wb").write(r.content)
-        
+
     return True
+
 
 def get_data(im_type="all"):
     relpath = "fibermorph/demo/data"
@@ -73,9 +77,10 @@ def get_data(im_type="all"):
     if im_type == "curv" or im_type == "section":
         tmpdir = fibermorph.make_subdirectory(datadir, im_type)
         urllist = url_files(im_type)
-        
+
         download_im(tmpdir, urllist)
-        
+        return tmpdir
+
     else:
         typelist = ["curv", "section"]
         for im_type in typelist:
@@ -83,21 +88,22 @@ def get_data(im_type="all"):
             urllist = url_files(im_type)
 
             download_im(tmpdir, urllist)
-    
-    return True
+
+            return True
 
 
 def teardown_data(append=""):
     datadir = pathlib.Path.cwd().joinpath("fibermorph/demo/data/tmpdata/"+append)
 
     print("Deleting {}".format(str(datadir.resolve())))
-    
+
     try:
         shutil.rmtree(datadir)
     except FileNotFoundError:
         print("The file doesn't exist. Nothing has been deleted")
-    
+
     return True
+
 
 def validation_curv(output_location, repeats=3):
     jetzt = datetime.now()
@@ -157,9 +163,9 @@ def validation_curv(output_location, repeats=3):
 
         print("Results saved as:\n")
         print(df_path)
-    
+
     shutil.rmtree(pathlib.Path(output_path).joinpath("analysis"))
-    
+
     return main_output_path
 
 
@@ -222,44 +228,79 @@ def validation_section(output_location, repeats=12):
     return main_output_path
 
 
+# %% Main modules
+
+
 def real_curv():
-    input_directory = pathlib.Path.cwd().joinpath("fibermorph/demo/data/tmpdata/curv")
+    """Downloads curvature data and runs fibermorph_curv analysis.
+
+    Returns
+    -------
+    bool
+        True.
+
+    """
+    input_directory = get_data("curv")
     jetzt = datetime.now()
     timestamp = jetzt.strftime("%b%d_%H%M_")
     testname = str(timestamp + "DemoTest_Curv")
-    
+
     output_location = fibermorph.make_subdirectory(create_results_cache(), append_name=testname)
-    
+
     fibermorph.curvature(input_directory, output_location, jobs=1, resolution=132, window_size_mm=0.5, save_img=True)
-    
+
     return True
 
 
 def real_section():
-    input_directory = pathlib.Path.cwd().joinpath("fibermorph/demo/data/tmpdata/section")
-    
+    """Downloads section data and runs fibermorph_section analysis.
+
+    Returns
+    -------
+    bool
+        True.
+
+    """
+    input_directory = get_data("section")
+
     jetzt = datetime.now()
     timestamp = jetzt.strftime("%b%d_%H%M_")
     testname = str(timestamp + "DemoTest_Section")
-    
+
     output_dir = fibermorph.make_subdirectory(create_results_cache(), append_name=testname)
-    
+
     fibermorph.section(input_directory, output_dir, jobs=4, resolution=1.06)
-    
+
     return True
 
 
 def dummy_curv():
+    """Creates dummy data, runs curvature analysis and provides error data for this analysis compared to known values from the dummy data.
+
+    Returns
+    -------
+    bool
+        True.
+
+    """
     output_dir = validation_curv(create_results_cache(), repeats=1)
     print("Validation data and error analyses are saved in:\n")
     print(output_dir)
-    
+
     return True
 
 
 def dummy_section():
+    """Creates dummy data, runs section analysis and provides error data for this analysis compared to known values from the dummy data.
+
+    Returns
+    -------
+    bool
+        True.
+
+    """
     output_dir = validation_section(create_results_cache(), repeats=2)
     print("Validation data and error analyses are saved in:\n")
     print(output_dir)
-    
+
     return True
