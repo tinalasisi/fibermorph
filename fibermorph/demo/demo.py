@@ -66,7 +66,8 @@ def download_im(tmpdir, demo_url):
     return True
 
 def get_data(im_type="all"):
-    datadir = pathlib.Path.cwd().joinpath("fibermorph/demo/data")
+    relpath = "fibermorph/demo/data"
+    datadir = pathlib.Path.cwd().joinpath(relpath)
     datadir = fibermorph.make_subdirectory(datadir, "tmpdata")
 
     if im_type == "curv" or im_type == "section":

@@ -215,7 +215,7 @@ def make_subdirectory(directory, append_name=""):
                 output_path))
         
         # Use pathlib to create the folder.
-        pathlib.Path.mkdir(output_path)
+        pathlib.Path.mkdir(output_path, parents=True, exist_ok=True)
         
         # Prints a status to let you know that the folder has been created
         print("Output path has been created")
