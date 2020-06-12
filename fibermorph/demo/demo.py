@@ -39,49 +39,63 @@ def delete_results_cache():
 
     return True
 
+def url_files(im_type):
+    
+    if im_type == "curv":
+        
+        demo_url = [
+            "https://github.com/tinalasisi/fibermorph_DemoData/raw/master/test_input/curv/004_demo_curv.tiff",
+            "https://github.com/tinalasisi/fibermorph_DemoData/raw/master/test_input/curv/027_demo_nocurv.tiff"]
 
-def get_data():
-    exists = os.path.exists("curv")
-    if not exists:
-        os.makedirs("curv")
+        return demo_url
+    
+    elif im_type == "section":
+        
+        demo_url = [
+            "https://github.com/tinalasisi/fibermorph_DemoData/raw/master/test_input/section/140918_demo_section.tiff",
+            "https://github.com/tinalasisi/fibermorph_DemoData/raw/master/test_input/section/140918_demo_section2.tiff"]
+        
+        return demo_url
 
-    exists = os.path.exists("section")
-    if not exists:
-        os.makedirs("section")
+def download_im(tmpdir, demo_url):
+    
+    for u in demo_url:
+        r = requests.get(u, allow_redirects=True)
+        open(str(tmpdir.joinpath(pathlib.Path(u).name)), "wb").write(r.content)
+        
+    return True
 
-    demo_curv_url = "https://github.com/tinalasisi/fibermorph_DemoData/raw/master/test_input/curv/004_demo_curv.tiff"
-    r = requests.get(demo_curv_url, allow_redirects=True)
-    open('curv/004_demo_curv.tiff', "wb").write(r.content)
+def get_data(im_type="all"):
+    datadir = pathlib.Path.cwd().joinpath("fibermorph/demo/data")
+    datadir = fibermorph.make_subdirectory(datadir, "tmpdata")
 
-    demo_nocurv_url = "https://github.com/tinalasisi/fibermorph_DemoData/raw/master/test_input/curv/027_demo_nocurv.tiff"
-    r = requests.get(demo_curv_url, allow_redirects=True)
-    open('curv/027_demo_nocurv.tiff', "wb").write(r.content)
+    if im_type == "curv" or im_type == "section":
+        tmpdir = fibermorph.make_subdirectory(datadir, im_type)
+        urllist = url_files(im_type)
+        
+        download_im(tmpdir, urllist)
+        
+    else:
+        typelist = ["curv", "section"]
+        for im_type in typelist:
+            tmpdir = fibermorph.make_subdirectory(datadir, im_type)
+            urllist = url_files(im_type)
 
-    demo_section_url = "https://github.com/tinalasisi/fibermorph_DemoData/raw/master/test_input/section/140918_demo_section.tiff"
-    r = requests.get(demo_curv_url, allow_redirects=True)
-    open('section/140918_demo_section.tiff', "wb").write(r.content)
-
-    demo_section2_url = "https://github.com/tinalasisi/fibermorph_DemoData/raw/master/test_input/section/140918_demo_section2.tiff"
-    r = requests.get(demo_curv_url, allow_redirects=True)
-    open('section/140918_demo_section2.tiff', "wb").write(r.content)
-
+            download_im(tmpdir, urllist)
+    
     return True
 
 
-def teardown_data():
-    files = [
-        'curv/004_demo_curv.tiff', 'curv/027_demo_nocurv.tiff', 'section/140918_demo_section.tiff', 'section/140918_demo_section2.tiff']
-    dirs = [
-        "curv", "section"]
+def teardown_data(append=""):
+    datadir = pathlib.Path.cwd().joinpath("fibermorph/demo/data/tmpdata/"+append)
 
-    for file_name in files:
-        if os.path.exists(file_name):
-            os.remove(file_name)
-
-    for dir_name in dirs:
-        if os.path.exists(dir_name):
-            os.rmdir(dir_name)
-
+    print("Deleting {}".format(str(datadir.resolve())))
+    
+    try:
+        shutil.rmtree(datadir)
+    except FileNotFoundError:
+        print("The file doesn't exist. Nothing has been deleted")
+    
     return True
 
 def validation_curv(output_location, repeats=3):
@@ -206,8 +220,6 @@ def validation_section(output_location, repeats=12):
     return main_output_path
 
 
-# %% Testing fibermorph_curvature
-
 def curv_real():
     
     jetzt = datetime.now()
@@ -245,13 +257,10 @@ output_dir = validation_curv(create_results_cache(), repeats=1)
 print("Validation data and error analyses are saved in:\n")
 print(output_dir)
 
-# %% Testing section with dummy data
 
-output_dir = validation_section(create_results_cache(), repeats=2)
-print("Validation data and error analyses are saved in:\n")
-print(output_dir)
-
-# %% Delete results cache
-
-delete_results_cache()
-teardown_data()
+def dummy_section():
+    output_dir = validation_section(create_results_cache(), repeats=2)
+    print("Validation data and error analyses are saved in:\n")
+    print(output_dir)
+    
+    return True
