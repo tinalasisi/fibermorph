@@ -10,7 +10,7 @@ from datetime import datetime
 import numpy as np
 import pandas as pd
 
-sys.path.append(os.path.join(os.path.dirname(__file__),'../'))
+sys.path.append(os.path.join(os.path.dirname(__file__), '../'))
 from fibermorph import dummy_data
 from fibermorph import fibermorph
 
@@ -123,21 +123,20 @@ def validation_curv(output_location, repeats=3):
             im_height=3900,
             width=10)
 
-        valid_df = pd.DataFrame(df).sort_values(by=['ref_length'], ignore_index=True)
+        valid_df = pd.DataFrame(df).sort_values(by=['ref_length'], ignore_index=True).reset_index(drop=True)
 
-        test_df = fibermorph.curvature_seq(im_path, output_path, resolution=1, window_size_mm=10, save_img=False,
-                                           test=True)
+        test_df = fibermorph.curvature_seq(im_path, output_path, resolution=1, window_size_mm=10, save_img=False, test=True)
 
-        test_df2 = pd.DataFrame(test_df).sort_values(by=['length'], ignore_index=True)
+        test_df2 = pd.DataFrame(test_df).sort_values(by=['length'], ignore_index=True).reset_index(drop=True)
 
         col_list = ['error_length']
 
         if shape == "arc":
             valid_df['index1'] = valid_df['ref_length'] * valid_df['ref_radius']
-            valid_df = pd.DataFrame(valid_df).sort_values(by=['index1'], ignore_index=True)
+            valid_df = pd.DataFrame(valid_df).sort_values(by=['index1'], ignore_index=True).reset_index(drop=True)
             test_df2['radius'] = 1 / test_df2['curv_median']
             test_df2['index2'] = test_df2['length'] * test_df2['radius']
-            test_df2 = pd.DataFrame(test_df2).sort_values(by=['index2'], ignore_index=True)
+            test_df2 = pd.DataFrame(test_df2).sort_values(by=['index2'], ignore_index=True).reset_index(drop=True)
             test_df2['error_radius'] = abs(valid_df['ref_radius'] - test_df2['radius']) / valid_df['ref_radius']
             test_df2['error_curvature'] = abs(valid_df['ref_curvature'] - test_df2['curv_median']) / valid_df[
                 'ref_curvature']
@@ -148,7 +147,8 @@ def validation_curv(output_location, repeats=3):
 
         valid_df2 = valid_df.join(test_df2)
 
-        error_df = valid_df2[col_list]
+        error_df = valid_df2
+        # error_df = valid_df2[col_list]
 
         im_name = im_path.stem
         df_path = pathlib.Path(output_path).joinpath(str(im_name) + "_errordata.csv")
@@ -156,9 +156,9 @@ def validation_curv(output_location, repeats=3):
 
         print("Results saved as:\n")
         print(df_path)
-
-    shutil.rmtree(pathlib.Path(main_output_path).joinpath("analysis"))
-
+    
+    shutil.rmtree(pathlib.Path(output_path).joinpath("analysis"))
+    
     return main_output_path
 
 
@@ -208,7 +208,8 @@ def validation_section(output_location, repeats=12):
 
         col_list = ['error_min', 'error_max', 'error_area', 'error_eccentricity']
 
-        error_df = valid_df2[col_list]
+        error_df = valid_df2
+        # error_df = valid_df2[col_list]
 
         im_name = im_path.stem
         df_path = pathlib.Path(output_path).joinpath(str(im_name) + "_errordata.csv")
@@ -220,8 +221,8 @@ def validation_section(output_location, repeats=12):
     return main_output_path
 
 
-def curv_real():
-    
+def real_curv():
+    input_directory = pathlib.Path.cwd().joinpath("fibermorph/demo/data/tmpdata/curv")
     jetzt = datetime.now()
     timestamp = jetzt.strftime("%b%d_%H%M_")
     testname = str(timestamp + "DemoTest_Curv")
@@ -232,30 +233,27 @@ def curv_real():
     
     return True
 
-# %% Testing fibermorph section
 
-def section_real():
-input_directory = "/Users/tinalasisi/Desktop/2020-05-19_fibermorphTest/test_input/section"
-# input_directory = "/Users/tinalasisi/Box/01_TPL5158/Box_Dissertation/HairPhenotyping_Methods/data/fibermorph_input/section/ValidationSet_section_TIFF/TIFF/"
+def real_section():
+    input_directory = pathlib.Path.cwd().joinpath("fibermorph/demo/data/tmpdata/section")
+    
+    jetzt = datetime.now()
+    timestamp = jetzt.strftime("%b%d_%H%M_")
+    testname = str(timestamp + "DemoTest_Section")
+    
+    output_dir = fibermorph.make_subdirectory(create_results_cache(), append_name=testname)
+    
+    fibermorph.section(input_directory, output_dir, jobs=4, resolution=1.06)
+    
+    return True
 
-jetzt = datetime.now()
-timestamp = jetzt.strftime("%b%d_%H%M_")
-testname = str(timestamp + "DemoTest_Section")
 
-output_dir = fibermorph.make_subdirectory(create_results_cache(), append_name=testname)
-
-fibermorph.section(input_directory, output_dir, jobs=4, resolution=1.06)
-# fibermorph.section(input_directory, output_dir, jobs=4, resolution=4.25, minsize=20, maxsize=150)
-
-# note: throws error if the resolution is 4.25 if you don't use the second input directory
-
-# fibermorph.list_images(input_directory)
-
-# %% Testing curvature with dummy data
-
-output_dir = validation_curv(create_results_cache(), repeats=1)
-print("Validation data and error analyses are saved in:\n")
-print(output_dir)
+def dummy_curv():
+    output_dir = validation_curv(create_results_cache(), repeats=1)
+    print("Validation data and error analyses are saved in:\n")
+    print(output_dir)
+    
+    return True
 
 
 def dummy_section():
