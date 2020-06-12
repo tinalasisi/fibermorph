@@ -6,7 +6,7 @@ exec(open(version_py).read())
 setup(
     name='fibermorph',
     version=__version__,
-    packages=['test', 'analyze', 'preprocessing'],
+    packages=['fibermorph'],
     url='https://github.com/tinalasisi/fibermorph',
     license='MIT',
     author='tinalasisi',

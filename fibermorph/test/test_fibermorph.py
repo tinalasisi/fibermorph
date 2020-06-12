@@ -44,6 +44,7 @@ def test_convert():
 
 def test_analyze_all_curv(tmp_path):
     df, img = dummy_data.dummy_data_gen(output_directory=tmp_path, shape="arc")
+    print(np.asarray(img).dtype)
     assert np.asarray(img).dtype is np.dtype('uint8')
     # analysis_dir = tmp_path
     # resolution = 1.0
@@ -81,5 +82,3 @@ def test_():
 
 def test_():
     pass
-
-

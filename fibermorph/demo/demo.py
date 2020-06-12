@@ -1,76 +1,30 @@
 # %% import
-import argparse
+
 import os
 import pathlib
+import requests
 import shutil
+import sys
 from datetime import datetime
 
 import numpy as np
 import pandas as pd
 
-from fibermorph import dummy_data
-from fibermorph import fibermorph
+sys.path.append(os.path.join(os.path.dirname(__file__),'../'))
+import dummy_data
+import fibermorph
 
 # %% functions
-
-# Grab version from _version.py in the fibermorph directory
-dir = os.path.dirname(__file__)
-version_py = os.path.join(dir, "_version.py")
-exec(open(version_py).read())
-
-
-# parse_args() and timing() listed first for easy updating/access
-
-def parse_args():
-    """
-    Parse command-line arguments
-    Returns
-    -------
-    Parser argument namespace
-    """
-    parser = argparse.ArgumentParser(description="FibermorphDemo")
-    
-    parser.add_argument(
-        "--output_directory", required=True,
-        help="Required. Full path to and name of desired output directory. "
-             "Will be created if it doesn't exist.")
-    
-    parser.add_argument(
-        "--input_directory", required=True,
-        help="Required. Full path to and name of desired directory containing "
-             "input files.")
-    
-    parser.add_argument(
-        "--resolution_mm", required=True, type=int,
-        help="Integer. Number of pixels per mm.")
-
-    # Create mutually exclusive flags for each of fibermorph's modules
-    module_group = parser.add_mutually_exclusive_group(required=True)
-
-    module_group.add_argument(
-        "--raw2gray", action="store_true", default=False,
-        help="")
-
-    module_group.add_argument(
-        "--curvature", action="store_true", default=False,
-        help="")
-
-    module_group.add_argument(
-        "--section", action="store_true", default=False,
-        help="")
-
-    args = parser.parse_args()
-    return args
 
 def create_results_cache():
     abspath = os.path.abspath(__file__)
     dname = os.path.dirname(abspath)
     os.chdir(dname)
-    
+
     # Designate where fibermorph should make the directory with all your results - this location must exist!
     os.makedirs(r'./results_cache', exist_ok=True)
     output_directory = os.path.abspath(r'./results_cache')
-    
+
     return output_directory
 
 
@@ -79,27 +33,71 @@ def delete_results_cache():
     dname = os.path.dirname(abspath)
     os.chdir(dname)
     cache = "./results_cache"
-    
+
     print("Deleting {}".format(os.path.abspath(cache)))
     shutil.rmtree(cache)
-    
+
     return True
 
+
+def get_data():
+    exists = os.path.exists("curv")
+    if not exists:
+        os.makedirs("curv")
+
+    exists = os.path.exists("section")
+    if not exists:
+        os.makedirs("section")
+
+    demo_curv_url = "https://github.com/tinalasisi/fibermorph_DemoData/raw/master/test_input/curv/004_demo_curv.tiff"
+    r = requests.get(demo_curv_url, allow_redirects=True)
+    open('curv/004_demo_curv.tiff', "wb").write(r.content)
+
+    demo_nocurv_url = "https://github.com/tinalasisi/fibermorph_DemoData/raw/master/test_input/curv/027_demo_nocurv.tiff"
+    r = requests.get(demo_curv_url, allow_redirects=True)
+    open('curv/027_demo_nocurv.tiff', "wb").write(r.content)
+
+    demo_section_url = "https://github.com/tinalasisi/fibermorph_DemoData/raw/master/test_input/section/140918_demo_section.tiff"
+    r = requests.get(demo_curv_url, allow_redirects=True)
+    open('section/140918_demo_section.tiff', "wb").write(r.content)
+
+    demo_section2_url = "https://github.com/tinalasisi/fibermorph_DemoData/raw/master/test_input/section/140918_demo_section2.tiff"
+    r = requests.get(demo_curv_url, allow_redirects=True)
+    open('section/140918_demo_section2.tiff', "wb").write(r.content)
+
+    return True
+
+
+def teardown_data():
+    files = [
+        'curv/004_demo_curv.tiff', 'curv/027_demo_nocurv.tiff', 'section/140918_demo_section.tiff', 'section/140918_demo_section2.tiff']
+    dirs = [
+        "curv", "section"]
+
+    for file_name in files:
+        if os.path.exists(file_name):
+            os.remove(file_name)
+
+    for dir_name in dirs:
+        if os.path.exists(dir_name):
+            os.rmdir(dir_name)
+
+    return True
 
 def validation_curv(output_location, repeats=3):
     jetzt = datetime.now()
     timestamp = jetzt.strftime("%b%d_%H%M_")
     testname = str(timestamp + "ValidationTest_Curv")
-    
+
     main_output_path = fibermorph.make_subdirectory(output_location, append_name=testname)
-    
+
     dummy_dir = fibermorph.make_subdirectory(main_output_path, append_name="ValidationData")
     shape_list = ["arc", "line"]
-    
+
     replist = [el for el in shape_list for i in range(repeats)]
-    
+
     output_path = fibermorph.make_subdirectory(main_output_path, append_name="ValidationAnalysis")
-    
+
     for shape in replist:
         print(shape)
         df, img, im_path, df_path = dummy_data.dummy_data_gen(
@@ -110,16 +108,16 @@ def validation_curv(output_location, repeats=3):
             im_width=5200,
             im_height=3900,
             width=10)
-        
+
         valid_df = pd.DataFrame(df).sort_values(by=['ref_length'], ignore_index=True)
-        
+
         test_df = fibermorph.curvature_seq(im_path, output_path, resolution=1, window_size_mm=10, save_img=False,
                                            test=True)
-        
+
         test_df2 = pd.DataFrame(test_df).sort_values(by=['length'], ignore_index=True)
-        
+
         col_list = ['error_length']
-        
+
         if shape == "arc":
             valid_df['index1'] = valid_df['ref_length'] * valid_df['ref_radius']
             valid_df = pd.DataFrame(valid_df).sort_values(by=['index1'], ignore_index=True)
@@ -129,24 +127,24 @@ def validation_curv(output_location, repeats=3):
             test_df2['error_radius'] = abs(valid_df['ref_radius'] - test_df2['radius']) / valid_df['ref_radius']
             test_df2['error_curvature'] = abs(valid_df['ref_curvature'] - test_df2['curv_median']) / valid_df[
                 'ref_curvature']
-            
+
             col_list = ['error_radius', 'error_curvature', 'error_length']
-        
+
         test_df2['error_length'] = abs(valid_df['ref_length'] - test_df2['length']) / valid_df['ref_length']
-        
+
         valid_df2 = valid_df.join(test_df2)
-        
+
         error_df = valid_df2[col_list]
-        
+
         im_name = im_path.stem
         df_path = pathlib.Path(output_path).joinpath(str(im_name) + "_errordata.csv")
         error_df.to_csv(df_path)
-        
+
         print("Results saved as:\n")
         print(df_path)
-    
+
     shutil.rmtree(pathlib.Path(main_output_path).joinpath("analysis"))
-    
+
     return main_output_path
 
 
@@ -154,16 +152,16 @@ def validation_section(output_location, repeats=12):
     jetzt = datetime.now()
     timestamp = jetzt.strftime("%b%d_%H%M_")
     testname = str(timestamp + "ValidationTest_Section")
-    
+
     main_output_path = fibermorph.make_subdirectory(output_location, append_name=testname)
-    
+
     dummy_dir = fibermorph.make_subdirectory(main_output_path, append_name="ValidationData")
     shape_list = ["circle", "ellipse"]
-    
+
     replist = [el for el in shape_list for i in range(repeats)]
-    
+
     output_path = fibermorph.make_subdirectory(main_output_path, append_name="ValidationAnalysis")
-    
+
     for shape in replist:
         print(shape)
         df, img, im_path, df_path = dummy_data.dummy_data_gen(
@@ -174,7 +172,7 @@ def validation_section(output_location, repeats=12):
             im_width=5200,
             im_height=3900,
             width=1)
-        
+
         valid_df = pd.DataFrame(df).sort_values(by=[0], axis=1)
         min_ax = np.asarray(valid_df)[0][0]
         max_ax = np.asarray(valid_df)[0][1]
@@ -182,29 +180,29 @@ def validation_section(output_location, repeats=12):
         valid_df['ref_max'] = max_ax
         valid_df['ref_eccentricity'] = np.sqrt(1 - (min_ax ** 2) / (max_ax ** 2))
         valid_df.drop(columns=['ref_height', 'ref_width'])
-        
+
         test_df = fibermorph.analyze_section(im_path, output_path, minsize=0, maxsize=3900, resolution=1.0)
-        
+
         test_df['error_min'] = abs(valid_df['ref_min'] - test_df['min']) / valid_df['ref_min']
         test_df['error_max'] = abs(valid_df['ref_max'] - test_df['max']) / valid_df['ref_max']
-        
+
         test_df['error_area'] = abs(valid_df['ref_area'] - test_df['area']) / valid_df['ref_area']
         test_df['error_eccentricity'] = np.nan_to_num(
             abs(valid_df['ref_eccentricity'] - test_df['eccentricity']) / valid_df['ref_eccentricity'], posinf=0)
-        
+
         valid_df2 = valid_df.join(test_df)
-        
+
         col_list = ['error_min', 'error_max', 'error_area', 'error_eccentricity']
-        
+
         error_df = valid_df2[col_list]
-        
+
         im_name = im_path.stem
         df_path = pathlib.Path(output_path).joinpath(str(im_name) + "_errordata.csv")
         error_df.to_csv(df_path)
-        
+
         print("Results saved as:\n")
         print(df_path)
-    
+
     return main_output_path
 
 
@@ -224,7 +222,7 @@ def curv_real():
 
 # %% Testing fibermorph section
 
-def section_real()
+def section_real():
 input_directory = "/Users/tinalasisi/Desktop/2020-05-19_fibermorphTest/test_input/section"
 # input_directory = "/Users/tinalasisi/Box/01_TPL5158/Box_Dissertation/HairPhenotyping_Methods/data/fibermorph_input/section/ValidationSet_section_TIFF/TIFF/"
 
@@ -256,3 +254,4 @@ print(output_dir)
 # %% Delete results cache
 
 delete_results_cache()
+teardown_data()
