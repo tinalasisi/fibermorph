@@ -17,7 +17,6 @@ import pandas as pd
 import os
 from datetime import datetime
 from sympy import geometry
-from fibermorph import make_subdirectory
 
 random.seed()
 
