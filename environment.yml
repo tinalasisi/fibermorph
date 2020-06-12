@@ -1,4 +1,4 @@
-name: /Users/tinalasisi/PycharmProjects/fibermorph/venv
+name: fibermorph_env
 channels:
   - defaults
 dependencies:
@@ -49,4 +49,3 @@ dependencies:
     - scikit-learn==0.22.1
     - scipy==1.4.1
     - sqlparse==0.3.0
-
