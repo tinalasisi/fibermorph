@@ -8,32 +8,31 @@ import sys
 import numpy as np
 import pandas as pd
 from datetime import datetime
-from fibermorph import dummy_data
-from fibermorph import fibermorph
+
+# sys.path.append(os.path.join(os.path.dirname(__file__), '../'))
+import dummy_data
+import fibermorph
 
 
-sys.path.append(os.path.join(os.path.dirname(__file__), '../'))
+
 
 
 # %% functions
 
 def create_results_cache():
-    abspath = os.path.abspath(__file__)
-    dname = os.path.dirname(abspath)
-    os.chdir(dname)
+    relpath = "fibermorph/demo"
+    datadir = pathlib.Path.cwd().joinpath(relpath)
+    cache = fibermorph.make_subdirectory(datadir, "results_cache")
 
     # Designate where fibermorph should make the directory with all your results - this location must exist!
-    os.makedirs(r'./results_cache', exist_ok=True)
-    output_directory = os.path.abspath(r'./results_cache')
+    os.makedirs(cache, exist_ok=True)
+    output_directory = os.path.abspath(cache)
 
     return output_directory
 
 
 def delete_results_cache():
-    abspath = os.path.abspath(__file__)
-    dname = os.path.dirname(abspath)
-    os.chdir(dname)
-    cache = "./results_cache"
+    cache = pathlib.Path.cwd().joinpath("fibermorph/demo/results_cache")
 
     print("Deleting {}".format(os.path.abspath(cache)))
     shutil.rmtree(cache)

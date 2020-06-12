@@ -28,6 +28,14 @@ from skimage import filters
 from skimage.filters import threshold_minimum
 from skimage.segmentation import clear_border
 from skimage.util import invert
+# sys.path.append(os.path.join(os.path.dirname(__file__), '../'))
+
+import demo
+
+
+
+
+
 
 # Grab version from _version.py in the fibermorph directory
 dir = os.path.dirname(__file__)
@@ -47,21 +55,21 @@ def parse_args():
     parser = argparse.ArgumentParser(description="Fibermorph")
     
     parser.add_argument(
-        "--output_directory", required=True,
+        "--output_directory", default=None,
         help="Required. Full path to and name of desired output directory. "
              "Will be created if it doesn't exist.")
     
     parser.add_argument(
-        "--input_directory", required=True,
+        "--input_directory", default=None,
         help="Required. Full path to and name of desired directory containing "
              "input files.")
 
     parser.add_argument(
-        "--resolution_mm", required=True, type=int,
+        "--resolution_mm", type=int, default=132,
         help="Integer. Number of pixels per mm.")
 
     parser.add_argument(
-        "--resolution_mu", required=True, type=float,
+        "--resolution_mu", type=float, default=4.25,
         help="Float. Number of pixels per micron.")
     
     parser.add_argument(
@@ -104,7 +112,49 @@ def parse_args():
         "--section", action="store_true", default=False,
         help="")
     
+    module_group.add_argument(
+        "--demo_real_curv", action="store_true", default=False,
+        help="")
+
+    module_group.add_argument(
+        "--demo_real_section", action="store_true", default=False,
+        help="")
+
+    module_group.add_argument(
+        "--demo_dummy_curv", action="store_true", default=False,
+        help="")
+
+    module_group.add_argument(
+        "--demo_dummy_section", action="store_true", default=False,
+        help="")
+
+    module_group.add_argument(
+        "--demo_teardown_data", action="store_true", default=False,
+        help="")
+
+    module_group.add_argument(
+        "--demo_delete_results_cache", action="store_true", default=False,
+        help="")
+    
     args = parser.parse_args()
+    
+    # Validate arguments
+    demo_mods = [
+        args.demo_real_curv,
+        args.demo_real_section,
+        args.demo_dummy_curv,
+        args.demo_dummy_section,
+        args.demo_teardown_data,
+        args.demo_delete_results_cache]
+    
+    if any(demo_mods) is False:
+        if args.input_directory is None and args.output_directory is None:
+            sys.exit("ExitError: need both --input_directory and --output_directory")
+        if args.input_directory is None:
+            sys.exit("ExitError: need --input_directory")
+        if args.output_directory is None:
+            sys.exit("ExitError: need --output_directory")
+    
     return args
 
 
@@ -1254,10 +1304,30 @@ def section(input_directory, main_output_path, jobs, resolution, minsize=20, max
 def main():
     args = parse_args()
     
+    # Run fibermorph
+    
+    if args.demo_teardown_data is True:
+        demo.teardown_data()
+        sys.exit(0)
+    elif args.demo_delete_results_cache is True:
+        demo.delete_results_cache()
+        sys.exit(0)
+    elif args.demo_real_curv is True:
+        demo.real_curv()
+        sys.exit(0)
+    elif args.demo_real_section is True:
+        demo.real_section()
+        sys.exit(0)
+    elif args.demo_dummy_curv is True:
+        demo.dummy_curv()
+        sys.exit(0)
+    elif args.demo_dummy_section is True:
+        demo.dummy_section()
+        sys.exit(0)
+        
     # Check for output directory and create it if it doesn't exist
     output_dir = make_subdirectory(args.output_directory)
-    
-    # Run fibermorph
+
     if args.raw2gray is True:
         raw2gray(
             args.input_directory, output_dir, args.file_extension, args.jobs)
