@@ -11,8 +11,8 @@ import numpy as np
 import pandas as pd
 
 sys.path.append(os.path.join(os.path.dirname(__file__),'../'))
-import dummy_data
-import fibermorph
+from fibermorph import dummy_data
+from fibermorph import fibermorph
 
 # %% functions
 
