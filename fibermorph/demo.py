@@ -14,9 +14,6 @@ import dummy_data
 import fibermorph
 
 
-
-
-
 # %% functions
 
 def create_results_cache():
