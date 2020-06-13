@@ -109,3 +109,6 @@ venv
 
 # Data
 data
+
+.DS_Store
+*.pyc
