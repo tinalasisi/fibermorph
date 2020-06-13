@@ -1,12 +1,14 @@
 import os
+import sys
 import numpy as np
 
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from fibermorph import fibermorph
 from fibermorph import dummy_data
 
-# Get current directory
-dir = os.path.dirname(__file__)
 
+# Get current directory
+dir = os.path.dirname(os.path.abspath(__file__))
 
 def teardown_module(function):
     teardown_files = [
