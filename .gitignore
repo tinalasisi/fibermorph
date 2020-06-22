@@ -9,6 +9,7 @@ testdata/
 fibermorph/test/curv
 fibermorph/test/results_cache
 fibermorph/test/section
+fibermorph.egg-info
 
 # Created by https://www.gitignore.io/api/pycharm+all
 # Edit at https://www.gitignore.io/?templates=pycharm+all
