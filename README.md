@@ -11,14 +11,11 @@ Python package for image analysis of hair curvature and cross-section
 1. Open a terminal.
     #### Mac OS: 
       + Open the *Terminal* application.
-      + Enter the Pathname for the fibermorph directory. E.g. `/Users/tpl5158/Desktop/fibermorph-master`
     #### Windows:
       + Type `Anaconda` into your search bar and choose the `Anaconda Powershell` application.
-      + Enter the Pathname for the fibermorph directory. E.g. `\Users\tpl5158\Desktop\fibermorph-master`
     #### Linux:
       + Open a terminal window using your search bar or the appropriate keyboard shortcut for  your Linux distribution.
-      + Navigate to the fibermorph directory you just unzipped.
-      
+     
       
 2. Install the fibermorph conda environment
       + Install the fibermorph package conda environment using one of two options:
