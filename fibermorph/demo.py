@@ -10,8 +10,8 @@ import pandas as pd
 from datetime import datetime
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-import dummy_data
-import fibermorph
+from fibermorph import dummy_data
+from fibermorph import fibermorph
 
 
 # %% functions
