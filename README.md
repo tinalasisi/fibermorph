@@ -48,16 +48,12 @@ Before using this on any of your own data, it's recommended that you test that y
 
 ## Using the fibermorph packages
 
-### analyze 
-These are the main packages for analyzing hair fiber morphology. The packages used are in the `analyze` directory, but you will be opening a text editor (any text editor will do, just not a word _processor_ like MS Word)  to edit the corresponding files in the `input_files` directory.
+
 
 **curvature**: To calculate curvature from grayscale TIFF:
-- edit `curvature_input.py` to input the appropriate directory paths to images and output for your machine.
-    + `python input_files/curvature_input.py`
 
 **section**: To calculate cross-sectional properties from grayscale TIFF:
-- edit `section_input.py` to input the appropriate directory paths to images and output for your machine.
-    + `python input_files/section_input.py`
+
 
 
     
