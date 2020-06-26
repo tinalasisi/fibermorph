@@ -16,9 +16,8 @@ from fibermorph import fibermorph
 
 # %% functions
 
-def create_results_cache():
-    relpath = "fibermorph/demo"
-    datadir = pathlib.Path.cwd().joinpath(relpath)
+def create_results_cache(path):
+    datadir = pathlib.Path(path)
     cache = fibermorph.make_subdirectory(datadir, "results_cache")
 
     # Designate where fibermorph should make the directory with all your results - this location must exist!
@@ -28,8 +27,8 @@ def create_results_cache():
     return output_directory
 
 
-def delete_results_cache():
-    cache = pathlib.Path.cwd().joinpath("fibermorph/demo/results_cache")
+def delete_results_cache(path):
+    cache = path
 
     print("Deleting {}".format(os.path.abspath(cache)))
     shutil.rmtree(cache)
@@ -65,31 +64,22 @@ def download_im(tmpdir, demo_url):
     return True
 
 
-def get_data(im_type="all"):
-    relpath = "fibermorph/demo/data"
-    datadir = pathlib.Path.cwd().joinpath(relpath)
+def get_data(path):
+    datadir = pathlib.Path(path)
     datadir = fibermorph.make_subdirectory(datadir, "tmpdata")
 
-    if im_type == "curv" or im_type == "section":
+    typelist = ["curv", "section"]
+    for im_type in typelist:
         tmpdir = fibermorph.make_subdirectory(datadir, im_type)
         urllist = url_files(im_type)
 
         download_im(tmpdir, urllist)
-        return tmpdir
 
-    else:
-        typelist = ["curv", "section"]
-        for im_type in typelist:
-            tmpdir = fibermorph.make_subdirectory(datadir, im_type)
-            urllist = url_files(im_type)
-
-            download_im(tmpdir, urllist)
-
-            return True
+        return True
 
 
-def teardown_data(append=""):
-    datadir = pathlib.Path.cwd().joinpath("fibermorph/demo/data/tmpdata/"+append)
+def teardown_data(path):
+    datadir = pathlib.Path(path)
 
     print("Deleting {}".format(str(datadir.resolve())))
 
@@ -227,7 +217,7 @@ def validation_section(output_location, repeats=12):
 # %% Main modules
 
 
-def real_curv():
+def real_curv(path):
     """Downloads curvature data and runs fibermorph_curv analysis.
 
     Returns
@@ -241,14 +231,14 @@ def real_curv():
     timestamp = jetzt.strftime("%b%d_%H%M_")
     testname = str(timestamp + "DemoTest_Curv")
 
-    output_location = fibermorph.make_subdirectory(create_results_cache(), append_name=testname)
+    output_location = fibermorph.make_subdirectory(create_results_cache(path), append_name=testname)
 
     fibermorph.curvature(input_directory, output_location, jobs=1, resolution=132, window_size_mm=0.5, save_img=True)
 
     return True
 
 
-def real_section():
+def real_section(path):
     """Downloads section data and runs fibermorph_section analysis.
 
     Returns
@@ -263,14 +253,14 @@ def real_section():
     timestamp = jetzt.strftime("%b%d_%H%M_")
     testname = str(timestamp + "DemoTest_Section")
 
-    output_dir = fibermorph.make_subdirectory(create_results_cache(), append_name=testname)
+    output_dir = fibermorph.make_subdirectory(create_results_cache(path), append_name=testname)
 
     fibermorph.section(input_directory, output_dir, jobs=4, resolution=1.06)
 
     return True
 
 
-def dummy_curv():
+def dummy_curv(path):
     """Creates dummy data, runs curvature analysis and provides error data for this analysis compared to known values from the dummy data.
 
     Returns
@@ -279,14 +269,14 @@ def dummy_curv():
         True.
 
     """
-    output_dir = validation_curv(create_results_cache(), repeats=1)
+    output_dir = validation_curv(create_results_cache(path), repeats=1)
     print("Validation data and error analyses are saved in:\n")
     print(output_dir)
 
     return True
 
 
-def dummy_section():
+def dummy_section(path):
     """Creates dummy data, runs section analysis and provides error data for this analysis compared to known values from the dummy data.
 
     Returns
@@ -295,7 +285,7 @@ def dummy_section():
         True.
 
     """
-    output_dir = validation_section(create_results_cache(), repeats=2)
+    output_dir = validation_section(create_results_cache(path), repeats=2)
     print("Validation data and error analyses are saved in:\n")
     print(output_dir)
 

@@ -1301,22 +1301,22 @@ def main():
     # Run fibermorph
 
     if args.demo_teardown_data is True:
-        demo.teardown_data()
+        demo.teardown_data(args.output_directory)
         sys.exit(0)
     elif args.demo_delete_results_cache is True:
-        demo.delete_results_cache()
+        demo.delete_results_cache(args.output_directory)
         sys.exit(0)
     elif args.demo_real_curv is True:
-        demo.real_curv()
+        demo.real_curv(args.output_directory)
         sys.exit(0)
     elif args.demo_real_section is True:
-        demo.real_section()
+        demo.real_section(args.output_directory)
         sys.exit(0)
     elif args.demo_dummy_curv is True:
-        demo.dummy_curv()
+        demo.dummy_curv(args.output_directory)
         sys.exit(0)
     elif args.demo_dummy_section is True:
-        demo.dummy_section()
+        demo.dummy_section(args.output_directory)
         sys.exit(0)
 
     # Check for output directory and create it if it doesn't exist
