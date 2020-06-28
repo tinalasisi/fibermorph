@@ -27,11 +27,15 @@ def create_results_cache(path):
     return output_directory
 
 
-def delete_results_cache(path):
-    cache = path
+def delete_dir(path):
+    datadir = pathlib.Path(path)
 
-    print("Deleting {}".format(os.path.abspath(cache)))
-    shutil.rmtree(cache)
+    print("Deleting {}".format(str(datadir.resolve())))
+
+    try:
+        shutil.rmtree(datadir)
+    except FileNotFoundError:
+        print("The file doesn't exist. Nothing has been deleted")
 
     return True
 
@@ -77,18 +81,6 @@ def get_data(path):
 
         return True
 
-
-def teardown_data(path):
-    datadir = pathlib.Path(path)
-
-    print("Deleting {}".format(str(datadir.resolve())))
-
-    try:
-        shutil.rmtree(datadir)
-    except FileNotFoundError:
-        print("The file doesn't exist. Nothing has been deleted")
-
-    return True
 
 
 def validation_curv(output_location, repeats=3):
