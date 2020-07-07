@@ -17,14 +17,17 @@ from fibermorph import fibermorph
 # %% functions
 
 def create_results_cache(path):
-    datadir = pathlib.Path(path)
-    cache = fibermorph.make_subdirectory(datadir, "results_cache")
+    try:
+        datadir = pathlib.Path(path)
+        cache = fibermorph.make_subdirectory(datadir, "results_cache")
 
-    # Designate where fibermorph should make the directory with all your results - this location must exist!
-    os.makedirs(cache, exist_ok=True)
-    output_directory = os.path.abspath(cache)
-
-    return output_directory
+        # Designate where fibermorph should make the directory with all your results - this location must exist!
+        os.makedirs(cache, exist_ok=True)
+        output_directory = os.path.abspath(cache)
+        return output_directory
+    
+    except TypeError:
+        print("Path is missing.")
 
 
 def delete_dir(path):
@@ -80,7 +83,6 @@ def get_data(path):
         download_im(tmpdir, urllist)
 
         return True
-
 
 
 def validation_curv(output_location, repeats=3):

@@ -143,6 +143,10 @@ def parse_args():
             sys.exit("ExitError: need --input_directory")
         if args.output_directory is None:
             sys.exit("ExitError: need --output_directory")
+            
+    else:
+        if args.output_directory is None:
+            sys.exit("ExitError: need --output_directory")
 
     return args
 
@@ -1296,7 +1300,7 @@ def main():
     # Run fibermorph
 
     if args.delete_dir is True:
-        demo.delete_dir(args.input_directory)
+        demo.delete_dir(args.output_directory)
         sys.exit(0)
     elif args.demo_real_curv is True:
         demo.real_curv(args.output_directory)
