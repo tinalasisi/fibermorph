@@ -1328,7 +1328,7 @@ def main():
     elif args.section is True:
         section(
             args.input_directory, output_dir, args.jobs,
-            args.resolution, args.minsize, args.maxsize)
+            args.resolution_mu, args.minsize, args.maxsize)
     else:
         sys.exit("Error. Tim didn't exhaust all module options")
 
