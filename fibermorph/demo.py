@@ -71,16 +71,23 @@ def download_im(tmpdir, demo_url):
     return True
 
 
-def get_data(path):
+def get_data(path, im_type):
     datadir = pathlib.Path(path)
     datadir = fibermorph.make_subdirectory(datadir, "tmpdata")
 
-    typelist = ["curv", "section"]
-    for im_type in typelist:
+    if im_type == "curv" or im_type == "section":
         tmpdir = fibermorph.make_subdirectory(datadir, im_type)
         urllist = url_files(im_type)
 
         download_im(tmpdir, urllist)
+        return tmpdir
+
+    else:
+        typelist = ["curv", "section"]
+        for im_type in typelist:
+            tmpdir = fibermorph.make_subdirectory(datadir, im_type)
+            urllist = url_files(im_type)
+            download_im(tmpdir, urllist)
 
         return True
 
@@ -220,7 +227,7 @@ def real_curv(path):
         True.
 
     """
-    input_directory = get_data("curv")
+    input_directory = get_data(path, "curv")
     jetzt = datetime.now()
     timestamp = jetzt.strftime("%b%d_%H%M_")
     testname = str(timestamp + "DemoTest_Curv")
@@ -241,7 +248,7 @@ def real_section(path):
         True.
 
     """
-    input_directory = get_data("section")
+    input_directory = get_data(path, "section")
 
     jetzt = datetime.now()
     timestamp = jetzt.strftime("%b%d_%H%M_")
