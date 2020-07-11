@@ -92,7 +92,7 @@ def get_data(path, im_type):
         return True
 
 
-def validation_curv(output_location, repeats=3):
+def validation_curv(output_location, repeats):
     jetzt = datetime.now()
     timestamp = jetzt.strftime("%b%d_%H%M_")
     testname = str(timestamp + "ValidationTest_Curv")
@@ -156,7 +156,7 @@ def validation_curv(output_location, repeats=3):
     return main_output_path
 
 
-def validation_section(output_location, repeats=12):
+def validation_section(output_location, repeats):
     jetzt = datetime.now()
     timestamp = jetzt.strftime("%b%d_%H%M_")
     testname = str(timestamp + "ValidationTest_Section")
@@ -261,7 +261,7 @@ def real_section(path):
     return True
 
 
-def dummy_curv(path):
+def dummy_curv(path, repeats=1):
     """Creates dummy data, runs curvature analysis and provides error data for this analysis compared to known values from the dummy data.
 
     Returns
@@ -270,14 +270,14 @@ def dummy_curv(path):
         True.
 
     """
-    output_dir = validation_curv(create_results_cache(path), repeats=1)
+    output_dir = validation_curv(create_results_cache(path), repeats)
     print("Validation data and error analyses are saved in:\n")
     print(output_dir)
 
     return True
 
 
-def dummy_section(path):
+def dummy_section(path, repeats=1):
     """Creates dummy data, runs section analysis and provides error data for this analysis compared to known values from the dummy data.
 
     Returns
@@ -286,7 +286,7 @@ def dummy_section(path):
         True.
 
     """
-    output_dir = validation_section(create_results_cache(path), repeats=2)
+    output_dir = validation_section(create_results_cache(path), repeats)
     print("Validation data and error analyses are saved in:\n")
     print(output_dir)
 

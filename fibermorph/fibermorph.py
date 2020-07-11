@@ -90,6 +90,11 @@ def parse_args():
     parser.add_argument(
         "--save_image", type=bool, default=False,
         help="Boolean. Default is False. Whether the curvature function should save images for intermediate image processing steps.")
+    
+    parser.add_argument(
+        "--repeats", type=int, default=1,
+        help="Integer. Number of times to repeat validation module (i.e. number of sets of dummy data to generate)."
+    )
 
     # Create mutually exclusive flags for each of fibermorph's modules
     module_group = parser.add_mutually_exclusive_group(required=True)
@@ -514,8 +519,11 @@ def binarize_curv(filter_img, im_name, output_path, save_img=False):
     """
 
     selem = skimage.morphology.disk(3)
-
-    thresh_im = filter_img > threshold_minimum(filter_img)
+    
+    try:
+        thresh_im = filter_img > threshold_minimum(filter_img)
+    except:
+        thresh_im = skimage.util.invert(thresh_im)
 
     # clear the border of the image (buffer is the px width to be considered as border)
     cleared_im = skimage.segmentation.clear_border(thresh_im, buffer_size=10)
@@ -1309,10 +1317,10 @@ def main():
         demo.real_section(args.output_directory)
         sys.exit(0)
     elif args.demo_dummy_curv is True:
-        demo.dummy_curv(args.output_directory)
+        demo.dummy_curv(args.output_directory, args.repeats)
         sys.exit(0)
     elif args.demo_dummy_section is True:
-        demo.dummy_section(args.output_directory)
+        demo.dummy_section(args.output_directory, args.repeats)
         sys.exit(0)
 
     # Check for output directory and create it if it doesn't exist
