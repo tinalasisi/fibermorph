@@ -35,7 +35,6 @@ To run the demo, you will input something like:
 
 This command will download the demo data into a new folder `tmpdata` within the path you gave. Then, fibermorph will run the curvature analysis, the results of which will be saved in a new folder `results_cache` at this same location.
 
-
 ## Validation data
 In order to validate the image analysis program, the fibermorph package includes two modules that will generate and analyze dummy data, then run the appropriate analysis and generate error data.
 
@@ -50,14 +49,26 @@ This will run the module and create a `results_cache` within the given path. In 
 
 Running the module once will create a set of data and analyses for a single randomly generated arc and line. To produce more data, simply add the flag `--repeats`  with the number of times you would like to repeat it, e.g. `fibermorph --repeats <integer>`
 
+### Validating section analysis
+`--demo_dummy_section`
+
+This flag will run a demo of fibermorph curvature with dummy data. Arcs and lines are generated, analyzed and error is calculated.
+
+To run the demo, you can enter e.g. `fibermorph --demo_dummy_section --output_directory /Users/<UserName>/<ExistingPath>/<NewFolderName`
+
+This will run the module and create a `results_cache` within the given path. In this folder there will be another folder named `<MonthDay_HourMinute>_ValidationTest_Section` where the generated dummy images and corresponding parameters in spreadsheets will be in a folder named `ValidationData` and the error data will be in a folder named `ValidationAnalysis`.
+
+Running the module once will create a set of data and analyses for a single randomly generated circle and ellipse. To produce more data, simply add the flag `--repeats`  with the number of times you would like to repeat it, e.g. `fibermorph --repeats <integer>`
+
 
 ### Deleting demo folders
 `--delete_dir`
 Can be used to delete directories generated in the demo modules.
 
-Example usage: `fibermorph --delete_dir --output_directory /Users/<UserName>/<ExistingPath>/<NewFolderName`
+Example usage: `fibermorph --delete_dir --output_directory /Users/<UserName>/<ExistingPath>/<NewFolderName>`
 
 ## Using the fibermorph packages
+The main modules of the fibermorph package are `--curvature` and `--section`. Both require the following flags to run:
 
 ```
 --output_directory OUTPUT_DIRECTORY
@@ -67,9 +78,8 @@ Example usage: `fibermorph --delete_dir --output_directory /Users/<UserName>/<Ex
 --jobs JOBS           Integer. Number of parallel jobs to run. Default is 1.
 ```
 
-
-**curvature**: To calculate curvature from grayscale TIFF:
-
+### Curvature
+To calculate curvature from grayscale TIFF images of hair fibers, the flag `--curvature` is used with the following flags:
 ```
 --resolution_mm RESOLUTION_MM
                       Integer. Number of pixels per mm for curvature analysis.
@@ -82,27 +92,38 @@ Example usage: `fibermorph --delete_dir --output_directory /Users/<UserName>/<Ex
                       steps.
 ```
 
-**section**: To calculate cross-sectional properties from grayscale TIFF:
-
+So, to run a curvature analysis, you would enter e.g.
+```
+fibermorph --curvature --input_directory /Users/<UserName>/<ImageFolderPath> --output_directory /Users/<UserName>/<ExistingPath>/ --window_size 0.5 --resolution_mm 132 --save_image TRUE --jobs 2
 ```
 
+### Section
+To calculate cross-sectional properties from grayscale TIFF images of hair fibers, the flag `--section` is used with the following flags:
+```
 --minsize MINSIZE     Integer. Minimum diameter in microns for sections. Default is 20.
 --maxsize MAXSIZE     Integer. Maximum diameter in microns for sections. Default is 150.
---save_image SAVE_IMAGE
-                      Boolean. Default is False. Whether the curvature function should save images for intermediate image processing
-                      steps.
-
 --resolution_mu RESOLUTION_MU       Float. Number of pixels per micron for section analysis.
 
 ```
 
+An example command would be:
+```
+fibermorph --section --input_directory /Users/<UserName>/<ImageFolderPath> --output_directory /Users/<UserName>/<ExistingPath>/ --minsize 30 --maxsize 180 --resolution_mu 4.25 --jobs 2
+```
+
+
 ### Converting raw images to grayscale TIFF
+This package features an additional auxiliary module to convert raw images to grayscale TIFF files if necessary: `--raw2gray`
+
+In addition to the input and output directories, the module needs the user to specify what file extension it should be looking for.
 
 ```
---raw2gray            Convert raw image files to grayscale TIFF files.
-
 --file_extension FILE_EXTENSION
-                      Optional. String. Extension of input files to use in input_directory when using raw2gray function. Default is
-                      .RW2.
+                      Optional. String. Extension of input files to use in input_directory when using raw2gray function. Default is .RW2.
 
+```
+
+A user could enter, for example:
+```
+fibermorph --raw2gray --input_directory /Users/<UserName>/<ImageFolderPath> --output_directory /Users/<UserName>/<ExistingPath>/<NewFolderName> --file_extension .RW2 --jobs 4
 ```
