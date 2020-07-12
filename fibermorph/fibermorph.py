@@ -95,6 +95,10 @@ def parse_args():
         "--repeats", type=int, default=1,
         help="Integer. Number of times to repeat validation module (i.e. number of sets of dummy data to generate)."
     )
+    parser.add_argument(
+        "--within_element", type=bool, default=False,
+        help="Boolean. Default is False. Whether an additional directory should be created with spreadsheets of curvature values within each element."
+    )
 
     # Create mutually exclusive flags for each of fibermorph's modules
     module_group = parser.add_mutually_exclusive_group(required=True)
@@ -864,9 +868,23 @@ def subset_gen(pixel_length, window_size, label):
         subset_start += 1
         subset_end += 1
 
+@timing
+def within_element_func(output_path, name, element, taubin_df):
+    
+    # for within hair distribution
+    label_name = str(element.label)
+    element_df = pd.DataFrame(taubin_df)
+    element_df.columns = ['curv']
+    element_df['label'] = label_name
+    
+    output_path = make_subdirectory(output_path, append_name="WithinElement")
+    with pathlib.Path(output_path).joinpath(name + label_name + ".csv") as save_path:
+            element_df.to_csv(save_path)
+        
+    return True
 
 @timing
-def analyze_each_curv(element, window_size, resolution):
+def analyze_each_curv(element, window_size, resolution, output_path, name, within_element):
     """Calculates curvature for each labeled element in an array.
 
     Parameters
@@ -929,6 +947,9 @@ def analyze_each_curv(element, window_size, resolution):
     within_element_df = [curv_mean, curv_median, length_mm]
     print("\nThe curvature summary stats for this element are:")
     print(within_element_df)
+    
+    if within_element:
+        within_element_func(output_path, name, element, taubin_df)
 
     if within_element_df is not None or np.nan:
         return within_element_df
@@ -960,7 +981,7 @@ def imread(input_file):
 
 
 @timing
-def analyze_all_curv(img, name, output_path, resolution, window_size_mm=1, test=False):
+def analyze_all_curv(img, name, output_path, resolution, window_size_mm=1, test=False, within_element=False):
     """Analyzes curvature for all elements in an image.
 
     Parameters
@@ -977,6 +998,8 @@ def analyze_all_curv(img, name, output_path, resolution, window_size_mm=1, test=
         Desired size for window of measurement in mm.
     test : bool
         True or False for whether this is being run for validation tests
+    within_element
+        True or False for whether to save spreadsheets with within element curvature values
 
     Returns
     -------
@@ -1002,7 +1025,7 @@ def analyze_all_curv(img, name, output_path, resolution, window_size_mm=1, test=
     window_size = int(round(window_size_mm * resolution))  # must be an integer
     print("\nWindow size for analysis is {} pixels".format(window_size))
     print("Analysis of curvature for each element begins...")
-    tempdf = [analyze_each_curv(hair, window_size, resolution) for hair in props]
+    tempdf = [analyze_each_curv(hair, window_size, resolution, output_path, name, within_element) for hair in props]
 
     print("\nData for {} is:".format(name))
     print(tempdf)
@@ -1013,19 +1036,6 @@ def analyze_all_curv(img, name, output_path, resolution, window_size_mm=1, test=
     print(within_im_curvdf)
     print(within_im_curvdf.dtypes)
 
-    # # remove outliers
-    # q1 = within_im_curvdf.quantile(0.01)
-    # q3 = within_im_curvdf.quantile(0.99)
-    # iqr = q3 - q1
-    #
-    # # TODO: check if outlier calculation is correct
-    # within_im_curv_outliers = within_im_curvdf[
-    #     ~((within_im_curvdf < (q1 - 1.5 * iqr)) | (within_im_curvdf > (q3 + 1.5 * iqr))).any(axis=1)]
-    #
-    # print(within_im_curv_outliers)
-    #
-    # within_im_curvdf2 = pd.DataFrame(within_im_curv_outliers, columns=['curv_mean', 'curv_median', 'length']).dropna()
-
     within_im_curvdf2 = pd.DataFrame(within_im_curvdf, columns=['curv_mean', 'curv_median', 'length']).dropna()
 
     print("\nDataFrame with NaN values dropped:")
@@ -1034,7 +1044,7 @@ def analyze_all_curv(img, name, output_path, resolution, window_size_mm=1, test=
     output_path = make_subdirectory(output_path, append_name="analysis")
     with pathlib.Path(output_path).joinpath(name + ".csv") as save_path:
         within_im_curvdf2.to_csv(save_path)
-
+    
     curv_mean_im_mean = within_im_curvdf2['curv_mean'].mean()
     curv_mean_im_median = within_im_curvdf2['curv_mean'].median()
     curv_median_im_mean = within_im_curvdf2['curv_median'].mean()
@@ -1058,7 +1068,7 @@ def analyze_all_curv(img, name, output_path, resolution, window_size_mm=1, test=
 
 
 @timing
-def curvature_seq(input_file, output_path, resolution, window_size_mm, save_img, test=False):
+def curvature_seq(input_file, output_path, resolution, window_size_mm, save_img, test=False, within_element=False):
     """Sequence of functions to be executed for calculating curvature in fibermorph.
 
     Parameters
@@ -1075,6 +1085,8 @@ def curvature_seq(input_file, output_path, resolution, window_size_mm, save_img,
         True or false for saving images.
     test : bool
         True or false for whether this is being run for validation tests.
+    within_element
+        True or False for whether to save spreadsheets with within element curvature values
 
     Returns
     -------
@@ -1099,7 +1111,7 @@ def curvature_seq(input_file, output_path, resolution, window_size_mm, save_img,
     pruned_im = prune(skeleton_im, im_name, output_path, save_img)
 
     # analyze
-    im_df = analyze_all_curv(pruned_im, im_name, output_path, resolution, window_size_mm, test)
+    im_df = analyze_all_curv(pruned_im, im_name, output_path, resolution, window_size_mm, test, within_element)
 
     return im_df
 
@@ -1155,7 +1167,7 @@ def raw2gray(input_directory, output_location, file_type, jobs):
 
 
 @timing
-def curvature(input_directory, main_output_path, jobs, resolution, window_size_mm, save_img):
+def curvature(input_directory, main_output_path, jobs, resolution, window_size_mm, save_img, within_element):
     """Takes directory of grayscale tiff images and analyzes curvature for each curve/line in the image.
 
     Parameters
@@ -1172,6 +1184,8 @@ def curvature(input_directory, main_output_path, jobs, resolution, window_size_m
         Desired window of measurement in mm.
     save_img : bool
         True or false for saving images for image processing steps.
+    within_element
+        True or False for whether to save spreadsheets with within element curvature values
 
     Returns
     -------
@@ -1197,9 +1211,13 @@ def curvature(input_directory, main_output_path, jobs, resolution, window_size_m
     # This is the old parallel jobs function
     im_df = (Parallel(n_jobs=jobs, verbose=100)(
         delayed(curvature_seq)(input_file, output_path,
-                               resolution, window_size_mm, save_img) for input_file in file_list))
+                               resolution, window_size_mm, save_img, test=False, within_element=within_element) for input_file in file_list))
 
     summary_df = pd.concat(im_df)
+    
+    print("This is the summary dataframe for the current sample")
+    print(summary_df)
+    
     summary_df.columns = [
         "ID", "curv_mean_mean", "curv_mean_median", "curv_median_mean", "curv_median_median",
         "length_mean", "length_median", "hair_count"]
@@ -1332,7 +1350,7 @@ def main():
     elif args.curvature is True:
         curvature(
             args.input_directory, output_dir, args.jobs,
-            args.resolution_mm, args.window_size, args.save_image)
+            args.resolution_mm, args.window_size, args.save_image, args.within_element)
     elif args.section is True:
         section(
             args.input_directory, output_dir, args.jobs,

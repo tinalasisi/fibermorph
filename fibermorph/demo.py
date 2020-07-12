@@ -119,7 +119,7 @@ def validation_curv(output_location, repeats):
 
         valid_df = pd.DataFrame(df).sort_values(by=['ref_length'], ignore_index=True).reset_index(drop=True)
 
-        test_df = fibermorph.curvature_seq(im_path, output_path, resolution=1, window_size_mm=10, save_img=False, test=True)
+        test_df = fibermorph.curvature_seq(im_path, output_path, resolution=1, window_size_mm=10, save_img=False, test=True, within_element=False)
 
         test_df2 = pd.DataFrame(test_df).sort_values(by=['length'], ignore_index=True).reset_index(drop=True)
 
@@ -234,7 +234,7 @@ def real_curv(path):
 
     output_location = fibermorph.make_subdirectory(create_results_cache(path), append_name=testname)
 
-    fibermorph.curvature(input_directory, output_location, jobs=1, resolution=132, window_size_mm=0.5, save_img=True)
+    fibermorph.curvature(input_directory, output_location, jobs=1, resolution=132, window_size_mm=0.5, save_img=True, within_element=False)
 
     return True
 
