@@ -90,11 +90,18 @@ To calculate curvature from grayscale TIFF images of hair fibers, the flag `--cu
 --save_image SAVE_IMAGE
                       Boolean. Default is False. Whether the curvature function should save images for intermediate image processing
                       steps.
+
+--within_element WITHIN_ELEMENT
+                      Boolean. Default is False. Whether an
+                      additional directory should be created with
+                      spreadsheets of curvature values within
+                      each element.
+
 ```
 
 So, to run a curvature analysis, you would enter e.g.
 ```
-fibermorph --curvature --input_directory /Users/<UserName>/<ImageFolderPath> --output_directory /Users/<UserName>/<ExistingPath>/ --window_size 0.5 --resolution_mm 132 --save_image TRUE --jobs 2
+fibermorph --curvature --input_directory /Users/<UserName>/<ImageFolderPath> --output_directory /Users/<UserName>/<ExistingPath>/ --window_size 0.5 --resolution_mm 132 --save_image TRUE --within_element FALSE --jobs 2
 ```
 
 ### Section
