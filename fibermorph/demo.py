@@ -92,7 +92,7 @@ def get_data(path, im_type):
         return True
 
 
-def validation_curv(output_location, repeats=3):
+def validation_curv(output_location, repeats, window_size_px, resolution=1):
     jetzt = datetime.now()
     timestamp = jetzt.strftime("%b%d_%H%M_")
     testname = str(timestamp + "ValidationTest_Curv")
@@ -111,26 +111,26 @@ def validation_curv(output_location, repeats=3):
         df, img, im_path, df_path = dummy_data.dummy_data_gen(
             output_directory=dummy_dir,
             shape=shape,
-            min_elem=10,
-            max_elem=20,
+            min_elem=1,
+            max_elem=1,
             im_width=5200,
             im_height=3900,
             width=10)
 
         valid_df = pd.DataFrame(df).sort_values(by=['ref_length'], ignore_index=True).reset_index(drop=True)
 
-        test_df = fibermorph.curvature_seq(im_path, output_path, resolution=1, window_size_mm=10, save_img=False, test=True)
+        test_df = fibermorph.curvature_seq(im_path, output_path, resolution, window_size_px, save_img=False, test=True, within_element=False)
 
         test_df2 = pd.DataFrame(test_df).sort_values(by=['length'], ignore_index=True).reset_index(drop=True)
 
         col_list = ['error_length']
 
         if shape == "arc":
-            valid_df['index1'] = valid_df['ref_length'] * valid_df['ref_radius']
-            valid_df = pd.DataFrame(valid_df).sort_values(by=['index1'], ignore_index=True).reset_index(drop=True)
+            # valid_df['index1'] = valid_df['ref_length'] * valid_df['ref_radius']
+            # valid_df = pd.DataFrame(valid_df).sort_values(by=['index1'], ignore_index=True).reset_index(drop=True)
             test_df2['radius'] = 1 / test_df2['curv_median']
-            test_df2['index2'] = test_df2['length'] * test_df2['radius']
-            test_df2 = pd.DataFrame(test_df2).sort_values(by=['index2'], ignore_index=True).reset_index(drop=True)
+            # test_df2['index2'] = test_df2['length'] * test_df2['radius']
+            # test_df2 = pd.DataFrame(test_df2).sort_values(by=['index2'], ignore_index=True).reset_index(drop=True)
             test_df2['error_radius'] = abs(valid_df['ref_radius'] - test_df2['radius']) / valid_df['ref_radius']
             test_df2['error_curvature'] = abs(valid_df['ref_curvature'] - test_df2['curv_median']) / valid_df[
                 'ref_curvature']
@@ -156,7 +156,7 @@ def validation_curv(output_location, repeats=3):
     return main_output_path
 
 
-def validation_section(output_location, repeats=12):
+def validation_section(output_location, repeats):
     jetzt = datetime.now()
     timestamp = jetzt.strftime("%b%d_%H%M_")
     testname = str(timestamp + "ValidationTest_Section")
@@ -234,7 +234,7 @@ def real_curv(path):
 
     output_location = fibermorph.make_subdirectory(create_results_cache(path), append_name=testname)
 
-    fibermorph.curvature(input_directory, output_location, jobs=1, resolution=132, window_size_mm=0.5, save_img=True)
+    fibermorph.curvature(input_directory, output_location, jobs=1, resolution=132, window_size_mm=0.5, save_img=True, within_element=False)
 
     return True
 
@@ -261,7 +261,7 @@ def real_section(path):
     return True
 
 
-def dummy_curv(path):
+def dummy_curv(path, repeats=1, window_size_px=10):
     """Creates dummy data, runs curvature analysis and provides error data for this analysis compared to known values from the dummy data.
 
     Returns
@@ -270,14 +270,14 @@ def dummy_curv(path):
         True.
 
     """
-    output_dir = validation_curv(create_results_cache(path), repeats=1)
+    output_dir = validation_curv(create_results_cache(path), repeats, window_size_px)
     print("Validation data and error analyses are saved in:\n")
     print(output_dir)
 
     return True
 
 
-def dummy_section(path):
+def dummy_section(path, repeats=1):
     """Creates dummy data, runs section analysis and provides error data for this analysis compared to known values from the dummy data.
 
     Returns
@@ -286,7 +286,7 @@ def dummy_section(path):
         True.
 
     """
-    output_dir = validation_section(create_results_cache(path), repeats=2)
+    output_dir = validation_section(create_results_cache(path), repeats)
     print("Validation data and error analyses are saved in:\n")
     print(output_dir)
 
