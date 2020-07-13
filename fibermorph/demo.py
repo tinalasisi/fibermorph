@@ -126,11 +126,11 @@ def validation_curv(output_location, repeats, window_size_px, resolution=1):
         col_list = ['error_length']
 
         if shape == "arc":
-            valid_df['index1'] = valid_df['ref_length'] * valid_df['ref_radius']
-            valid_df = pd.DataFrame(valid_df).sort_values(by=['index1'], ignore_index=True).reset_index(drop=True)
+            # valid_df['index1'] = valid_df['ref_length'] * valid_df['ref_radius']
+            # valid_df = pd.DataFrame(valid_df).sort_values(by=['index1'], ignore_index=True).reset_index(drop=True)
             test_df2['radius'] = 1 / test_df2['curv_median']
-            test_df2['index2'] = test_df2['length'] * test_df2['radius']
-            test_df2 = pd.DataFrame(test_df2).sort_values(by=['index2'], ignore_index=True).reset_index(drop=True)
+            # test_df2['index2'] = test_df2['length'] * test_df2['radius']
+            # test_df2 = pd.DataFrame(test_df2).sort_values(by=['index2'], ignore_index=True).reset_index(drop=True)
             test_df2['error_radius'] = abs(valid_df['ref_radius'] - test_df2['radius']) / valid_df['ref_radius']
             test_df2['error_curvature'] = abs(valid_df['ref_curvature'] - test_df2['curv_median']) / valid_df[
                 'ref_curvature']
