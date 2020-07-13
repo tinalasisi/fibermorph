@@ -1,4 +1,5 @@
 # Miscellaneous additions
+dist
 .DS_Store
 .cache
 analyze/__pycache__
