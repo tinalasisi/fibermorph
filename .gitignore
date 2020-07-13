@@ -1,4 +1,6 @@
 # Miscellaneous additions
+build
+*.egg-info
 dist
 .DS_Store
 .cache
