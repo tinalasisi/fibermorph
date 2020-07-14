@@ -1,17 +1,24 @@
 # fibermorph
 Python package for image analysis of hair curvature and cross-section
 
-> ### Prerequisites
+> ## Prerequisites
 We recommend that you use a virtual environment to run fibermorph in a virtual environment to avoid any conflicts with other Python packages you might have on your system. To learn more about virtual enviornments, click [here](https://docs.python.org/3/tutorial/venv.html). 
 
 If you are familiar with Python, conda and have the necessary installations on your system, feel free to skip ahead to the section entitled "Install the package", otherwise you can follow the step by step instructions below for the prerequisites.
 
-> ### Setting up
-1. We recommend you download [miniconda]() for your operating system. 
-You may also download Anaconda. The only difference is that Anaconda comes preloaded with more libraries (500 Mb). You won't need this to run fibermorph, so we recommend you stick to minconda which is the smaller (58 Mb) and quicker to download.
+## Setting up
+1. We recommend you download [miniconda](https://docs.conda.io/en/latest/miniconda.html) for your operating system. 
+
+You may also download [Anaconda](https://docs.anaconda.com/anaconda/install/). The only difference is that Anaconda comes preloaded with more libraries (500 Mb). You won't need this to run fibermorph, so we recommend you stick to minconda which is the smaller (58 Mb) and quicker to download.
+
+Whichever you choose *be sure to download the version with Python 3.X and not Python 2.X*.
+
 2. Open a terminal. 
+
 The commands are written in bash, so if you are running this on a Windows OS, you will need to switch into the correct settings. You can find more information for Windows specifically [here]().
+
 3.  Now you can set up a virtual environment. 
+
 Create an empty conda environment, e.g. `conda create -n <YearMonthDay>_fibermorph python=3.8` and load it `conda activate <YearMonthDay>_fibermorph`
 
 You are now ready to install fibermorph!
@@ -20,8 +27,12 @@ You are now ready to install fibermorph!
 ## Install the package
 
 1. After having activated your new virtual environment, you can simply run `pip install fibermorph`.
-You can find the latest release [here]() on this GitHub page and on the [fibermorph PyPI page](). 
-2. You have successfully installed fibermorph. The package is now ready for use. Enter `fibermorph -h` or `fibermorph --help` to see all the flags. You can keep reading to try out the demos and read instructions on the various modules within the package.
+
+You can find the latest release [here](https://github.com/tinalasisi/fibermorph/) on this GitHub page and on the [fibermorph PyPI page](https://pypi.org/project/fibermorph/). 
+
+2. You have successfully installed fibermorph. 
+
+The package is now ready for use. Enter `fibermorph -h` or `fibermorph --help` to see all the flags. You can keep reading to try out the demos and read instructions on the various modules within the package.
 
 ## Demo data
 Before using this on any of your own data, it's recommended that you test that you test whether fibermorph is working properly on your machine. There are a few `demo` modules you can use to check whether fibermorph is running correctly.
