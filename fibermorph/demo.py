@@ -8,18 +8,36 @@ import sys
 import numpy as np
 import pandas as pd
 from datetime import datetime
+from functools import wraps
+import timeit
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from fibermorph import dummy_data
 from fibermorph import fibermorph
 
 
+
 # %% functions
+
+def timing(f):
+    @wraps(f)
+    def wrap(*args, **kw):
+        print("\n\nThe {} function is currently running...\n\n".format(f.__name__))
+        ts = timeit.default_timer()
+        result = f(*args, **kw)
+        te = timeit.default_timer()
+        total_time = fibermorph.convert(te - ts)
+        print(
+            '\n\nThe function: {} has finished running\n\nTotal time: {}\n\n'.format(
+                f.__name__, total_time))
+        return result
+    
+    return wrap
 
 def create_results_cache(path):
     try:
         datadir = pathlib.Path(path)
-        cache = fibermorph.make_subdirectory(datadir, "results_cache")
+        cache = fibermorph.make_subdirectory(datadir, "fibermorph_demo")
 
         # Designate where fibermorph should make the directory with all your results - this location must exist!
         os.makedirs(cache, exist_ok=True)
@@ -92,6 +110,7 @@ def get_data(path, im_type):
         return True
 
 
+# @timing
 def validation_curv(output_location, repeats, window_size_px, resolution=1):
     jetzt = datetime.now()
     timestamp = jetzt.strftime("%b%d_%H%M_")
@@ -155,8 +174,10 @@ def validation_curv(output_location, repeats, window_size_px, resolution=1):
 
     return main_output_path
 
-
+# @timing
 def validation_section(output_location, repeats):
+    
+    
     jetzt = datetime.now()
     timestamp = jetzt.strftime("%b%d_%H%M_")
     testname = str(timestamp + "ValidationTest_Section")
@@ -171,6 +192,7 @@ def validation_section(output_location, repeats):
     output_path = fibermorph.make_subdirectory(main_output_path, append_name="ValidationAnalysis")
 
     for shape in replist:
+        fibermorph.blockPrint()
         print(shape)
         df, img, im_path, df_path = dummy_data.dummy_data_gen(
             output_directory=dummy_dir,
@@ -209,15 +231,17 @@ def validation_section(output_location, repeats):
         df_path = pathlib.Path(output_path).joinpath(str(im_name) + "_errordata.csv")
         error_df.to_csv(df_path)
 
-        print("Results saved as:\n")
-        print(df_path)
+        # print("Results saved as:\n")
+        # print(df_path)
+    
+        fibermorph.enablePrint()
 
     return main_output_path
 
 
 # %% Main modules
 
-
+@timing
 def real_curv(path):
     """Downloads curvature data and runs fibermorph_curv analysis.
 
@@ -227,18 +251,27 @@ def real_curv(path):
         True.
 
     """
-    input_directory = get_data(path, "curv")
+    fibermorph.blockPrint()
+    
+    fibermorph_demo_dir = create_results_cache(path)
+    
+    input_directory = get_data(fibermorph_demo_dir, "curv")
     jetzt = datetime.now()
     timestamp = jetzt.strftime("%b%d_%H%M_")
     testname = str(timestamp + "DemoTest_Curv")
+    
+    output_dir = fibermorph.make_subdirectory(fibermorph_demo_dir, append_name=testname)
+    
+    fibermorph.curvature(input_directory, output_dir, jobs=1, resolution=132, window_size_mm=0.5, save_img=True, within_element=False)
+    
+    fibermorph.enablePrint()
+    
+    print("Demo data for fibermorph curvature are in {}\n\nDemo results are in {}".format(input_directory, output_dir))
 
-    output_location = fibermorph.make_subdirectory(create_results_cache(path), append_name=testname)
-
-    fibermorph.curvature(input_directory, output_location, jobs=1, resolution=132, window_size_mm=0.5, save_img=True, within_element=False)
 
     return True
 
-
+@timing
 def real_section(path):
     """Downloads section data and runs fibermorph_section analysis.
 
@@ -248,19 +281,28 @@ def real_section(path):
         True.
 
     """
-    input_directory = get_data(path, "section")
+    
+    fibermorph.blockPrint()
+    
+    fibermorph_demo_dir = create_results_cache(path)
+    
+    input_directory = get_data(fibermorph_demo_dir, "section")
 
     jetzt = datetime.now()
     timestamp = jetzt.strftime("%b%d_%H%M_")
     testname = str(timestamp + "DemoTest_Section")
 
-    output_dir = fibermorph.make_subdirectory(create_results_cache(path), append_name=testname)
+    output_dir = fibermorph.make_subdirectory(fibermorph_demo_dir, append_name=testname)
 
     fibermorph.section(input_directory, output_dir, jobs=4, resolution=1.06)
+    
+    fibermorph.enablePrint()
+    
+    print("Demo data for fibermorph section are in {}\n\nDemo results are in {}".format(input_directory, output_dir))
 
     return True
 
-
+@timing
 def dummy_curv(path, repeats=1, window_size_px=10):
     """Creates dummy data, runs curvature analysis and provides error data for this analysis compared to known values from the dummy data.
 
@@ -270,13 +312,18 @@ def dummy_curv(path, repeats=1, window_size_px=10):
         True.
 
     """
+    
+    fibermorph.blockPrint()
+    
     output_dir = validation_curv(create_results_cache(path), repeats, window_size_px)
-    print("Validation data and error analyses are saved in:\n")
+    
+    fibermorph.enablePrint()
+    print("Validation data and error analyses for fibermorph curvature are saved in:\n")
     print(output_dir)
 
     return True
 
-
+@timing
 def dummy_section(path, repeats=1):
     """Creates dummy data, runs section analysis and provides error data for this analysis compared to known values from the dummy data.
 
@@ -286,8 +333,12 @@ def dummy_section(path, repeats=1):
         True.
 
     """
+    fibermorph.blockPrint()
+    
     output_dir = validation_section(create_results_cache(path), repeats)
-    print("Validation data and error analyses are saved in:\n")
+    
+    fibermorph.enablePrint()
+    print("Validation data and error analyses for fibermorph section are saved in:\n")
     print(output_dir)
 
     return True
