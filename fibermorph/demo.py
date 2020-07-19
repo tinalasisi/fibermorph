@@ -262,12 +262,11 @@ def real_curv(path):
     
     output_dir = fibermorph.make_subdirectory(fibermorph_demo_dir, append_name=testname)
     
-    fibermorph.curvature(input_directory, output_dir, jobs=1, resolution=132, window_size_mm=0.5, save_img=True, within_element=False)
+    fibermorph.curvature(input_directory, output_dir, jobs=1, resolution=132, window_size=0.5, window_unit="mm", save_img=True, within_element=False)
     
     fibermorph.enablePrint()
     
     print("Demo data for fibermorph curvature are in {}\n\nDemo results are in {}".format(input_directory, output_dir))
-
 
     return True
 

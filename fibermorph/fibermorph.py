@@ -77,8 +77,11 @@ def parse_args():
         help="Integer. Number of parallel jobs to run. Default is 1.")
     
     parser.add_argument(
-        "--window_size", type=float, default=1.0,
-        help="Float. Desired size for window of measurement for curvature analysis in mm. Default is 1.0mm.")
+        "--window_size", type=float, default=10, nargs='+', help="Float or integer. Desired size for window of measurement for curvature analysis in pixels or mm (given the flag --window_unit). Default is 10. Works when the --window_unit is pixels.")
+
+    parser.add_argument(
+        "--window_unit", type=str, default="px",
+        help="String. Unit of measurement for window of measurement for curvature analysis. Can be 'px' (pixels) or 'mm'. Default is 'px'.")
     
     parser.add_argument(
         "--minsize", type=int, default=20,
@@ -855,16 +858,16 @@ def taubin_curv(coords, resolution):
 
 
 # @timing
-def subset_gen(pixel_length, window_size, label):
+def subset_gen(pixel_length, window_size_px, label):
     """Generator function for start and end indices of the window of measurement.
 
     Parameters
     ----------
     pixel_length : int
         Number of pixels in input curve/line.
-    window_size : int
+    window_size_px : int
         The size of window of measurement.
-    label : list
+    label : np.array
         Nested list of coordinates for the input curve/line.
 
     Returns
@@ -873,9 +876,11 @@ def subset_gen(pixel_length, window_size, label):
         Nested list of coordinates for the window of measurement in the input curve/line.
 
     """
+    
+    # TODO: Add warning that under 10pixels will yield problems
     subset_start = 0
-    if window_size > 10:
-        subset_end = int(window_size + subset_start)
+    if window_size_px >= 10:
+        subset_end = int(window_size_px + subset_start)
     else:
         subset_end = int(pixel_length)
     while subset_end <= pixel_length:
@@ -894,21 +899,21 @@ def within_element_func(output_path, name, element, taubin_df):
     element_df['label'] = label_name
     
     output_path = make_subdirectory(output_path, append_name="WithinElement")
-    with pathlib.Path(output_path).joinpath(name + label_name + ".csv") as save_path:
+    with pathlib.Path(output_path).joinpath("WithinElement_" + name + "_" + label_name + ".csv") as save_path:
         element_df.to_csv(save_path)
     
     return True
 
 
 # @timing
-def analyze_each_curv(element, window_size, resolution, output_path, name, within_element):
+def analyze_each_curv(element, window_size_px, resolution, output_path, name, within_element):
     """Calculates curvature for each labeled element in an array.
 
     Parameters
     ----------
     element : Iterable
         A list of RegionProperties (most importantly, coordinates) from scikit-image regionprops function.
-    window_size : int
+    window_size_px : int
         Number of pixels to be used for window of measurement.
     resolution : float
         Number of pixels per mm in original image.
@@ -929,14 +934,15 @@ def analyze_each_curv(element, window_size, resolution, output_path, name, withi
     # Smit AL, Bengough AG, Engels C, van Noordwijk M, Pellerin S, van de Geijn SC. Root Methods: A Handbook.
     # Springer Science & Business Media; 2013. 594 p.323
     
-    length_mm = float(element.area * 1.12 / resolution)
-    # length_mm = float(len(element.coords) / resolution)
+    element_pixel_length = int(len(element.coords))  # length of element in pixels
+    print("\nCurv length is {} pixels".format(element_pixel_length))
+
+    length_mm = float(element_pixel_length / resolution) * 1.12
     print("\nCurv length is {} mm".format(length_mm))
     
-    element_pixel_length = len(element.coords)  # length of element in pixels
-    print("\nCurv length is {} pixels".format(element_pixel_length))
+    window_size_px = int(window_size_px)
     
-    subset_loop = (subset_gen(element_pixel_length, window_size, element_label))  # generates subset loop
+    subset_loop = (subset_gen(element_pixel_length, window_size_px, element_label))  # generates subset loop
     
     # Safe generator expression in case of errors
     curv = [taubin_curv(element_coords, resolution) for element_coords in subset_loop]
@@ -1001,7 +1007,7 @@ def imread(input_file):
 
 
 # @timing
-def analyze_all_curv(img, name, output_path, resolution, window_size_mm=1, test=False, within_element=False):
+def analyze_all_curv(img, name, output_path, resolution, window_size, window_unit, test=False, within_element=False):
     """Analyzes curvature for all elements in an image.
 
     Parameters
@@ -1010,11 +1016,11 @@ def analyze_all_curv(img, name, output_path, resolution, window_size_mm=1, test=
         Pruned skeleton of curves/lines as a uint8 ndarray.
     name : str
         Image name.
-    analysis_dir : str or pathlib object
+    output_path : str or pathlib object
         Output directory.
-    resolution : float
+    resolution : int
         Number of pixels per mm in original image.
-    window_size_mm : float
+    window_size: float or int or list
         Desired size for window of measurement in mm.
     test : bool
         True or False for whether this is being run for validation tests
@@ -1042,27 +1048,41 @@ def analyze_all_curv(img, name, output_path, resolution, window_size_mm=1, test=
     
     props = skimage.measure.regionprops(label_image)
     
-    window_size = int(round(window_size_mm * resolution))  # must be an integer
-    print("\nWindow size for analysis is {} pixels".format(window_size))
-    print("Analysis of curvature for each element begins...")
-    tempdf = [analyze_each_curv(hair, window_size, resolution, output_path, name, within_element) for hair in props]
+    if not isinstance(window_size, list):
+        print("Window size passed from args is:\n")
+        print(type(window_size))
+        print(window_size)
+        print("First item is:")
+        print(window_size[0])
+        window_size = [window_size]
+        
+    window_size = [float(i) for i in window_size]
+        
+    window_size_px = [int(i * resolution) for i in window_size]
     
-    print("\nData for {} is:".format(name))
-    print(tempdf)
+    print("\nWindow size for analysis is {} {}".format(window_size_px, window_unit))
+    print("Analysis of curvature for each element begins...")
+    
+    im_sumdf = [window_iter(props, name, i, window_unit, resolution, output_path, test, within_element) for i in window_size_px]
+    
+    im_sumdf = pd.concat(im_sumdf)
+    
+    return im_sumdf
+
+def window_iter(props, name, window_size, window_unit, resolution, output_path, test, within_element):
+    
+    name = str(name + str(window_size) + str(window_unit))
+    print(name)
+    print(window_size)
+    
+    tempdf = [analyze_each_curv(hair, window_size, resolution, output_path, name, within_element) for hair in props]
     
     within_im_curvdf = pd.DataFrame(tempdf, columns=['curv_mean', 'curv_median', 'length'])
     
-    print("\nDataframe for {} is:".format(name))
-    print(within_im_curvdf)
-    print(within_im_curvdf.dtypes)
-    
     within_im_curvdf2 = pd.DataFrame(within_im_curvdf, columns=['curv_mean', 'curv_median', 'length']).dropna()
     
-    print("\nDataFrame with NaN values dropped:")
-    print(within_im_curvdf2)
-    
     output_path = make_subdirectory(output_path, append_name="analysis")
-    with pathlib.Path(output_path).joinpath(name + ".csv") as save_path:
+    with pathlib.Path(output_path).joinpath(name + "_ImageSum" + ".csv") as save_path:
         within_im_curvdf2.to_csv(save_path)
     
     curv_mean_im_mean = within_im_curvdf2['curv_mean'].mean()
@@ -1088,7 +1108,7 @@ def analyze_all_curv(img, name, output_path, resolution, window_size_mm=1, test=
 
 
 # @timing
-def curvature_seq(input_file, output_path, resolution, window_size_mm, save_img, test=False, within_element=False):
+def curvature_seq(input_file, output_path, resolution, window_size, window_unit="px", save_img=False, test=False, within_element=False):
     """Sequence of functions to be executed for calculating curvature in fibermorph.
 
     Parameters
@@ -1097,9 +1117,9 @@ def curvature_seq(input_file, output_path, resolution, window_size_mm, save_img,
         Path to image that needs to be analyzed.
     output_path : str or pathlib Path object
         Output directory
-    resolution : float
+    resolution : int
         Number of pixels per mm in original image.
-    window_size_mm : float
+    window_size : float or float
         Desired size for window of measurement in mm.
     save_img : bool
         True or false for saving images.
@@ -1133,7 +1153,7 @@ def curvature_seq(input_file, output_path, resolution, window_size_mm, save_img,
     pruned_im = prune(skeleton_im, im_name, output_path, save_img)
     
     # analyze
-    im_df = analyze_all_curv(pruned_im, im_name, output_path, resolution, window_size_mm, test, within_element)
+    im_df = analyze_all_curv(pruned_im, im_name, output_path, resolution, window_size, window_unit, test, within_element)
     
     # enablePrint()
     
@@ -1193,7 +1213,7 @@ def raw2gray(input_directory, output_location, file_type, jobs):
 
 
 @timing
-def curvature(input_directory, main_output_path, jobs, resolution, window_size_mm, save_img, within_element):
+def curvature(input_directory, main_output_path, jobs, resolution, window_size, window_unit, save_img, within_element):
     """Takes directory of grayscale tiff images and analyzes curvature for each curve/line in the image.
 
     Parameters
@@ -1239,7 +1259,7 @@ def curvature(input_directory, main_output_path, jobs, resolution, window_size_m
     # This is the old parallel jobs function
     im_df = (Parallel(n_jobs=jobs, verbose=0)(
         delayed(curvature_seq)(input_file, output_path,
-                               resolution, window_size_mm, save_img, test=False, within_element=within_element) for
+                               resolution, window_size, window_unit, save_img, test=False, within_element=within_element) for
         input_file in file_list))
     
     summary_df = pd.concat(im_df)
@@ -1385,7 +1405,7 @@ def main():
     elif args.curvature is True:
         curvature(
             args.input_directory, output_dir, args.jobs,
-            args.resolution_mm, args.window_size, args.save_image, args.within_element)
+            args.resolution_mm, args.window_size, args.window_unit, args.save_image, args.within_element)
     elif args.section is True:
         section(
             args.input_directory, output_dir, args.jobs,
@@ -1398,3 +1418,8 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+# TODO: remove std.output for regular curvature and section modules
+# TODO: Test again with single window_size instead of list
+# TODO: Suppress make_directory when save_img == False
