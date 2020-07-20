@@ -10,29 +10,14 @@ import pandas as pd
 from datetime import datetime
 from functools import wraps
 import timeit
+from tqdm import tqdm, trange
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from fibermorph import dummy_data
 from fibermorph import fibermorph
 
 
-
 # %% functions
-
-def timing(f):
-    @wraps(f)
-    def wrap(*args, **kw):
-        print("\n\nThe {} function is currently running...\n\n".format(f.__name__))
-        ts = timeit.default_timer()
-        result = f(*args, **kw)
-        te = timeit.default_timer()
-        total_time = fibermorph.convert(te - ts)
-        print(
-            '\n\nThe function: {} has finished running\n\nTotal time: {}\n\n'.format(
-                f.__name__, total_time))
-        return result
-    
-    return wrap
 
 def create_results_cache(path):
     try:
@@ -45,7 +30,7 @@ def create_results_cache(path):
         return output_directory
     
     except TypeError:
-        print("Path is missing.")
+        tqdm.write("Path is missing.")
 
 
 def delete_dir(path):
@@ -110,7 +95,6 @@ def get_data(path, im_type):
         return True
 
 
-# @timing
 def validation_curv(output_location, repeats, window_size_px, resolution=1):
     jetzt = datetime.now()
     timestamp = jetzt.strftime("%b%d_%H%M_")
@@ -125,8 +109,8 @@ def validation_curv(output_location, repeats, window_size_px, resolution=1):
 
     output_path = fibermorph.make_subdirectory(main_output_path, append_name="ValidationAnalysis")
 
-    for shape in replist:
-        print(shape)
+    for shape in tqdm(replist, desc="Generating & analyzing dummy data", position=0, unit="datasets", leave=True):
+        # print(shape)
         df, img, im_path, df_path = dummy_data.dummy_data_gen(
             output_directory=dummy_dir,
             shape=shape,
@@ -138,7 +122,7 @@ def validation_curv(output_location, repeats, window_size_px, resolution=1):
 
         valid_df = pd.DataFrame(df).sort_values(by=['ref_length'], ignore_index=True).reset_index(drop=True)
 
-        test_df = fibermorph.curvature_seq(im_path, output_path, resolution, window_size_px, save_img=False, test=True, within_element=False)
+        test_df = fibermorph.curvature_seq(im_path, output_path, resolution, window_size_px, window_unit="px", save_img=False, test=True, within_element=False)
 
         test_df2 = pd.DataFrame(test_df).sort_values(by=['length'], ignore_index=True).reset_index(drop=True)
 
@@ -167,16 +151,14 @@ def validation_curv(output_location, repeats, window_size_px, resolution=1):
         df_path = pathlib.Path(output_path).joinpath(str(im_name) + "_errordata.csv")
         error_df.to_csv(df_path)
 
-        print("Results saved as:\n")
-        print(df_path)
+        # tqdm.write("\nResults saved as:\n{}\n\n".format(df_path))
 
     shutil.rmtree(pathlib.Path(output_path).joinpath("analysis"))
 
     return main_output_path
 
-# @timing
+
 def validation_section(output_location, repeats):
-    
     
     jetzt = datetime.now()
     timestamp = jetzt.strftime("%b%d_%H%M_")
@@ -191,8 +173,8 @@ def validation_section(output_location, repeats):
 
     output_path = fibermorph.make_subdirectory(main_output_path, append_name="ValidationAnalysis")
 
-    for shape in replist:
-        print(shape)
+    for shape in tqdm(replist, desc="Generating & analyzing dummy data", position=0, unit="datasets", leave=True):
+        # print(shape)
         df, img, im_path, df_path = dummy_data.dummy_data_gen(
             output_directory=dummy_dir,
             shape=shape,
@@ -230,15 +212,14 @@ def validation_section(output_location, repeats):
         df_path = pathlib.Path(output_path).joinpath(str(im_name) + "_errordata.csv")
         error_df.to_csv(df_path)
 
-        # print("Results saved as:\n")
-        # print(df_path)
+        # tqdm.write("\nResults saved as:\n{}\n\n".format(df_path))
     
     return main_output_path
 
 
 # %% Main modules
 
-@timing
+
 def real_curv(path):
     """Downloads curvature data and runs fibermorph_curv analysis.
 
@@ -260,11 +241,11 @@ def real_curv(path):
     
     fibermorph.curvature(input_directory, output_dir, jobs=1, resolution=132, window_size=0.5, window_unit="mm", save_img=True, within_element=False)
     
-    print("Demo data for fibermorph curvature are in {}\n\nDemo results are in {}".format(input_directory, output_dir))
+    tqdm.write("\n\nDemo data for fibermorph curvature are in {}\n\nDemo results are in {}\n\n".format(input_directory, output_dir))
 
     return True
 
-@timing
+
 def real_section(path):
     """Downloads section data and runs fibermorph_section analysis.
 
@@ -285,13 +266,13 @@ def real_section(path):
 
     output_dir = fibermorph.make_subdirectory(fibermorph_demo_dir, append_name=testname)
 
-    fibermorph.section(input_directory, output_dir, jobs=4, resolution=1.06)
+    fibermorph.section(input_directory, output_dir, jobs=4, resolution=1.06, minsize=20, maxsize=150)
     
-    print("Demo data for fibermorph section are in {}\n\nDemo results are in {}".format(input_directory, output_dir))
+    tqdm.write("\n\nDemo data for fibermorph section are in {}\n\nDemo results are in {}\n\n".format(input_directory, output_dir))
 
     return True
 
-@timing
+
 def dummy_curv(path, repeats=1, window_size_px=10):
     """Creates dummy data, runs curvature analysis and provides error data for this analysis compared to known values from the dummy data.
 
@@ -304,12 +285,11 @@ def dummy_curv(path, repeats=1, window_size_px=10):
     
     output_dir = validation_curv(create_results_cache(path), repeats, window_size_px)
     
-    print("Validation data and error analyses for fibermorph curvature are saved in:\n")
-    print(output_dir)
+    tqdm.write("\n\nValidation data and error analyses for fibermorph curvature are saved in:\n{}\n\n".format(output_dir))
 
     return True
 
-@timing
+
 def dummy_section(path, repeats=1):
     """Creates dummy data, runs section analysis and provides error data for this analysis compared to known values from the dummy data.
 
@@ -322,7 +302,6 @@ def dummy_section(path, repeats=1):
     
     output_dir = validation_section(create_results_cache(path), repeats)
     
-    print("Validation data and error analyses for fibermorph section are saved in:\n")
-    print(output_dir)
+    tqdm.write("\n\nValidation data and error analyses for fibermorph section are saved in:\n{}\n\n".format(output_dir))
 
     return True
