@@ -152,10 +152,10 @@ def create_data(df, image, output_directory, shape):
     jetzt = datetime.now()
     timestamp = jetzt.strftime("%b%d_%H%M_%S_%f_")
     df_path = df.to_csv(pathlib.Path(output_directory).joinpath(timestamp + shape + "_data.csv"))
-    print(df)
+    # print(df)
     im_path = pathlib.Path(output_directory).joinpath(timestamp + shape + "_data.tiff")
     image.save(im_path)
-    print(im_path)
+    # print(im_path)
 
     return df, image, im_path, df_path
 
