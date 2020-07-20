@@ -50,66 +50,89 @@ def parse_args():
     -------
     Parser argument namespace
     """
-    parser = argparse.ArgumentParser(description="Fibermorph")
+    parser = argparse.ArgumentParser(description="fibermorph")
     
     parser.add_argument(
-        "--output_directory", "-o", default=None,
+        "-o", "--output_directory", metavar="", default=None,
         help="Required. Full path to and name of desired output directory. "
              "Will be created if it doesn't exist.")
     
     parser.add_argument(
-        "--input_directory", "-i", default=None,
+        "-i", "--input_directory", metavar="", default=None,
         help="Required. Full path to and name of desired directory containing "
              "input files.")
-    
-    parser.add_argument(
-        "--resolution_mm", type=int, default=132,
-        help="Integer. Number of pixels per mm for curvature analysis.")
-    
-    parser.add_argument(
-        "--resolution_mu", type=float, default=4.25,
-        help="Float. Number of pixels per micron for section analysis.")
-    
-    parser.add_argument(
-        "--file_extension", type=str, default=".RW2",
-        help="Optional. String. Extension of input files to use in input_directory when using raw2gray function. "
-             "Default is .RW2.")
-    
-    parser.add_argument(
-        "--jobs", type=int, default=1,
-        help="Integer. Number of parallel jobs to run. Default is 1.")
-    
-    parser.add_argument(
-        "--window_size", type=float, default=10, nargs='+', help="Float or integer. Desired size for window of measurement for curvature analysis in pixels or mm (given the flag --window_unit). Default is 10. Works when the --window_unit is pixels.")
 
     parser.add_argument(
+        "--jobs", type=int, metavar="", default=1,
+        help="Integer. Number of parallel jobs to run. Default is 1.")
+
+    gr_curv = parser.add_argument_group(
+        "curvature options", "arguments used specifically for curvature module"
+    )
+    
+    gr_curv.add_argument(
+        "--resolution", type=int, metavar="", default=132,
+        help="Integer. Number of pixels per mm for curvature analysis.")
+
+    gr_curv.add_argument(
+        "--window_size", type=float, metavar="", default=10, nargs='+',
+        help="Float or integer. Desired size for window of measurement for curvature analysis in pixels or mm (given "
+             "the flag --window_unit). Default is 10. Works when the --window_unit is pixels.")
+
+    gr_curv.add_argument(
         "--window_unit", type=str, default="px", choices=["px", "mm"],
-        help="String. Unit of measurement for window of measurement for curvature analysis. Can be 'px' (pixels) or 'mm'. Default is 'px'.")
-    
-    parser.add_argument(
-        "--minsize", type=int, default=20,
-        help="Integer. Minimum diameter in microns for sections. Default is 20.")
-    
-    parser.add_argument(
-        "--maxsize", type=int, default=150,
-        help="Integer. Maximum diameter in microns for sections. Default is 150.")
-    
-    parser.add_argument(
-        "--save_image", "-s", action="store_true", default=False,
+        help="String. Unit of measurement for window of measurement for curvature analysis. Can be 'px' (pixels) or "
+             "'mm'. Default is 'px'.")
+
+    gr_curv.add_argument(
+        "-s", "--save_image", action="store_true", default=False,
         help="Default is False. Will save intermediate curvature processing images if --save_image flag is included.")
+
+    gr_curv.add_argument(
+        "-W", "--within_element", action="store_true", default=False,
+        help="Boolean. Default is False. Will create an additional directory with spreadsheets of raw curvature "
+             "measurements for each hair if the --within_element flag is included."
+    )
     
-    parser.add_argument(
-        "--repeats", type=int, default=1,
+    gr_sect = parser.add_argument_group(
+        "section options", "arguments used specifically for section module"
+    )
+    
+    gr_sect.add_argument(
+        "--resolution_mu", type=float, metavar="", default=4.25,
+        help="Float. Number of pixels per micron for section analysis.")
+
+    gr_sect.add_argument(
+        "--minsize", type=int, metavar="", default=20,
+        help="Integer. Minimum diameter in microns for sections. Default is 20.")
+
+    gr_sect.add_argument(
+        "--maxsize", type=int, metavar="", default=150,
+        help="Integer. Maximum diameter in microns for sections. Default is 150.")
+
+    gr_raw = parser.add_argument_group(
+        "raw2gray options", "arguments used specifically for raw2gray module"
+    )
+    
+    gr_raw.add_argument(
+        "--file_extension", type=str, metavar="", default=".RW2",
+        help="Optional. String. Extension of input files to use in input_directory when using raw2gray function. "
+             "Default is .RW2.")
+
+    gr_demo = parser.add_argument_group(
+        "demo options", "arguments used specifically for section and curvature demo_dummy modules"
+    )
+    
+    gr_demo.add_argument(
+        "--repeats", type=int, metavar="", default=1,
         help="Integer. Number of times to repeat validation module (i.e. number of sets of dummy data to generate)."
     )
-    
-    parser.add_argument(
-        "--within_element", "-E", action="store_true", default=False,
-        help="Boolean. Default is False. Will create an additional directory with spreadsheets of raw curvature measurements for each hair if the --within_element flag is included."
-    )
-    
+
     # Create mutually exclusive flags for each of fibermorph's modules
-    module_group = parser.add_mutually_exclusive_group(required=True)
+    group = parser.add_argument_group(
+        "fibermorph module options", "mutually exclusive modules that can be run with the fibermorph package"
+    )
+    module_group = group.add_mutually_exclusive_group(required=True)
     
     module_group.add_argument(
         "--raw2gray", action="store_true", default=False,
@@ -1448,7 +1471,7 @@ def main():
     elif args.curvature is True:
         curvature(
             args.input_directory, output_dir, args.jobs,
-            args.resolution_mm, args.window_size, args.window_unit, args.save_image, args.within_element)
+            args.resolution, args.window_size, args.window_unit, args.save_image, args.within_element)
     elif args.section is True:
         section(
             args.input_directory, output_dir, args.jobs,
@@ -1462,5 +1485,3 @@ def main():
 if __name__ == "__main__":
     main()
 
-
-# TODO: Test again with single window_size instead of list
