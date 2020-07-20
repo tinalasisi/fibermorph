@@ -17,6 +17,8 @@ import pandas as pd
 import rawpy
 import scipy
 import skimage
+import contextlib
+import joblib
 import skimage.measure
 import skimage.morphology
 from PIL import Image
@@ -28,6 +30,9 @@ from skimage import filters
 from skimage.filters import threshold_minimum
 from skimage.segmentation import clear_border
 from skimage.util import invert
+from tqdm import tqdm
+from tqdm.contrib.concurrent import process_map
+from functools import partial
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 import demo
@@ -226,10 +231,10 @@ def copy_if_exist(file, directory):
     
     if os.path.isfile(path):
         shutil.copy(path, destination)
-        print('file has been copied'.format(path))
+        # print('file has been copied'.format(path))
         return True
     else:
-        print('file does not exist'.format(path))
+        # print('file does not exist'.format(path))
         return False
 
 
@@ -296,8 +301,7 @@ def make_subdirectory(directory, append_name=""):
     # Since it's a boolean return, and True is the only other option we will simply print the output.
     else:
         # This will print exactly what you tell it, including the space. The backslash n means new line.
-        print(
-            "Output path already exists:\n               {}".format(
+        print("Output path already exists:\n               {}".format(
                 output_path))
     return output_path
 
@@ -323,7 +327,7 @@ def list_images(directory):
     file_list = [p for p in pathlib.Path(mainpath).rglob('*') if p.suffix in exts]
     
     list.sort(file_list)  # sort the files
-    print(len(file_list))  # printed the sorted files
+    # print(len(file_list))  # printed the sorted files
     
     return file_list
 
@@ -351,8 +355,8 @@ def raw_to_gray(imgfile, output_directory):
     basename = os.path.basename(imgfile)
     name = os.path.splitext(basename)[0] + ".tiff"
     output_name = pathlib.Path(output_directory).joinpath(name)
-    print("\n\n")
-    print(name)
+    # print("\n\n")
+    # print(name)
     
     try:
         with rawpy.imread(imgfile) as raw:
@@ -360,10 +364,10 @@ def raw_to_gray(imgfile, output_directory):
             im = Image.fromarray(rgb).convert('LA')
             im.save(str(output_name))
     except:
-        print("\nSomething is wrong with {}\n".format(str(imgfile)))
+        # print("\nSomething is wrong with {}\n".format(str(imgfile)))
         pass
     
-    print('{} has been successfully converted to a grayscale tiff.\n Path is {}\n'.format(name, output_name))
+    # print('{} has been successfully converted to a grayscale tiff.\n Path is {}\n'.format(name, output_name))
     
     return output_name
 
@@ -424,10 +428,10 @@ def analyze_section(input_file, output_path, minsize=20, maxsize=150, resolution
     
     props_df = pd.DataFrame(props_df, columns=['label', 'centroid', 'distance'])
     
-    print(props_df)
+    # print(props_df)
     
     section_id = props_df['distance'].astype(float).idxmin()
-    print(section_id)
+    # print(section_id)
     
     section = props[section_id]
     
@@ -510,12 +514,12 @@ def filter_curv(input_file, output_path, save_img):
     # read in Image
     gray_img = cv2.imread(str(input_path), 0)
     type(gray_img)
-    print("Image size is:", gray_img.shape)
+    # print("Image size is:", gray_img.shape)
     
     # use frangi ridge filter to find hairs, the output will be inverted
     filter_img = skimage.filters.frangi(gray_img)
     type(filter_img)
-    print("Image size is:", filter_img.shape)
+    # print("Image size is:", filter_img.shape)
     
     if save_img:
         output_path = make_subdirectory(output_path, append_name="filtered")
@@ -654,28 +658,28 @@ def check_bin(img):
     
     # Gets the unique values in the image matrix. Since it is binary, there should only be 2.
     unique, counts = np.unique(img_bool, return_counts=True)
-    print(unique)
-    print("Found this many counts:")
-    print(len(counts))
-    print(counts)
+    # print(unique)
+    # print("Found this many counts:")
+    # print(len(counts))
+    # print(counts)
     
     # If the length of unique is not 2 then print that the image isn't a binary.
     if len(unique) != 2:
-        print("Image is not binarized!")
+        # print("Image is not binarized!")
         hair_pixels = len(counts)
-        print("There is/are {} value(s) present, but there should be 2!\n".format(hair_pixels))
+        # print("There is/are {} value(s) present, but there should be 2!\n".format(hair_pixels))
     # If it is binarized, print out that is is and then get the amount of hair pixels to background pixels.
     if counts[0] < counts[1]:
-        print("{} is not reversed".format(str(img)))
+        # print("{} is not reversed".format(str(img)))
         img = skimage.util.invert(img_bool)
-        print("Now {} is reversed =)".format(str(img)))
+        # print("Now {} is reversed =)".format(str(img)))
         return img
     
     else:
-        print("{} is already reversed".format(str(img)))
+        # print("{} is already reversed".format(str(img)))
         img = img_bool
         
-        print(type(img))
+        # print(type(img))
         return img
 
 
@@ -716,7 +720,7 @@ def skeletonize(clean_img, name, output_path, save_img):
         return skeleton
     
     else:
-        print("\n Done skeletonizing {}".format(name))
+        # print("\n Done skeletonizing {}".format(name))
         
         return skeleton
 
@@ -745,7 +749,7 @@ def prune(skeleton, name, pruned_dir, save_img):
 
     """
     
-    print("\nPruning {}...\n".format(name))
+    # print("\nPruning {}...\n".format(name))
     
     # identify 3-way branch-points
     hit1 = np.array([[0, 1, 0],
@@ -772,28 +776,28 @@ def prune(skeleton, name, pruned_dir, save_img):
                      [1, 0, 1]], dtype=np.uint8)
     hit_list.append(hit3)
     hit_list.append(hit4)
-    print("Creating hit and miss list")
+    # print("Creating hit and miss list")
     
     skel_image = check_bin(skeleton)
-    print("Converting image to binary array")
+    # print("Converting image to binary array")
     
     branch_points = np.zeros(skel_image.shape)
-    print("Creating empty array for branch points")
+    # print("Creating empty array for branch points")
     
     for hit in hit_list:
         target = hit.sum()
         curr = ndimage.convolve(skel_image, hit, mode="constant")
         branch_points = np.logical_or(branch_points, np.where(curr == target, 1, 0))
     
-    print("Completed collection of branch points")
+    # print("Completed collection of branch points")
     
     # pixels may "hit" multiple structure elements, ensure the output is a binary image
     branch_points_image = np.where(branch_points, 1, 0)
-    print("Ensuring binary")
+    # print("Ensuring binary")
     
     # use SciPy's ndimage module for locating and determining coordinates of each branch-point
     labels, num_labels = ndimage.label(branch_points_image)
-    print("Labelling branches")
+    # print("Labelling branches")
     
     # use SciPy's ndimage module to determine the coordinates/pixel corresponding to the center of mass of each
     # branchpoint
@@ -808,7 +812,7 @@ def prune(skeleton, name, pruned_dir, save_img):
     
     dilated_branches = ndimage.convolve(branch_points_image, hit, mode='constant')
     dilated_branches_image = np.where(dilated_branches, 1, 0)
-    print("Ensuring binary dilated branches")
+    # print("Ensuring binary dilated branches")
     pruned_image = np.subtract(skel_image, dilated_branches_image)
     # pruned_image = np.subtract(skel_image, branch_points_image)
     
@@ -952,10 +956,10 @@ def analyze_each_curv(element, window_size_px, resolution, output_path, name, wi
     # Springer Science & Business Media; 2013. 594 p.323
     
     element_pixel_length = int(len(element.coords))  # length of element in pixels
-    print("\nCurv length is {} pixels".format(element_pixel_length))
+    # print("\nCurv length is {} pixels".format(element_pixel_length))
 
     length_mm = float(element_pixel_length / resolution) * 1.12
-    print("\nCurv length is {} mm".format(length_mm))
+    # print("\nCurv length is {} mm".format(length_mm))
     
     window_size_px = int(window_size_px)
     
@@ -965,31 +969,31 @@ def analyze_each_curv(element, window_size_px, resolution, output_path, name, wi
     curv = [taubin_curv(element_coords, resolution) for element_coords in subset_loop]
     
     taubin_df = pd.Series(curv).astype('float')
-    print("\nCurv dataframe is:")
-    print(taubin_df)
-    print(type(taubin_df))
-    print("\nCurv df min is:{}".format(taubin_df.min()))
-    print("\nCurv df max is:{}".format(taubin_df.max()))
+    # print("\nCurv dataframe is:")
+    # print(taubin_df)
+    # print(type(taubin_df))
+    # print("\nCurv df min is:{}".format(taubin_df.min()))
+    # print("\nCurv df max is:{}".format(taubin_df.max()))
     
-    print("\nTrimming outliers...")
+    # print("\nTrimming outliers...")
     taubin_df2 = taubin_df[taubin_df.between(taubin_df.quantile(.01), taubin_df.quantile(.99))]  # without outliers
     
-    print("\nAfter trimming outliers...")
-    print("\nCurv dataframe is:")
-    print(taubin_df2)
-    print(type(taubin_df2))
-    print("\nCurv df min is:{}".format(taubin_df2.min()))
-    print("\nCurv df max is:{}".format(taubin_df2.max()))
+    # print("\nAfter trimming outliers...")
+    # print("\nCurv dataframe is:")
+    # print(taubin_df2)
+    # print(type(taubin_df2))
+    # print("\nCurv df min is:{}".format(taubin_df2.min()))
+    # print("\nCurv df max is:{}".format(taubin_df2.max()))
     
     curv_mean = taubin_df2.mean()
-    print("\nCurv mean is:{}".format(curv_mean))
+    # print("\nCurv mean is:{}".format(curv_mean))
     
     curv_median = taubin_df2.median()
-    print("\nCurv median is:{}".format(curv_median))
+    # print("\nCurv median is:{}".format(curv_median))
     
     within_element_df = [curv_mean, curv_median, length_mm]
-    print("\nThe curvature summary stats for this element are:")
-    print(within_element_df)
+    # print("\nThe curvature summary stats for this element are:")
+    # print(within_element_df)
     
     if within_element:
         within_element_func(output_path, name, element, taubin_df)
@@ -1058,29 +1062,29 @@ def analyze_all_curv(img, name, output_path, resolution, window_size, window_uni
     else:
         print(type(img))
     
-    print("Analyzing {}".format(name))
+    # print("Analyzing {}".format(name))
     
     img = check_bin(img)
     
     label_image, num_elements = skimage.measure.label(img.astype(int), connectivity=2, return_num=True)
-    print("\n There are {} elements in the image".format(num_elements))
+    # print("\n There are {} elements in the image".format(num_elements))
     
     props = skimage.measure.regionprops(label_image)
     
     if not isinstance(window_size, list):
-        print("Window size passed from args is:\n")
-        print(type(window_size))
-        print(window_size)
-        print("First item is:")
-        print(window_size[0])
+        # print("Window size passed from args is:\n")
+        # print(type(window_size))
+        # print(window_size)
+        # print("First item is:")
+        # print(window_size[0])
         window_size = [window_size]
         
     window_size = [float(i) for i in window_size]
         
     window_size_px = [int(i * resolution) for i in window_size]
     
-    print("\nWindow size for analysis is {} {}".format(window_size_px, window_unit))
-    print("Analysis of curvature for each element begins...")
+    # print("\nWindow size for analysis is {} {}".format(window_size_px, window_unit))
+    # print("Analysis of curvature for each element begins...")
     
     name = "ID-" + name
     
@@ -1094,8 +1098,8 @@ def analyze_all_curv(img, name, output_path, resolution, window_size, window_uni
 def window_iter(props, name, window_size, window_unit, resolution, output_path, test, within_element):
     
     name = str(name + "_WindowSize-" + str(window_size) + str(window_unit))
-    print(name)
-    print(window_size)
+    # print(name)
+    # print(window_size)
     
     tempdf = [analyze_each_curv(hair, window_size, resolution, output_path, name, within_element) for hair in props]
     
@@ -1119,15 +1123,14 @@ def window_iter(props, name, window_size, window_unit, resolution, output_path, 
         [name, curv_mean_im_mean, curv_mean_im_median, curv_median_im_mean, curv_median_im_median, length_mean,
          length_median, hair_count]).T
     
-    print("\nDataframe for {} is:".format(name))
-    print(im_sumdf)
-    print("\n")
+    # print("\nDataframe for {} is:".format(name))
+    # print(im_sumdf)
+    # print("\n")
     
     if test:
         return within_im_curvdf2
     else:
         return im_sumdf
-
 
 # @timing
 @blockPrint
@@ -1178,6 +1181,25 @@ def curvature_seq(input_file, output_path, resolution, window_size, window_unit,
     
     return im_df
 
+@contextlib.contextmanager
+def tqdm_joblib(tqdm_object):
+    """Context manager to patch joblib to report into tqdm progress bar given as argument"""
+    class TqdmBatchCompletionCallback(joblib.parallel.BatchCompletionCallBack):
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+
+        def __call__(self, *args, **kwargs):
+            tqdm_object.update(n=self.batch_size)
+            return super().__call__(*args, **kwargs)
+
+    old_batch_callback = joblib.parallel.BatchCompletionCallBack
+    joblib.parallel.BatchCompletionCallBack = TqdmBatchCompletionCallback
+    try:
+        yield tqdm_object
+    finally:
+        joblib.parallel.BatchCompletionCallBack = old_batch_callback
+        tqdm_object.close()
+
 
 # Main modules (organized in order of operations: raw2gray, curvature, section)
 
@@ -1207,12 +1229,12 @@ def raw2gray(input_directory, output_location, file_type, jobs):
     
     file_list = [p for p in pathlib.Path(input_directory).rglob('*') if p.suffix in file_type]
     list.sort(file_list)  # sort the files
-    print(file_list)  # printed the sorted files
+    # print(file_list)  # printed the sorted files
     
-    print("There are {} files to convert".format(len(file_list)))
-    print("\n\n")
+    # print("There are {} files to convert".format(len(file_list)))
+    # print("\n\n")
     
-    print("Converting raw files into grayscale tiff files...\n")
+    # print("Converting raw files into grayscale tiff files...\n")
     
     tiff_directory = make_subdirectory(output_location, append_name="tiff")
     
@@ -1223,14 +1245,14 @@ def raw2gray(input_directory, output_location, file_type, jobs):
     total_time = (total_end - total_start)
     
     # This will print out the minutes to the console, with 2 decimal places.
-    print("\n\n")
-    print("Entire analysis took: {}.".format(convert(total_time)))
+    # print("\n\n")
+    # print("Entire analysis took: {}.".format(convert(total_time)))
     
     return True
 
 
-@timing
-@blockPrint
+# @blockPrint
+# @timing
 def curvature(input_directory, main_output_path, jobs, resolution, window_size, window_unit, save_img, within_element):
     """Takes directory of grayscale tiff images and analyzes curvature for each curve/line in the image.
 
@@ -1273,15 +1295,17 @@ def curvature(input_directory, main_output_path, jobs, resolution, window_size, 
     # resolution, window_size_mm, save_img) for input_file in file_list]
     
     # This is the old parallel jobs function
-    im_df = (Parallel(n_jobs=jobs, verbose=0)(
-        delayed(curvature_seq)(input_file, output_path,
-                               resolution, window_size, window_unit, save_img, test=False, within_element=within_element) for
-        input_file in file_list))
+    with tqdm_joblib(tqdm(desc="curvature", total=len(file_list), unit="files", miniters=1)) as progress_bar:
+        progress_bar.monitor_interval = 2
+        im_df = (Parallel(n_jobs=jobs, verbose=0)(
+            delayed(curvature_seq)(input_file, output_path,
+                                   resolution, window_size, window_unit, save_img, test=False, within_element=within_element) for
+            input_file in file_list))
     
     summary_df = pd.concat(im_df)
     
-    print("This is the summary dataframe for the current sample")
-    print(summary_df)
+    # print("This is the summary dataframe for the current sample")
+    # print(summary_df)
     
     summary_df.columns = [
         "ID", "curv_mean_mean", "curv_mean_median", "curv_median_mean", "curv_median_median",
@@ -1299,28 +1323,28 @@ def curvature(input_directory, main_output_path, jobs, resolution, window_size, 
     
     summary_df.set_index('ID', inplace=True)
     
-    print("You've got data...")
-    print(summary_df)
+    # print("You've got data...")
+    # print(summary_df)
     
     jetzt = datetime.now()
     timestamp = jetzt.strftime("_%b%d_%H%M")
     
     with pathlib.Path(output_path).joinpath("curvature_summary_data{}.csv".format(timestamp)) as output_path:
         summary_df.to_csv(output_path)
-        print(output_path)
+        # print(output_path)
     
     # End the timer and then print out the how long it took
     total_end = timer()
     total_time = (total_end - total_start)
     
     # This will print out the minutes to the console, with 2 decimal places.
-    print("Entire analysis took: {}.".format(convert(total_time)))
+    # print("Entire analysis took: {}.".format(convert(total_time)))
     
     return True
 
 
-@timing
-@blockPrint
+# @timing
+# @blockPrint
 def section(input_directory, main_output_path, jobs, resolution, minsize=20, maxsize=150):
     """Takes directory of grayscale images (and locates central section where necessary) and analyzes cross-sectional
     properties for each image.
@@ -1354,8 +1378,8 @@ def section(input_directory, main_output_path, jobs, resolution, minsize=20, max
     file_list = list_images(input_directory)
     
     # Shows what is in the file_list. The backslash n prints a new line
-    print("There are {} files in the cropped_list:".format(len(file_list)))
-    print(file_list, "\n\n")
+    # print("There are {} files in the cropped_list:".format(len(file_list)))
+    # print(file_list, "\n\n")
     
     # Creating subdirectories for cropped images
     
@@ -1368,8 +1392,10 @@ def section(input_directory, main_output_path, jobs, resolution, minsize=20, max
     
     # section_df = [analyze_section(f, output_im_path, minsize, maxsize, resolution) for f in file_list]
     
-    section_df = (Parallel(n_jobs=jobs, verbose=0)(
-        delayed(analyze_section)(f, output_im_path, minsize, maxsize, resolution) for f in file_list))
+    with tqdm_joblib(tqdm(desc="section", total=len(file_list), unit="files", miniters=1)) as progress_bar:
+        progress_bar.monitor_interval = 2
+        section_df = (Parallel(n_jobs=jobs, verbose=0)(
+            delayed(analyze_section)(f, output_im_path, minsize, maxsize, resolution) for f in file_list))
     
     section_df = pd.concat(section_df)
     section_df.columns = ['area', 'min', 'max', 'eccentricity', 'ID']
@@ -1382,7 +1408,7 @@ def section(input_directory, main_output_path, jobs, resolution, minsize=20, max
     total_end = timer()
     total_time = int(total_end - total_start)
     
-    print("Complete analysis time: {}".format(convert(total_time)))
+    # print("Complete analysis time: {}".format(convert(total_time)))
     
     return True
 

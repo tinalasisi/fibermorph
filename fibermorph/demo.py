@@ -192,7 +192,6 @@ def validation_section(output_location, repeats):
     output_path = fibermorph.make_subdirectory(main_output_path, append_name="ValidationAnalysis")
 
     for shape in replist:
-        fibermorph.blockPrint()
         print(shape)
         df, img, im_path, df_path = dummy_data.dummy_data_gen(
             output_directory=dummy_dir,
@@ -234,8 +233,6 @@ def validation_section(output_location, repeats):
         # print("Results saved as:\n")
         # print(df_path)
     
-        fibermorph.enablePrint()
-
     return main_output_path
 
 
@@ -251,7 +248,6 @@ def real_curv(path):
         True.
 
     """
-    fibermorph.blockPrint()
     
     fibermorph_demo_dir = create_results_cache(path)
     
@@ -263,8 +259,6 @@ def real_curv(path):
     output_dir = fibermorph.make_subdirectory(fibermorph_demo_dir, append_name=testname)
     
     fibermorph.curvature(input_directory, output_dir, jobs=1, resolution=132, window_size=0.5, window_unit="mm", save_img=True, within_element=False)
-    
-    fibermorph.enablePrint()
     
     print("Demo data for fibermorph curvature are in {}\n\nDemo results are in {}".format(input_directory, output_dir))
 
@@ -281,8 +275,6 @@ def real_section(path):
 
     """
     
-    fibermorph.blockPrint()
-    
     fibermorph_demo_dir = create_results_cache(path)
     
     input_directory = get_data(fibermorph_demo_dir, "section")
@@ -294,8 +286,6 @@ def real_section(path):
     output_dir = fibermorph.make_subdirectory(fibermorph_demo_dir, append_name=testname)
 
     fibermorph.section(input_directory, output_dir, jobs=4, resolution=1.06)
-    
-    fibermorph.enablePrint()
     
     print("Demo data for fibermorph section are in {}\n\nDemo results are in {}".format(input_directory, output_dir))
 
@@ -312,11 +302,8 @@ def dummy_curv(path, repeats=1, window_size_px=10):
 
     """
     
-    fibermorph.blockPrint()
-    
     output_dir = validation_curv(create_results_cache(path), repeats, window_size_px)
     
-    fibermorph.enablePrint()
     print("Validation data and error analyses for fibermorph curvature are saved in:\n")
     print(output_dir)
 
@@ -332,11 +319,9 @@ def dummy_section(path, repeats=1):
         True.
 
     """
-    fibermorph.blockPrint()
     
     output_dir = validation_section(create_results_cache(path), repeats)
     
-    fibermorph.enablePrint()
     print("Validation data and error analyses for fibermorph section are saved in:\n")
     print(output_dir)
 

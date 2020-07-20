@@ -66,3 +66,13 @@ def test_analyze_each_curv():
 def test_analyze_section():
     # fibermorph.analyze_section()
     pass
+
+
+from tqdm import tqdm
+import pandas as pd
+import numpy as np
+from time import sleep
+
+df = [[1, 2, 3], [4, 5, 6]]
+
+testdf = [np.sum(i) and sleep(2) for i in tqdm(df)]
