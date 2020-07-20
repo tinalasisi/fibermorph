@@ -80,7 +80,7 @@ def parse_args():
         "--window_size", type=float, default=10, nargs='+', help="Float or integer. Desired size for window of measurement for curvature analysis in pixels or mm (given the flag --window_unit). Default is 10. Works when the --window_unit is pixels.")
 
     parser.add_argument(
-        "--window_unit", type=str, default="px",
+        "--window_unit", type=str, default="px", choices=["px", "mm"],
         help="String. Unit of measurement for window of measurement for curvature analysis. Can be 'px' (pixels) or 'mm'. Default is 'px'.")
     
     parser.add_argument(
@@ -92,19 +92,19 @@ def parse_args():
         help="Integer. Maximum diameter in microns for sections. Default is 150.")
     
     parser.add_argument(
-        "--save_image", type=bool, default=False,
-        help="Boolean. Default is False. Whether the curvature function should save images for intermediate image "
-             "processing steps.")
+        "--save_image", action="store_true", default=False,
+        help="Default is False. Will save intermediate curvature processing images if --save_image flag is included.")
     
     parser.add_argument(
         "--repeats", type=int, default=1,
         help="Integer. Number of times to repeat validation module (i.e. number of sets of dummy data to generate)."
     )
+    
     parser.add_argument(
-        "--within_element", type=bool, default=False,
-        help="Boolean. Default is False. Whether an additional directory should be created with spreadsheets of "
-             "curvature values within each element."
+        "--within_element", action="store_true", default=False,
+        help="Boolean. Default is False. Will create an additional directory with spreadsheets of raw curvature measurements for each hair if the --within_element flag is included."
     )
+    
     parser.add_argument(
         "--window_size_px", type=int, default=10,
         help="Integer. Desired size for window of measurement for curvature analysis in pixels. Default is 10 pixels. Fewer than 3 pixels is not recommended."
@@ -187,11 +187,21 @@ def timing(f):
     
     return wrap
 
+def blockPrint(f):
+    @wraps(f)
+    def wrap(*args, **kw):
+        # block all printing to the console
+        sys.stdout = open(os.devnull, 'w')
+        # call the method in question
+        value = f(*args, **kw)
+        # enable all printing to the console
+        sys.stdout = sys.__stdout__
+        # pass the return value of the method back
+        return value
+    return wrap
+        
 
 # Rest of the functions--organized alphabetically
-
-def blockPrint():
-    sys.stdout = open(os.devnull, 'w')
 
 
 def copy_if_exist(file, directory):
@@ -242,11 +252,8 @@ def convert(seconds):
     return "%dh: %02dm: %02ds" % (hour, min, sec)
 
 
-def enablePrint():
-    sys.stdout = sys.__stdout__
-
-
 # @timing
+@blockPrint
 def make_subdirectory(directory, append_name=""):
     """Makes subdirectories.
 
@@ -296,6 +303,7 @@ def make_subdirectory(directory, append_name=""):
 
 
 # @timing
+@blockPrint
 def list_images(directory):
     """Generates a list of all .tif and/or .tiff files in a directory.
 
@@ -320,7 +328,7 @@ def list_images(directory):
     return file_list
 
 
-# @timing
+@timing
 def raw_to_gray(imgfile, output_directory):
     """Function to convert raw image file into tiff file.
 
@@ -361,6 +369,7 @@ def raw_to_gray(imgfile, output_directory):
 
 
 # @timing
+@blockPrint
 def analyze_section(input_file, output_path, minsize=20, maxsize=150, resolution=1.0):
     """This function executes a series of functions on the input file to segment and analyze the cross-section found
     in the image.
@@ -384,8 +393,6 @@ def analyze_section(input_file, output_path, minsize=20, maxsize=150, resolution
         Pandas Dataframe with section information for image.
 
     """
-    
-    blockPrint()
     
     # segment the image first
     img, im_name = imread(input_file)
@@ -435,13 +442,13 @@ def analyze_section(input_file, output_path, minsize=20, maxsize=150, resolution
     img_inv = skimage.util.invert(cropped_bin)
     with pathlib.Path(output_path).joinpath(im_name + ".tiff") as savename:
         plt.imsave(savename, img_inv, cmap='gray')
-        
-    enablePrint()
+
     
     return section_data
 
 
 # @timing
+@blockPrint
 def segment_section(img):
     """Segments the input image to isolate the section(s).
 
@@ -472,7 +479,8 @@ def segment_section(img):
 
 
 # @timing
-def filter_curv(input_file, output_path, save_img=False):
+@blockPrint
+def filter_curv(input_file, output_path, save_img):
     """Uses a ridge filter to extract the curved (or straight) lines from the background noise.
 
     Parameters
@@ -520,7 +528,8 @@ def filter_curv(input_file, output_path, save_img=False):
 
 
 # @timing
-def binarize_curv(filter_img, im_name, output_path, save_img=False):
+@blockPrint
+def binarize_curv(filter_img, im_name, output_path, save_img):
     """Binarizes the filtered output of the fibermorph.filter_curv function.
 
     Parameters
@@ -570,7 +579,8 @@ def binarize_curv(filter_img, im_name, output_path, save_img=False):
 
 
 # @timing
-def remove_particles(img, output_path, name, minpixel=5, prune=False, save_img=False):
+@blockPrint
+def remove_particles(img, output_path, name, minpixel, prune, save_img):
     """Removes particles under a particular size in the images.
 
     Parameters
@@ -624,6 +634,7 @@ def remove_particles(img, output_path, name, minpixel=5, prune=False, save_img=F
 
 
 # @timing
+@blockPrint
 def check_bin(img):
     """Checks whether image has been properly binarized. NB: works on the assumption that there should be more
     background pixels than element pixels.
@@ -669,7 +680,8 @@ def check_bin(img):
 
 
 # @timing
-def skeletonize(clean_img, name, output_path, save_img=False):
+@blockPrint
+def skeletonize(clean_img, name, output_path, save_img):
     """Reduces curves and lines to 1 pixel width (skeletons).
 
     Parameters
@@ -710,7 +722,8 @@ def skeletonize(clean_img, name, output_path, save_img=False):
 
 
 # @timing
-def prune(skeleton, name, pruned_dir, save_img=False):
+@blockPrint
+def prune(skeleton, name, pruned_dir, save_img):
     """Prunes branches from skeletonized image.
     Adapted from: "http://homepages.inf.ed.ac.uk/rbf/HIPR2/thin.htm"
 
@@ -799,12 +812,13 @@ def prune(skeleton, name, pruned_dir, save_img=False):
     pruned_image = np.subtract(skel_image, dilated_branches_image)
     # pruned_image = np.subtract(skel_image, branch_points_image)
     
-    pruned_image = remove_particles(pruned_image, pruned_dir, name, prune=True, save_img=save_img)
+    pruned_image = remove_particles(pruned_image, pruned_dir, name, minpixel=5, prune=True, save_img=save_img)
     
     return pruned_image
 
 
 # @timing
+@blockPrint
 def taubin_curv(coords, resolution):
     """Curvature calculation based on algebraic circle fit by Taubin.
     Adapted from: "https://github.com/PmagPy/PmagPy/blob/2efd4a92ddc19c26b953faaa5c08e3d8ebd305c9/SPD/lib
@@ -858,6 +872,7 @@ def taubin_curv(coords, resolution):
 
 
 # @timing
+@blockPrint
 def subset_gen(pixel_length, window_size_px, label):
     """Generator function for start and end indices of the window of measurement.
 
@@ -891,6 +906,7 @@ def subset_gen(pixel_length, window_size_px, label):
 
 
 # @timing
+@blockPrint
 def within_element_func(output_path, name, element, taubin_df):
     # for within hair distribution
     label_name = str(element.label)
@@ -899,13 +915,14 @@ def within_element_func(output_path, name, element, taubin_df):
     element_df['label'] = label_name
     
     output_path = make_subdirectory(output_path, append_name="WithinElement")
-    with pathlib.Path(output_path).joinpath("WithinElement_" + name + "_" + label_name + ".csv") as save_path:
+    with pathlib.Path(output_path).joinpath("WithinElement_" + name + "_Label-" + label_name + ".csv") as save_path:
         element_df.to_csv(save_path)
     
     return True
 
 
 # @timing
+@blockPrint
 def analyze_each_curv(element, window_size_px, resolution, output_path, name, within_element):
     """Calculates curvature for each labeled element in an array.
 
@@ -984,6 +1001,7 @@ def analyze_each_curv(element, window_size_px, resolution, output_path, name, wi
 
 
 # @timing
+@blockPrint
 def imread(input_file):
     """Reads in image as grayscale array.
 
@@ -1007,7 +1025,8 @@ def imread(input_file):
 
 
 # @timing
-def analyze_all_curv(img, name, output_path, resolution, window_size, window_unit, test=False, within_element=False):
+@blockPrint
+def analyze_all_curv(img, name, output_path, resolution, window_size, window_unit, test, within_element):
     """Analyzes curvature for all elements in an image.
 
     Parameters
@@ -1063,15 +1082,18 @@ def analyze_all_curv(img, name, output_path, resolution, window_size, window_uni
     print("\nWindow size for analysis is {} {}".format(window_size_px, window_unit))
     print("Analysis of curvature for each element begins...")
     
+    name = "ID-" + name
+    
     im_sumdf = [window_iter(props, name, i, window_unit, resolution, output_path, test, within_element) for i in window_size_px]
     
     im_sumdf = pd.concat(im_sumdf)
     
     return im_sumdf
 
+@blockPrint
 def window_iter(props, name, window_size, window_unit, resolution, output_path, test, within_element):
     
-    name = str(name + str(window_size) + str(window_unit))
+    name = str(name + "_WindowSize-" + str(window_size) + str(window_unit))
     print(name)
     print(window_size)
     
@@ -1082,7 +1104,7 @@ def window_iter(props, name, window_size, window_unit, resolution, output_path, 
     within_im_curvdf2 = pd.DataFrame(within_im_curvdf, columns=['curv_mean', 'curv_median', 'length']).dropna()
     
     output_path = make_subdirectory(output_path, append_name="analysis")
-    with pathlib.Path(output_path).joinpath(name + "_ImageSum" + ".csv") as save_path:
+    with pathlib.Path(output_path).joinpath("ImageSum_" + name + ".csv") as save_path:
         within_im_curvdf2.to_csv(save_path)
     
     curv_mean_im_mean = within_im_curvdf2['curv_mean'].mean()
@@ -1108,7 +1130,8 @@ def window_iter(props, name, window_size, window_unit, resolution, output_path, 
 
 
 # @timing
-def curvature_seq(input_file, output_path, resolution, window_size, window_unit="px", save_img=False, test=False, within_element=False):
+@blockPrint
+def curvature_seq(input_file, output_path, resolution, window_size, window_unit, save_img, test, within_element):
     """Sequence of functions to be executed for calculating curvature in fibermorph.
 
     Parameters
@@ -1135,10 +1158,8 @@ def curvature_seq(input_file, output_path, resolution, window_size, window_unit=
 
     """
     
-    # blockPrint()
-    
     # filter
-    filter_img, im_name = filter_curv(input_file, output_path)
+    filter_img, im_name = filter_curv(input_file, output_path, save_img)
     
     # binarize
     binary_img = binarize_curv(filter_img, im_name, output_path, save_img)
@@ -1155,14 +1176,13 @@ def curvature_seq(input_file, output_path, resolution, window_size, window_unit=
     # analyze
     im_df = analyze_all_curv(pruned_im, im_name, output_path, resolution, window_size, window_unit, test, within_element)
     
-    # enablePrint()
-    
     return im_df
 
 
 # Main modules (organized in order of operations: raw2gray, curvature, section)
 
 @timing
+@blockPrint
 def raw2gray(input_directory, output_location, file_type, jobs):
     """Convert raw files to grayscale tiff files.
 
@@ -1183,7 +1203,6 @@ def raw2gray(input_directory, output_location, file_type, jobs):
         True
 
     """
-    # blockPrint()
     total_start = timer()
     
     file_list = [p for p in pathlib.Path(input_directory).rglob('*') if p.suffix in file_type]
@@ -1207,12 +1226,11 @@ def raw2gray(input_directory, output_location, file_type, jobs):
     print("\n\n")
     print("Entire analysis took: {}.".format(convert(total_time)))
     
-    # enablePrint()
-
     return True
 
 
 @timing
+@blockPrint
 def curvature(input_directory, main_output_path, jobs, resolution, window_size, window_unit, save_img, within_element):
     """Takes directory of grayscale tiff images and analyzes curvature for each curve/line in the image.
 
@@ -1239,8 +1257,6 @@ def curvature(input_directory, main_output_path, jobs, resolution, window_size, 
         True.
 
     """
-    
-    # blockPrint()
     
     total_start = timer()
     
@@ -1300,12 +1316,11 @@ def curvature(input_directory, main_output_path, jobs, resolution, window_size, 
     # This will print out the minutes to the console, with 2 decimal places.
     print("Entire analysis took: {}.".format(convert(total_time)))
     
-    # enablePrint()
-    
     return True
 
 
 @timing
+@blockPrint
 def section(input_directory, main_output_path, jobs, resolution, minsize=20, maxsize=150):
     """Takes directory of grayscale images (and locates central section where necessary) and analyzes cross-sectional
     properties for each image.
@@ -1332,7 +1347,6 @@ def section(input_directory, main_output_path, jobs, resolution, minsize=20, max
 
     """
     
-    # blockPrint()
     
     total_start = timer()
     
@@ -1369,8 +1383,6 @@ def section(input_directory, main_output_path, jobs, resolution, minsize=20, max
     total_time = int(total_end - total_start)
     
     print("Complete analysis time: {}".format(convert(total_time)))
-    
-    # enablePrint()
     
     return True
 
