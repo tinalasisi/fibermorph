@@ -23,7 +23,7 @@ setup(
     install_requires=[
         'numpy', 'scipy', 'matplotlib', 'joblib', 'pandas', 'opencv-python',
         'scikit-learn', 'Pillow', 'rawpy', 'requests', 'sympy', 'argparse',
-        'scikit-image', 'joblib', 'matplotlib'],
+        'scikit-image', 'joblib', 'matplotlib', 'tqdm'],
     entry_points={
         "console_scripts": [
             'fibermorph = fibermorph.fibermorph:main']}
