@@ -2,15 +2,14 @@
 
 import os
 import pathlib
-import requests
 import shutil
 import sys
+from datetime import datetime
+
 import numpy as np
 import pandas as pd
-from datetime import datetime
-from functools import wraps
-import timeit
-from tqdm import tqdm, trange
+import requests
+from tqdm import tqdm
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from fibermorph import dummy_data
