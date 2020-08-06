@@ -1,10 +1,40 @@
 # fibermorph
+
+
 Python package for image analysis of hair curvature and cross-section
 
-> ## Prerequisites
-We recommend that you use a virtual environment to run fibermorph in a virtual environment to avoid any conflicts with other Python packages you might have on your system. To learn more about virtual enviornments, click [here](https://docs.python.org/3/tutorial/venv.html).
+## Quickstart
+For those who want to run the program immediately, just follow these commands in your terminal. You will need to have conda and know how to use it. If you need instructions for this, read the detailed set up below.
 
-If you are familiar with Python, conda and have the necessary installations on your system, feel free to skip ahead to the section entitled "Install the package", otherwise you can follow the step by step instructions below for the prerequisites.
+1. Create a conda environment.
+`conda create -n fibermorph_env`
+2. Activate this environment.
+`conda activate fibermorph_env`
+3. Install fibermorph.
+`pip install fibermorph`
+4. Test fibermorph with real data.
+`fibermorph --demo_real_curv --output_directory /Users/<UserName>/<ExistingPath>/<NewFolderName`
+
+and
+
+`fibermorph --demo_real_section --output_directory /Users/<UserName>/<ExistingPath>/<NewFolderName`
+5. Test fibermorph with dummy data and check the error in the spreadsheets generated with the command.
+`fibermorph --demo_dummy_curv --output_directory /Users/<UserName>/<ExistingPath>/<NewFolderName> --repeats 2`
+
+and
+
+`fibermorph --demo_dummy_section --output_directory /Users/<UserName>/<ExistingPath>/<NewFolderName> --repeats 2`
+6. Use fibermorph on your own grayscale TIFFs of longitudinal or cross-sectional hair images.
+```
+fibermorph --curvature --input_directory /Users/<UserName>/<ImageFolderPath> --output_directory /Users/<UserName>/<ExistingPath>/ --window_size 0.5 --window_unit mm --resolution 132 --save_image --within_element --jobs 2
+```
+
+and
+
+```
+fibermorph --section --input_directory /Users/<UserName>/<ImageFolderPath> --output_directory /Users/<UserName>/<ExistingPath>/ --minsize 30 --maxsize 180 --resolution_mu 4.25 --jobs 2
+```
+
 
 ## Setting up
 1. We recommend you download [miniconda](https://docs.conda.io/en/latest/miniconda.html) for your operating system.
@@ -15,11 +45,16 @@ Whichever you choose *be sure to download the version with Python 3.X and not Py
 
 2. Open a terminal.
 
-The commands are written in bash, so if you are running this on a Windows OS, you will need to switch into the correct settings. You can find more information for Windows specifically [here]().
+#### Mac OS:
+- Open the *Terminal* application.
+#### Windows:
+- Type `miniconda` in the search box and open the application.
+#### Linux:
+- Open the *Terminal* application.
 
 3.  Now you can set up a virtual environment.
 
-Create an empty conda environment, e.g. `conda create -n <YearMonthDay>_fibermorph python=3.8` and load it `conda activate <YearMonthDay>_fibermorph`
+Create an empty conda environment, e.g. `conda create -n <fibermorph_env python=3.8` and load it `conda activate fibermorph_env`
 
 You are now ready to install fibermorph!
 
@@ -75,7 +110,7 @@ Both `--demo_dummy` modules require the following flags:
 
 ```
 
-The modules create a `results_cache` within the given path. In this folder there will be another folder named `<MonthDay_HourMinute>_ValidationTest_<Curv or Section>` where the generated dummy images and corresponding parameters in spreadsheets will be in a folder named `ValidationData` and the error data will be in a folder named `ValidationAnalysis`.
+The modules create a `fibermorph_demo` within the given path. In this folder there will be another folder named `<MonthDay_HourMinute>_ValidationTest_<Curv or Section>` where the generated dummy images and corresponding parameters in spreadsheets will be in a folder named `ValidationData` and the error data will be in a folder named `ValidationAnalysis`.
 
 Running the module once will create a set of data and analyses for a single randomly generated arc and line (for curvature) or circle and ellipse (for section). To produce more data, simply add the flag `--repeats`  with the number of times you would like to repeat it, e.g. `fibermorph --repeats <integer>`. This flag is optional.
 

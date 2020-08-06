@@ -1,0 +1,39 @@
+==> 2020-08-06 18:22:58 <==
+# cmd: /Users/tinalasisi/opt/anaconda3/bin/conda-env update --prefix ./env --file environment.yml --prune
+# conda version: 4.8.3
++defaults/noarch::pyparsing-2.4.6-py_0
++defaults/noarch::python-dateutil-2.8.1-py_0
++defaults/osx-64::blas-1.0-mkl
++defaults/osx-64::ca-certificates-2020.1.1-0
++defaults/osx-64::certifi-2019.11.28-py36_0
++defaults/osx-64::cycler-0.10.0-py36hfc81398_0
++defaults/osx-64::freetype-2.9.1-hb4e5f40_0
++defaults/osx-64::intel-openmp-2019.4-233
++defaults/osx-64::kiwisolver-1.1.0-py36h0a44026_0
++defaults/osx-64::libcxx-10.0.0-1
++defaults/osx-64::libedit-3.1.20191231-h1de35cc_1
++defaults/osx-64::libffi-3.2.1-h0a44026_6
++defaults/osx-64::libgfortran-3.0.1-h93005f0_2
++defaults/osx-64::libpng-1.6.37-ha441bb4_0
++defaults/osx-64::matplotlib-3.1.3-py36_0
++defaults/osx-64::matplotlib-base-3.1.3-py36h9aa3819_0
++defaults/osx-64::mkl-2019.4-233
++defaults/osx-64::mkl-service-2.3.0-py36hfbe908c_0
++defaults/osx-64::mkl_fft-1.0.15-py36h5e564d8_0
++defaults/osx-64::mkl_random-1.1.0-py36ha771720_0
++defaults/osx-64::ncurses-6.2-h0a44026_1
++defaults/osx-64::numpy-1.18.1-py36h7241aed_0
++defaults/osx-64::numpy-base-1.18.1-py36h3304bdc_1
++defaults/osx-64::openssl-1.1.1d-h1de35cc_4
++defaults/osx-64::pip-20.0.2-py36_1
++defaults/osx-64::python-3.6.10-h359304d_0
++defaults/osx-64::readline-7.0-h1de35cc_5
++defaults/osx-64::setuptools-45.2.0-py36_0
++defaults/osx-64::six-1.14.0-py36_0
++defaults/osx-64::sqlite-3.31.1-h5c1f38d_1
++defaults/osx-64::tk-8.6.8-ha441bb4_0
++defaults/osx-64::tornado-6.0.3-py36h1de35cc_3
++defaults/osx-64::wheel-0.34.2-py36_0
++defaults/osx-64::xz-5.2.4-h1de35cc_4
++defaults/osx-64::zlib-1.2.11-h1de35cc_3
+# update specs: ['certifi==2019.11.28=py36_0', 'intel-openmp=2019.4', 'python-dateutil=2.8.1', 'freetype=2.9.1', 'ca-certificates=2020.1.1', 'xz=5.2.4', 'zlib=1.2.11', 'matplotlib=3.1.3', 'pip==20.0.2=py36_1', 'mkl=2019.4', 'tk=8.6.8', 'mkl_random=1.1.0', 'sqlite=3.31.1', 'python=3.6.10', 'tornado=6.0.3', 'pyparsing=2.4.6', 'libpng=1.6.37', 'numpy-base=1.18.1', 'openssl=1.1.1d', 'blas==1.0=mkl', 'six==1.14.0=py36_0', 'matplotlib-base=3.1.3', 'wheel=0.34.2', 'mkl-service=2.3.0', 'setuptools=45.2.0', 'mkl_fft=1.0.15', 'kiwisolver=1.1.0']
