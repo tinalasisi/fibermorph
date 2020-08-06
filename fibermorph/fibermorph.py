@@ -1054,7 +1054,8 @@ def analyze_each_curv(element, window_size_px, resolution, output_path, name, wi
 
     # length_mm = float(element_pixel_length / resolution) * 1.12
     
-    length_mm = float(element_pixel_length / resolution) * diag_corr
+    # length_mm = float(element_pixel_length) * resolution
+    length_mm = float(element_pixel_length * diag_corr) * resolution
     
     # print("\nCurv length is {} mm".format(length_mm))
     
