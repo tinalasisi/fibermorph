@@ -192,6 +192,7 @@ def parse_args():
     
     return args
 
+#%%
 
 def timing(f):
     @wraps(f)
@@ -843,10 +844,74 @@ def prune(skeleton, name, pruned_dir, save_img):
     
     pruned_image = remove_particles(pruned_image, pruned_dir, name, minpixel=5, prune=True, save_img=save_img)
     
-    return pruned_image
+    num_diag = diag(skeleton)
+
+    return pruned_image, num_diag
 
 
-# # @timing
+def diag(skeleton):
+    """Prunes branches from skeletonized image.
+    Adapted from: "http://homepages.inf.ed.ac.uk/rbf/HIPR2/thin.htm"
+
+    Parameters
+    ----------
+    skeleton : np.ndarray
+        Boolean array.
+    name : str
+        Image name.
+    pruned_dir : str or pathlib object
+        Output directory path.
+    save_img : bool
+        True or false for saving image.
+
+    Returns
+    -------
+    np.ndarray
+        Boolean array of pruned skeleton image.
+
+    """
+
+    hit1 = np.array([[0, 0, 1],
+                     [0, 1, 0],
+                     [1, 0, 0]], dtype=np.uint8)
+    hit2 = np.array([[1, 0, 0],
+                     [0, 1, 0],
+                     [0, 0, 1]], dtype=np.uint8)
+    
+    diag_list = [hit1, hit2]
+    
+    skel_image = check_bin(skeleton).astype(int)
+    # print("Converting image to binary array")
+    
+    diag_points = np.zeros(skel_image.shape)
+    # print("Creating empty array for branch points")
+
+    for hit in diag_list:
+        target = hit.sum()
+        curr = ndimage.convolve(skel_image, hit, mode="constant")
+        diag_points = np.logical_or(diag_points, np.where(curr == target, 1, 0))
+
+    # print("Completed collection of branch points")
+
+    # pixels may "hit" multiple structure elements, ensure the output is a binary image
+    diag_points_image = np.where(diag_points, 1, 0)
+    # print("Ensuring binary")
+
+    # use SciPy's ndimage module for locating and determining coordinates of each branch-point
+    labels, num_labels = ndimage.label(diag_points_image)
+    # print("Labelling branches")
+
+    # use SciPy's ndimage module to determine the coordinates/pixel corresponding to the center of mass of each
+    # branchpoint
+    diag_points = ndimage.center_of_mass(skel_image, labels=labels, index=range(1, num_labels + 1))
+    diag_points = np.array([value for value in diag_points if not np.isnan(value[0]) or not np.isnan(value[1])], dtype=int)
+
+    num_diag_points = len(diag_points)
+    
+    return num_diag_points
+
+
+# @timing
 @blockPrint
 def taubin_curv(coords, resolution):
     """Curvature calculation based on algebraic circle fit by Taubin.
@@ -952,7 +1017,7 @@ def within_element_func(output_path, name, element, taubin_df):
 
 # # @timing
 @blockPrint
-def analyze_each_curv(element, window_size_px, resolution, output_path, name, within_element):
+def analyze_each_curv(element, window_size_px, resolution, output_path, name, within_element, num_diag):
     """Calculates curvature for each labeled element in an array.
 
     Parameters
@@ -980,10 +1045,17 @@ def analyze_each_curv(element, window_size_px, resolution, output_path, name, wi
     # Smit AL, Bengough AG, Engels C, van Noordwijk M, Pellerin S, van de Geijn SC. Root Methods: A Handbook.
     # Springer Science & Business Media; 2013. 594 p.323
     
-    element_pixel_length = int(len(element.coords))  # length of element in pixels
+    element_pixel_length = int(element.area)  # length of element in pixels
     # print("\nCurv length is {} pixels".format(element_pixel_length))
+    
+    diag_perc = num_diag/element_pixel_length
+    
+    diag_corr = ((np.sqrt(2)-1) * diag_perc) + 1.12
 
-    length_mm = float(element_pixel_length / resolution) * 1.12
+    # length_mm = float(element_pixel_length / resolution) * 1.12
+    
+    length_mm = float(element_pixel_length / resolution) * diag_corr
+    
     # print("\nCurv length is {} mm".format(length_mm))
     
     window_size_px = int(window_size_px)
@@ -1055,7 +1127,7 @@ def imread(input_file):
 
 # # @timing
 @blockPrint
-def analyze_all_curv(img, name, output_path, resolution, window_size, window_unit, test, within_element):
+def analyze_all_curv(img, name, output_path, resolution, window_size, window_unit, test, within_element, num_diag):
     """Analyzes curvature for all elements in an image.
 
     Parameters
@@ -1113,20 +1185,20 @@ def analyze_all_curv(img, name, output_path, resolution, window_size, window_uni
     
     name = "ID-" + name
     
-    im_sumdf = [window_iter(props, name, i, window_unit, resolution, output_path, test, within_element) for i in window_size_px]
+    im_sumdf = [window_iter(props, name, i, window_unit, resolution, output_path, test, within_element, num_diag) for i in window_size_px]
     
     im_sumdf = pd.concat(im_sumdf)
     
     return im_sumdf
 
 @blockPrint
-def window_iter(props, name, window_size, window_unit, resolution, output_path, test, within_element):
+def window_iter(props, name, window_size, window_unit, resolution, output_path, test, within_element, num_diag):
     
     name = str(name + "_WindowSize-" + str(window_size) + str(window_unit))
     # print(name)
     # print(window_size)
     
-    tempdf = [analyze_each_curv(hair, window_size, resolution, output_path, name, within_element) for hair in props]
+    tempdf = [analyze_each_curv(hair, window_size, resolution, output_path, name, within_element, num_diag) for hair in props]
     
     within_im_curvdf = pd.DataFrame(tempdf, columns=['curv_mean', 'curv_median', 'length'])
     
@@ -1206,11 +1278,11 @@ def curvature_seq(input_file, output_path, resolution, window_size, window_unit,
             pbar.update(1)
     
             # prune
-            pruned_im = prune(skeleton_im, im_name, output_path, save_img)
+            pruned_im, num_diag = prune(skeleton_im, im_name, output_path, save_img)
             pbar.update(1)
     
             # analyze
-            im_df = analyze_all_curv(pruned_im, im_name, output_path, resolution, window_size, window_unit, test, within_element)
+            im_df = analyze_all_curv(pruned_im, im_name, output_path, resolution, window_size, window_unit, test, within_element, num_diag)
             pbar.update(1)
     
             return im_df
@@ -1440,7 +1512,7 @@ def section(input_directory, main_output_path, jobs, resolution, minsize, maxsiz
     
     return True
 
-
+#%%
 def main():
     args = parse_args()
     
