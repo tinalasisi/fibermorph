@@ -16,7 +16,7 @@ setup(
     url='https://github.com/tinalasisi/fibermorph',
     license='MIT',
     author='tinalasisi',
-    author_email='tpl5158@psu.edu',
+    author_email='tina.lasisi@gmail.com',
     description='Toolkit for analyzing hair fiber morphology',
     long_description=long_description,
     long_description_content_type='text/markdown',

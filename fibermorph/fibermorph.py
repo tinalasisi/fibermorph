@@ -844,9 +844,9 @@ def prune(skeleton, name, pruned_dir, save_img):
     
     pruned_image = remove_particles(pruned_image, pruned_dir, name, minpixel=5, prune=True, save_img=save_img)
     
-    num_diag = diag(skeleton)
+    num_diag, num_mid = diag(skeleton)
 
-    return pruned_image, num_diag
+    return pruned_image, num_diag, num_mid
 
 
 def diag(skeleton):
@@ -870,45 +870,85 @@ def diag(skeleton):
         Boolean array of pruned skeleton image.
 
     """
-
-    hit1 = np.array([[0, 0, 1],
-                     [0, 1, 0],
+    
+    # identify diagonals
+    hit1 = np.array([[0, 0, 0],
+                     [0, 1, 1],
                      [1, 0, 0]], dtype=np.uint8)
     hit2 = np.array([[1, 0, 0],
+                     [0, 1, 1],
+                     [0, 0, 0]], dtype=np.uint8)
+    hit3 = np.array([[0, 0, 1],
+                     [1, 1, 0],
+                     [0, 0, 0]], dtype=np.uint8)
+    hit4 = np.array([[0, 0, 0],
+                     [1, 1, 0],
+                     [0, 0, 1]], dtype=np.uint8)
+    hit5 = np.array([[0, 1, 0],
+                     [0, 1, 0],
+                     [1, 0, 0]], dtype=np.uint8)
+    hit6 = np.array([[0, 1, 0],
+                     [0, 1, 0],
+                     [0, 0, 1]], dtype=np.uint8)
+    hit7 = np.array([[1, 0, 0],
+                     [0, 1, 0],
+                     [0, 1, 0]], dtype=np.uint8)
+    hit8 = np.array([[0, 0, 1],
+                     [0, 1, 0],
+                     [0, 1, 0]], dtype=np.uint8)
+
+    mid_list = [hit1, hit2, hit3, hit4, hit5, hit6, hit7, hit8]
+
+    hit9 = np.array([[0, 0, 1],
+                     [0, 1, 0],
+                     [1, 0, 0]], dtype=np.uint8)
+    hit10 = np.array([[1, 0, 0],
                      [0, 1, 0],
                      [0, 0, 1]], dtype=np.uint8)
     
-    diag_list = [hit1, hit2]
+    diag_list = [hit9, hit10]
     
     skel_image = check_bin(skeleton).astype(int)
     # print("Converting image to binary array")
     
     diag_points = np.zeros(skel_image.shape)
+    mid_points = np.zeros(skel_image.shape)
     # print("Creating empty array for branch points")
 
     for hit in diag_list:
         target = hit.sum()
         curr = ndimage.convolve(skel_image, hit, mode="constant")
         diag_points = np.logical_or(diag_points, np.where(curr == target, 1, 0))
+        
+    for hit in mid_list:
+        target = hit.sum()
+        curr = ndimage.convolve(skel_image, hit, mode="constant")
+        mid_points = np.logical_or(mid_points, np.where(curr == target, 1, 0))
 
     # print("Completed collection of branch points")
 
     # pixels may "hit" multiple structure elements, ensure the output is a binary image
     diag_points_image = np.where(diag_points, 1, 0)
+    mid_points_image = np.where(mid_points, 1, 0)
     # print("Ensuring binary")
 
     # use SciPy's ndimage module for locating and determining coordinates of each branch-point
     labels, num_labels = ndimage.label(diag_points_image)
+    labels2, num_labels2 = ndimage.label(mid_points_image)
     # print("Labelling branches")
 
     # use SciPy's ndimage module to determine the coordinates/pixel corresponding to the center of mass of each
     # branchpoint
     diag_points = ndimage.center_of_mass(skel_image, labels=labels, index=range(1, num_labels + 1))
+    mid_points = ndimage.center_of_mass(skel_image, labels=labels2, index=range(1, num_labels2 + 1))
+    
     diag_points = np.array([value for value in diag_points if not np.isnan(value[0]) or not np.isnan(value[1])], dtype=int)
+    mid_points = np.array([value for value in mid_points if not np.isnan(value[0]) or not np.isnan(value[1])], dtype=int)
 
     num_diag_points = len(diag_points)
+    num_mid_points = len(mid_points)
     
-    return num_diag_points
+    return num_diag_points, num_mid_points
 
 
 # @timing
@@ -1017,7 +1057,7 @@ def within_element_func(output_path, name, element, taubin_df):
 
 # # @timing
 @blockPrint
-def analyze_each_curv(element, window_size_px, resolution, output_path, name, within_element, num_diag):
+def analyze_each_curv(element, window_size_px, resolution, output_path, name, within_element, num_diag, num_mid):
     """Calculates curvature for each labeled element in an array.
 
     Parameters
@@ -1049,8 +1089,12 @@ def analyze_each_curv(element, window_size_px, resolution, output_path, name, wi
     # print("\nCurv length is {} pixels".format(element_pixel_length))
     
     diag_perc = num_diag/element_pixel_length
+    mid_perc = num_mid/element_pixel_length
     
-    diag_corr = ((np.sqrt(2)-1) * diag_perc) + 1.12
+    diag_factor = (np.sqrt(2)-1) * diag_perc
+    mid_factor = ((np.sqrt(2)-1)/2) * mid_perc
+    
+    diag_corr = diag_factor + mid_factor + 1
 
     # length_mm = float(element_pixel_length / resolution) * 1.12
     
@@ -1128,7 +1172,7 @@ def imread(input_file):
 
 # # @timing
 @blockPrint
-def analyze_all_curv(img, name, output_path, resolution, window_size, window_unit, test, within_element, num_diag):
+def analyze_all_curv(img, name, output_path, resolution, window_size, window_unit, test, within_element, num_diag, num_mid):
     """Analyzes curvature for all elements in an image.
 
     Parameters
@@ -1186,20 +1230,20 @@ def analyze_all_curv(img, name, output_path, resolution, window_size, window_uni
     
     name = "ID-" + name
     
-    im_sumdf = [window_iter(props, name, i, window_unit, resolution, output_path, test, within_element, num_diag) for i in window_size_px]
+    im_sumdf = [window_iter(props, name, i, window_unit, resolution, output_path, test, within_element, num_diag, num_mid) for i in window_size_px]
     
     im_sumdf = pd.concat(im_sumdf)
     
     return im_sumdf
 
 @blockPrint
-def window_iter(props, name, window_size, window_unit, resolution, output_path, test, within_element, num_diag):
+def window_iter(props, name, window_size, window_unit, resolution, output_path, test, within_element, num_diag, num_mid):
     
     name = str(name + "_WindowSize-" + str(window_size) + str(window_unit))
     # print(name)
     # print(window_size)
     
-    tempdf = [analyze_each_curv(hair, window_size, resolution, output_path, name, within_element, num_diag) for hair in props]
+    tempdf = [analyze_each_curv(hair, window_size, resolution, output_path, name, within_element, num_diag, num_mid) for hair in props]
     
     within_im_curvdf = pd.DataFrame(tempdf, columns=['curv_mean', 'curv_median', 'length'])
     
@@ -1279,11 +1323,11 @@ def curvature_seq(input_file, output_path, resolution, window_size, window_unit,
             pbar.update(1)
     
             # prune
-            pruned_im, num_diag = prune(skeleton_im, im_name, output_path, save_img)
+            pruned_im, num_diag, num_mid = prune(skeleton_im, im_name, output_path, save_img)
             pbar.update(1)
     
             # analyze
-            im_df = analyze_all_curv(pruned_im, im_name, output_path, resolution, window_size, window_unit, test, within_element, num_diag)
+            im_df = analyze_all_curv(pruned_im, im_name, output_path, resolution, window_size, window_unit, test, within_element, num_diag, num_mid)
             pbar.update(1)
     
             return im_df
