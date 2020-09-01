@@ -1,4 +1,4 @@
-# fibermorph
+﻿# fibermorph
 
 
 Python package for image analysis of hair curvature and cross-section
@@ -12,28 +12,25 @@ For those who want to run the program immediately, just follow these commands in
 `conda activate fibermorph_env`
 3. Install fibermorph.
 `pip install fibermorph`
-4. Test fibermorph with real data.
+4. Test fibermorph with real data.  
 `fibermorph --demo_real_curv --output_directory /Users/<UserName>/<ExistingPath>/<NewFolderName`
 
-and
+	and  
 
-`fibermorph --demo_real_section --output_directory /Users/<UserName>/<ExistingPath>/<NewFolderName`
-5. Test fibermorph with dummy data and check the error in the spreadsheets generated with the command.
+	`fibermorph --demo_real_section --output_directory /Users/<UserName>/<ExistingPath>/<NewFolderName`
+5. Test fibermorph with dummy data and check the error in the spreadsheets generated with the command.  
 `fibermorph --demo_dummy_curv --output_directory /Users/<UserName>/<ExistingPath>/<NewFolderName> --repeats 2`
 
-and
+	and
 
-`fibermorph --demo_dummy_section --output_directory /Users/<UserName>/<ExistingPath>/<NewFolderName> --repeats 2`
-6. Use fibermorph on your own grayscale TIFFs of longitudinal or cross-sectional hair images.
-```
-fibermorph --curvature --input_directory /Users/<UserName>/<ImageFolderPath> --output_directory /Users/<UserName>/<ExistingPath>/ --window_size 0.5 --window_unit mm --resolution 132 --save_image --within_element --jobs 2
-```
+	`fibermorph --demo_dummy_section --output_directory /Users/<UserName>/<ExistingPath>/<NewFolderName> --repeats 2`
+6. Use fibermorph on your own grayscale TIFFs of longitudinal or cross-sectional hair images.  
 
-and
-
-```
-fibermorph --section --input_directory /Users/<UserName>/<ImageFolderPath> --output_directory /Users/<UserName>/<ExistingPath>/ --minsize 30 --maxsize 180 --resolution_mu 4.25 --jobs 2
-```
+	`fibermorph --curvature --input_directory /Users/<UserName>/<ImageFolderPath> --output_directory /Users/<UserName>/<ExistingPath>/ --window_size 0.5 --window_unit mm --resolution 132 --save_image --within_element --jobs 2`  
+	
+	and
+	
+	`fibermorph --section --input_directory /Users/<UserName>/<ImageFolderPath> --output_directory /Users/<UserName>/<ExistingPath>/ --minsize 30 --maxsize 180 --resolution_mu 4.25 --jobs 2`
 
 
 ## Setting up

@@ -1222,8 +1222,11 @@ def analyze_all_curv(img, name, output_path, resolution, window_size, window_uni
         window_size = [window_size]
         
     window_size = [float(i) for i in window_size]
-        
-    window_size_px = [int(i * resolution) for i in window_size]
+    
+    if not window_unit == "px":
+        window_size_px = [int(i * resolution) for i in window_size]
+    else:
+        window_size_px = [int(i) for i in window_size]
     
     # print("\nWindow size for analysis is {} {}".format(window_size_px, window_unit))
     # print("Analysis of curvature for each element begins...")
@@ -1414,8 +1417,10 @@ def curvature(input_directory, main_output_path, jobs, resolution, window_size, 
         Number of jobs to run in parallel.
     resolution : float
         Number of pixels per mm in original image.
-    window_size_mm : float
-        Desired window of measurement in mm.
+    window_size : float or int
+        Desired window of measurement in mm or pixels.
+    window_unit : str
+        Are the units for the window size in pixels or mm.
     save_img : bool
         True or false for saving images for image processing steps.
     within_element
