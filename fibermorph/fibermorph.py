@@ -40,6 +40,7 @@ dir = os.path.dirname(__file__)
 version_py = os.path.join(dir, "_version.py")
 exec(open(version_py).read())
 
+# %% Functions
 
 # parse_args() and timing() listed first for easy updating/access
 
@@ -580,10 +581,10 @@ def binarize_curv(filter_img, im_name, output_path, save_img):
 
     """
     
-    selem = skimage.morphology.disk(3)
+    selem = skimage.morphology.disk(5)
     
     try:
-        thresh_im = filter_img > threshold_minimum(filter_img)
+        thresh_im = filter_img > filters.threshold_otsu(filter_img)
     except:
         thresh_im = skimage.util.invert(filter_img)
     
@@ -639,6 +640,7 @@ def remove_particles(img, output_path, name, minpixel, prune, save_img):
     
     if not prune:
         minimum = minpixel
+        # clean = skimage.morphology.diameter_opening(img, diameter_threshold=minimum)
         clean = skimage.morphology.remove_small_objects(img, connectivity=2, min_size=minimum)
         if save_img:
             output_path = make_subdirectory(output_path, append_name="clean")
@@ -1318,7 +1320,7 @@ def curvature_seq(input_file, output_path, resolution, window_size, window_unit,
             pbar.update(1)
     
             # remove particles
-            clean_im = remove_particles(binary_img, output_path, im_name, minpixel=5, prune=False, save_img=save_img)
+            clean_im = remove_particles(binary_img, output_path, im_name, minpixel=int(resolution/2), prune=False, save_img=save_img)
             pbar.update(1)
     
             # skeletonize
