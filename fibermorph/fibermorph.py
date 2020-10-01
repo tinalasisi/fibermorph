@@ -19,6 +19,7 @@ import scipy
 import skimage
 import contextlib
 import joblib
+import skimage.exposure
 import skimage.measure
 import skimage.morphology
 from PIL import Image
@@ -582,6 +583,8 @@ def binarize_curv(filter_img, im_name, output_path, save_img):
     """
     
     selem = skimage.morphology.disk(5)
+    
+    filter_img = skimage.exposure.adjust_log(filter_img)
     
     try:
         thresh_im = filter_img > filters.threshold_otsu(filter_img)
@@ -1201,7 +1204,7 @@ def analyze_all_curv(img, name, output_path, resolution, window_size, window_uni
 
     """
     if type(img) != 'np.ndarray':
-        print(type)
+        print(type(img))
         img = np.array(img)
     else:
         print(type(img))
