@@ -7,7 +7,7 @@ Python package for image analysis of hair curvature and cross-section
 For those who want to run the program immediately, just follow these commands in your terminal. You will need to have conda and know how to use it. If you need instructions for this, read the detailed set up below.
 
 1. Create a conda environment.
-`conda create -n fibermorph_env`
+`conda create -n fibermorph_env python=3.8`
 2. Activate this environment.
 `conda activate fibermorph_env`
 3. Install fibermorph.
