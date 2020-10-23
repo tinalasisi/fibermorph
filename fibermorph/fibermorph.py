@@ -644,14 +644,13 @@ def remove_particles(img, output_path, name, minpixel, prune, save_img):
     minimum = minpixel
     # clean = skimage.morphology.diameter_opening(img, diameter_threshold=minimum)
     clean = skimage.morphology.remove_small_objects(img, connectivity=2, min_size=minimum)
-    
-    if prune:
-        output_path = make_subdirectory(output_path, append_name="pruned")
-    else:
-        output_path = make_subdirectory(output_path, append_name="clean")
         
     if save_img:
         img_inv = skimage.util.invert(clean)
+        if prune:
+            output_path = make_subdirectory(output_path, append_name="pruned")
+        else:
+            output_path = make_subdirectory(output_path, append_name="clean")
         with pathlib.Path(output_path).joinpath(name + ".tiff") as savename:
             plt.imsave(savename, img_inv, cmap='gray')
     
@@ -1066,7 +1065,7 @@ def within_element_func(output_path, name, element, taubin_df):
     
     return True
 
-
+@blockPrint
 def define_structure(structure: str):
 
     if structure == "mid":
@@ -1112,11 +1111,11 @@ def define_structure(structure: str):
         raise TypeError(
             "Structure input for find_structure() is invalid, choose from 'mid', or 'diag' and input as str")
 
-
+@blockPrint
 def find_structure(skeleton, structure: str):
     skel_image = check_bin(skeleton).astype(int)
     
-    print(skel_image.shape)
+    # print(skel_image.shape)
     
     # creating empty array for hit and miss algorithm
     hit_points = np.zeros(skel_image.shape)
@@ -1136,6 +1135,7 @@ def find_structure(skeleton, structure: str):
     
     return labels, num_labels
 
+@blockPrint
 def pixel_length_correction(element):
     
     num_total_points = element.area
@@ -1143,13 +1143,13 @@ def pixel_length_correction(element):
     skeleton = element.image
     
     diag_points, num_diag_points = find_structure(skeleton, 'diag')
-    print(num_diag_points)
+    # print(num_diag_points)
     
     mid_points, num_mid_points = find_structure(skeleton, 'mid')
-    print(num_mid_points)
+    # print(num_mid_points)
     
     num_adj_points = num_total_points - num_diag_points - num_mid_points
-    print(num_adj_points)
+    # print(num_adj_points)
 
     corr_element_pixel_length = num_adj_points + (num_diag_points * np.sqrt(2)) + (num_mid_points * np.sqrt(1.25))
 
@@ -1311,17 +1311,9 @@ def analyze_all_curv(img, name, output_path, resolution, window_size, window_uni
         
     window_size = [float(i) for i in window_size]
     
-    if not window_unit == "px":
-        window_size_px = [int(i * resolution) for i in window_size]
-    else:
-        window_size_px = [int(i) for i in window_size]
-    
-    # print("\nWindow size for analysis is {} {}".format(window_size_px, window_unit))
-    # print("Analysis of curvature for each element begins...")
-    
     name = "ID-" + name
     
-    im_sumdf = [window_iter(props, name, i, window_unit, resolution, output_path, test, within_element) for i in window_size_px]
+    im_sumdf = [window_iter(props, name, i, window_unit, resolution, output_path, test, within_element) for i in window_size]
     
     im_sumdf = pd.concat(im_sumdf)
     
@@ -1330,11 +1322,20 @@ def analyze_all_curv(img, name, output_path, resolution, window_size, window_uni
 @blockPrint
 def window_iter(props, name, window_size, window_unit, resolution, output_path, test, within_element):
     
+    if not window_unit == "px":
+        window_size_px = int(window_size * resolution)
+    else:
+        window_size_px = int(window_size)
+        window_size = int(window_size)
+    
+    # print("\nWindow size for analysis is {} {}".format(window_size_px, window_unit))
+    # print("Analysis of curvature for each element begins...")
+    
     name = str(name + "_WindowSize-" + str(window_size) + str(window_unit))
     # print(name)
     # print(window_size)
     
-    tempdf = [analyze_each_curv(hair, window_size, resolution, output_path, name, within_element) for hair in props]
+    tempdf = [analyze_each_curv(hair, window_size_px, resolution, output_path, name, within_element) for hair in props if hair.area > window_size]
     
     within_im_curvdf = pd.DataFrame(tempdf, columns=['curv_mean', 'curv_median', 'length'])
     
