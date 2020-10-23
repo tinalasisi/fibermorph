@@ -1,14 +1,50 @@
+# %% Import
 import os
 import sys
+import pathlib
 import numpy as np
 
+import argparse
+import datetime
+import os
+import pathlib
+import shutil
+import sys
+import timeit
+import warnings
+from datetime import datetime
+from functools import wraps
+from timeit import default_timer as timer
+
+import cv2
+import pandas as pd
+import rawpy
+import scipy
+import skimage
+import contextlib
+import joblib
+import skimage.exposure
+import skimage.measure
+import skimage.morphology
+from PIL import Image
+from joblib import Parallel, delayed
+from matplotlib import pyplot as plt
+from scipy import ndimage
+from scipy.spatial import distance as dist
+from skimage import filters
+from skimage.filters import threshold_minimum
+from skimage.segmentation import clear_border
+from skimage.util import invert
+from tqdm import tqdm
+
+# %%
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from fibermorph import fibermorph
 from fibermorph import dummy_data
 
-
 # Get current directory
 dir = os.path.dirname(os.path.abspath(__file__))
+
 
 def teardown_module(function):
     teardown_files = [
@@ -54,9 +90,80 @@ def test_analyze_all_curv(tmp_path):
     pass
 
 
+def test_length_measurement():
+    ref_df = pd.read_csv(pathlib.Path("fibermorph/test_data/SimArcData/Oct06_1855_32_017780_arc_data.csv"), header=0,
+                         index_col=0)
+    
+    ref_length = ref_df["ref_length"][0]
+    
+    img, name = fibermorph.imread(pathlib.Path("fibermorph/test_data/SimArcData/Oct06_1855_32_017780_arc_data.tiff"))
+    
+    img = fibermorph.check_bin(img)
+    
+    skel_im = skimage.morphology.thin(img)
+    print(skel_im.shape)
+    
+    prun_im = fibermorph.prune(skel_im, name, pathlib.Path("./"), save_img=False)
+    print(prun_im.shape)
+    
+    label_image, num_elements = skimage.measure.label(prun_im.astype(int), connectivity=2, return_num=True)
+    print("\n There are {} elements in the image".format(num_elements))
+    
+    # label the image and extract the first element/object with [0]
+    element = skimage.measure.regionprops(label_image)[0]
+    
+    # retrieve coordinates of each pixel with regionprops
+    element_label = np.array(element.coords)
+    print(len(element_label))
+    print(element.area)
+    assert len(element_label) == element.area
+    
+    corr_px_length = fibermorph.pixel_length_correction(element)
+
+    print("Reference length is: {}".format(ref_length))
+    print("Uncorrected length is: {}".format(element.area))
+    print("Corrected length is: {}". format(corr_px_length))
+
+
+def test_length_measurement():
+    ref_df = pd.read_csv(pathlib.Path("fibermorph/test_data/SimArcData/Oct06_1855_32_017780_arc_data.csv"), header=0,
+                         index_col=0)
+    
+    ref_length = ref_df["ref_length"][0]
+    
+    img, name = fibermorph.imread(pathlib.Path("fibermorph/test_data/SimArcData/Oct06_1855_32_017780_arc_data.tiff"))
+    
+    img = fibermorph.check_bin(img)
+    
+    skel_im = skimage.morphology.thin(img)
+    print(skel_im.shape)
+    
+    prun_im = fibermorph.prune(skel_im, name, pathlib.Path("./"), save_img=False)
+    print(prun_im.shape)
+    
+    label_image, num_elements = skimage.measure.label(prun_im.astype(int), connectivity=2, return_num=True)
+    print("\n There are {} elements in the image".format(num_elements))
+    
+    # label the image and extract the first element/object with [0]
+    element = skimage.measure.regionprops(label_image)[0]
+    
+    # retrieve coordinates of each pixel with regionprops
+    element_label = np.array(element.coords)
+    print(len(element_label))
+    print(element.area)
+    assert len(element_label) == element.area
+    
+    corr_px_length = fibermorph.pixel_length_correction(element)
+    
+    print("Reference length is: {}".format(ref_length))
+    print("Uncorrected length is: {}".format(element.area))
+    print("Corrected length is: {}".format(corr_px_length))
+
+
 def test_copy_if_exist():
     # fibermorph.copy_if_exist()
     pass
+
 
 def test_analyze_each_curv():
     # fibermorph.analyze_each_curv()

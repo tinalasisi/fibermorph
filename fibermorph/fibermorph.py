@@ -19,6 +19,7 @@ import scipy
 import skimage
 import contextlib
 import joblib
+import skimage.exposure
 import skimage.measure
 import skimage.morphology
 from PIL import Image
@@ -40,6 +41,7 @@ dir = os.path.dirname(__file__)
 version_py = os.path.join(dir, "_version.py")
 exec(open(version_py).read())
 
+# %% Functions
 
 # parse_args() and timing() listed first for easy updating/access
 
@@ -580,10 +582,12 @@ def binarize_curv(filter_img, im_name, output_path, save_img):
 
     """
     
-    selem = skimage.morphology.disk(3)
+    selem = skimage.morphology.disk(5)
+    
+    filter_img = skimage.exposure.adjust_log(filter_img)
     
     try:
-        thresh_im = filter_img > threshold_minimum(filter_img)
+        thresh_im = filter_img > filters.threshold_otsu(filter_img)
     except:
         thresh_im = skimage.util.invert(filter_img)
     
@@ -636,31 +640,21 @@ def remove_particles(img, output_path, name, minpixel, prune, save_img):
     """
     img_bool = np.asarray(img, dtype=np.bool)
     img = check_bin(img_bool)
-    
-    if not prune:
-        minimum = minpixel
-        clean = skimage.morphology.remove_small_objects(img, connectivity=2, min_size=minimum)
-        if save_img:
-            output_path = make_subdirectory(output_path, append_name="clean")
-            img_inv = skimage.util.invert(clean)
-            with pathlib.Path(output_path).joinpath(name + ".tiff") as savename:
-                plt.imsave(savename, img_inv, cmap='gray')
-            
-            return clean
-        else:
-            return clean
-    else:
-        # clean = img_bool
-        minimum = minpixel
-        clean = skimage.morphology.remove_small_objects(img, connectivity=2, min_size=minimum)
-        if save_img:
+
+    minimum = minpixel
+    # clean = skimage.morphology.diameter_opening(img, diameter_threshold=minimum)
+    clean = skimage.morphology.remove_small_objects(img, connectivity=2, min_size=minimum)
+        
+    if save_img:
+        img_inv = skimage.util.invert(clean)
+        if prune:
             output_path = make_subdirectory(output_path, append_name="pruned")
-            img_inv = skimage.util.invert(clean)
-            with pathlib.Path(output_path).joinpath(name + ".tiff") as savename:
-                plt.imsave(savename, img_inv, cmap='gray')
-            return clean
         else:
-            return clean
+            output_path = make_subdirectory(output_path, append_name="clean")
+        with pathlib.Path(output_path).joinpath(name + ".tiff") as savename:
+            plt.imsave(savename, img_inv, cmap='gray')
+    
+    return clean
 
 
 # # @timing
@@ -843,10 +837,8 @@ def prune(skeleton, name, pruned_dir, save_img):
     # pruned_image = np.subtract(skel_image, branch_points_image)
     
     pruned_image = remove_particles(pruned_image, pruned_dir, name, minpixel=5, prune=True, save_img=save_img)
-    
-    num_diag, num_mid = diag(skeleton)
 
-    return pruned_image, num_diag, num_mid
+    return pruned_image
 
 
 def diag(skeleton):
@@ -907,12 +899,22 @@ def diag(skeleton):
                      [0, 0, 1]], dtype=np.uint8)
     
     diag_list = [hit9, hit10]
+
+    hit11 = np.array([[0, 1, 0],
+                     [0, 1, 0],
+                     [0, 1, 0]], dtype=np.uint8)
+    hit12 = np.array([[0, 0, 0],
+                      [1, 1, 1],
+                      [0, 0, 0]], dtype=np.uint8)
+    
+    adj_list = [hit11, hit12]
     
     skel_image = check_bin(skeleton).astype(int)
     # print("Converting image to binary array")
     
     diag_points = np.zeros(skel_image.shape)
     mid_points = np.zeros(skel_image.shape)
+    adj_points = np.zeros(skel_image.shape)
     # print("Creating empty array for branch points")
 
     for hit in diag_list:
@@ -924,31 +926,40 @@ def diag(skeleton):
         target = hit.sum()
         curr = ndimage.convolve(skel_image, hit, mode="constant")
         mid_points = np.logical_or(mid_points, np.where(curr == target, 1, 0))
-
-    # print("Completed collection of branch points")
+        
+    for hit in adj_list:
+        target = hit.sum()
+        curr = ndimage.convolve(skel_image, hit, mode="constant")
+        adj_points = np.logical_or(adj_points, np.where(curr == target, 1, 0))
 
     # pixels may "hit" multiple structure elements, ensure the output is a binary image
     diag_points_image = np.where(diag_points, 1, 0)
     mid_points_image = np.where(mid_points, 1, 0)
+    adj_points_image = np.where(adj_points, 1, 0)
     # print("Ensuring binary")
 
     # use SciPy's ndimage module for locating and determining coordinates of each branch-point
     labels, num_labels = ndimage.label(diag_points_image)
     labels2, num_labels2 = ndimage.label(mid_points_image)
+    labels3, num_labels3 = ndimage.label(adj_points_image)
     # print("Labelling branches")
 
     # use SciPy's ndimage module to determine the coordinates/pixel corresponding to the center of mass of each
     # branchpoint
     diag_points = ndimage.center_of_mass(skel_image, labels=labels, index=range(1, num_labels + 1))
     mid_points = ndimage.center_of_mass(skel_image, labels=labels2, index=range(1, num_labels2 + 1))
-    
+    adj_points = ndimage.center_of_mass(skel_image, labels=labels3, index=range(1, num_labels3 + 1))
+
     diag_points = np.array([value for value in diag_points if not np.isnan(value[0]) or not np.isnan(value[1])], dtype=int)
     mid_points = np.array([value for value in mid_points if not np.isnan(value[0]) or not np.isnan(value[1])], dtype=int)
+    adj_points = np.array([value for value in adj_points if not np.isnan(value[0]) or not np.isnan(value[1])],
+                          dtype=int)
 
     num_diag_points = len(diag_points)
     num_mid_points = len(mid_points)
+    num_adj_points = len(adj_points)
     
-    return num_diag_points, num_mid_points
+    return num_diag_points, num_mid_points, num_adj_points
 
 
 # @timing
@@ -1054,10 +1065,99 @@ def within_element_func(output_path, name, element, taubin_df):
     
     return True
 
+@blockPrint
+def define_structure(structure: str):
+
+    if structure == "mid":
+        hit1 = np.array([[0, 0, 0],
+                         [0, 1, 1],
+                         [1, 0, 0]], dtype=np.uint8)
+        hit2 = np.array([[1, 0, 0],
+                         [0, 1, 1],
+                         [0, 0, 0]], dtype=np.uint8)
+        hit3 = np.array([[0, 0, 1],
+                         [1, 1, 0],
+                         [0, 0, 0]], dtype=np.uint8)
+        hit4 = np.array([[0, 0, 0],
+                         [1, 1, 0],
+                         [0, 0, 1]], dtype=np.uint8)
+        hit5 = np.array([[0, 1, 0],
+                         [0, 1, 0],
+                         [1, 0, 0]], dtype=np.uint8)
+        hit6 = np.array([[0, 1, 0],
+                         [0, 1, 0],
+                         [0, 0, 1]], dtype=np.uint8)
+        hit7 = np.array([[1, 0, 0],
+                         [0, 1, 0],
+                         [0, 1, 0]], dtype=np.uint8)
+        hit8 = np.array([[0, 0, 1],
+                         [0, 1, 0],
+                         [0, 1, 0]], dtype=np.uint8)
+        
+        mid_list = [hit1, hit2, hit3, hit4, hit5, hit6, hit7, hit8]
+        return mid_list
+    elif structure == "diag":
+        hit1 = np.array([[0, 0, 1],
+                         [0, 1, 0],
+                         [1, 0, 0]], dtype=np.uint8)
+        hit2 = np.array([[1, 0, 0],
+                         [0, 1, 0],
+                         [0, 0, 1]], dtype=np.uint8)
+        diag_list = [hit1, hit2]
+
+        return diag_list
+
+    else:
+        raise TypeError(
+            "Structure input for find_structure() is invalid, choose from 'mid', or 'diag' and input as str")
+
+@blockPrint
+def find_structure(skeleton, structure: str):
+    skel_image = check_bin(skeleton).astype(int)
+    
+    # print(skel_image.shape)
+    
+    # creating empty array for hit and miss algorithm
+    hit_points = np.zeros(skel_image.shape)
+    # defining the structure used in hit-and-miss algorithm
+    hit_list = define_structure(structure)
+    
+    for hit in hit_list:
+        target = hit.sum()
+        curr = ndimage.convolve(skel_image, hit, mode="constant")
+        hit_points = np.logical_or(hit_points, np.where(curr == target, 1, 0))
+    
+    # Ensuring target image is binary
+    hit_points_image = np.where(hit_points, 1, 0)
+    
+    # use SciPy's ndimage module for locating and determining coordinates of each branch-point
+    labels, num_labels = ndimage.label(hit_points_image)
+    
+    return labels, num_labels
+
+@blockPrint
+def pixel_length_correction(element):
+    
+    num_total_points = element.area
+    
+    skeleton = element.image
+    
+    diag_points, num_diag_points = find_structure(skeleton, 'diag')
+    # print(num_diag_points)
+    
+    mid_points, num_mid_points = find_structure(skeleton, 'mid')
+    # print(num_mid_points)
+    
+    num_adj_points = num_total_points - num_diag_points - num_mid_points
+    # print(num_adj_points)
+
+    corr_element_pixel_length = num_adj_points + (num_diag_points * np.sqrt(2)) + (num_mid_points * np.sqrt(1.25))
+
+    return corr_element_pixel_length
 
 # # @timing
 @blockPrint
-def analyze_each_curv(element, window_size_px, resolution, output_path, name, within_element, num_diag, num_mid):
+def analyze_each_curv(element, window_size_px, resolution, output_path, name, within_element):
     """Calculates curvature for each labeled element in an array.
 
     Parameters
@@ -1086,22 +1186,10 @@ def analyze_each_curv(element, window_size_px, resolution, output_path, name, wi
     # Springer Science & Business Media; 2013. 594 p.323
     
     element_pixel_length = int(element.area)  # length of element in pixels
-    # print("\nCurv length is {} pixels".format(element_pixel_length))
-    
-    diag_perc = num_diag/element_pixel_length
-    mid_perc = num_mid/element_pixel_length
-    
-    diag_factor = (np.sqrt(2)-1) * diag_perc
-    mid_factor = ((np.sqrt(2)-1)/2) * mid_perc
-    
-    diag_corr = diag_factor + mid_factor + 1
 
-    # length_mm = float(element_pixel_length / resolution) * 1.12
-    
-    # length_mm = float(element_pixel_length) * resolution
-    length_mm = float(element_pixel_length * diag_corr) * resolution
-    
-    # print("\nCurv length is {} mm".format(length_mm))
+    corr_element_pixel_length = pixel_length_correction(element)
+
+    length_mm = float(corr_element_pixel_length / resolution)
     
     window_size_px = int(window_size_px)
     
@@ -1172,7 +1260,7 @@ def imread(input_file):
 
 # # @timing
 @blockPrint
-def analyze_all_curv(img, name, output_path, resolution, window_size, window_unit, test, within_element, num_diag, num_mid):
+def analyze_all_curv(img, name, output_path, resolution, window_size, window_unit, test, within_element):
     """Analyzes curvature for all elements in an image.
 
     Parameters
@@ -1199,7 +1287,7 @@ def analyze_all_curv(img, name, output_path, resolution, window_size, window_uni
 
     """
     if type(img) != 'np.ndarray':
-        print(type)
+        print(type(img))
         img = np.array(img)
     else:
         print(type(img))
@@ -1223,30 +1311,31 @@ def analyze_all_curv(img, name, output_path, resolution, window_size, window_uni
         
     window_size = [float(i) for i in window_size]
     
-    if not window_unit == "px":
-        window_size_px = [int(i * resolution) for i in window_size]
-    else:
-        window_size_px = [int(i) for i in window_size]
-    
-    # print("\nWindow size for analysis is {} {}".format(window_size_px, window_unit))
-    # print("Analysis of curvature for each element begins...")
-    
     name = "ID-" + name
     
-    im_sumdf = [window_iter(props, name, i, window_unit, resolution, output_path, test, within_element, num_diag, num_mid) for i in window_size_px]
+    im_sumdf = [window_iter(props, name, i, window_unit, resolution, output_path, test, within_element) for i in window_size]
     
     im_sumdf = pd.concat(im_sumdf)
     
     return im_sumdf
 
 @blockPrint
-def window_iter(props, name, window_size, window_unit, resolution, output_path, test, within_element, num_diag, num_mid):
+def window_iter(props, name, window_size, window_unit, resolution, output_path, test, within_element):
+    
+    if not window_unit == "px":
+        window_size_px = int(window_size * resolution)
+    else:
+        window_size_px = int(window_size)
+        window_size = int(window_size)
+    
+    # print("\nWindow size for analysis is {} {}".format(window_size_px, window_unit))
+    # print("Analysis of curvature for each element begins...")
     
     name = str(name + "_WindowSize-" + str(window_size) + str(window_unit))
     # print(name)
     # print(window_size)
     
-    tempdf = [analyze_each_curv(hair, window_size, resolution, output_path, name, within_element, num_diag, num_mid) for hair in props]
+    tempdf = [analyze_each_curv(hair, window_size_px, resolution, output_path, name, within_element) for hair in props if hair.area > window_size]
     
     within_im_curvdf = pd.DataFrame(tempdf, columns=['curv_mean', 'curv_median', 'length'])
     
@@ -1318,7 +1407,7 @@ def curvature_seq(input_file, output_path, resolution, window_size, window_unit,
             pbar.update(1)
     
             # remove particles
-            clean_im = remove_particles(binary_img, output_path, im_name, minpixel=5, prune=False, save_img=save_img)
+            clean_im = remove_particles(binary_img, output_path, im_name, minpixel=int(resolution/2), prune=False, save_img=save_img)
             pbar.update(1)
     
             # skeletonize
@@ -1326,11 +1415,11 @@ def curvature_seq(input_file, output_path, resolution, window_size, window_unit,
             pbar.update(1)
     
             # prune
-            pruned_im, num_diag, num_mid = prune(skeleton_im, im_name, output_path, save_img)
+            pruned_im = prune(skeleton_im, im_name, output_path, save_img)
             pbar.update(1)
     
             # analyze
-            im_df = analyze_all_curv(pruned_im, im_name, output_path, resolution, window_size, window_unit, test, within_element, num_diag, num_mid)
+            im_df = analyze_all_curv(pruned_im, im_name, output_path, resolution, window_size, window_unit, test, within_element)
             pbar.update(1)
     
             return im_df

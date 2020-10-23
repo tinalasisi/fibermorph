@@ -20,6 +20,7 @@ setup(
     description='Toolkit for analyzing hair fiber morphology',
     long_description=long_description,
     long_description_content_type='text/markdown',
+    python_requires='>3.8.2',
     install_requires=[
         'numpy', 'scipy', 'matplotlib', 'joblib', 'pandas', 'opencv-python',
         'scikit-learn', 'Pillow', 'rawpy', 'requests', 'sympy', 'argparse',

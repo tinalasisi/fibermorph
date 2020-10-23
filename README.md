@@ -27,9 +27,9 @@ For those who want to run the program immediately, just follow these commands in
 6. Use fibermorph on your own grayscale TIFFs of longitudinal or cross-sectional hair images.  
 
 	`fibermorph --curvature --input_directory /Users/<UserName>/<ImageFolderPath> --output_directory /Users/<UserName>/<ExistingPath>/ --window_size 0.5 --window_unit mm --resolution 132 --save_image --within_element --jobs 2`  
-	
+
 	and
-	
+
 	`fibermorph --section --input_directory /Users/<UserName>/<ImageFolderPath> --output_directory /Users/<UserName>/<ExistingPath>/ --minsize 30 --maxsize 180 --resolution_mu 4.25 --jobs 2`
 
 
