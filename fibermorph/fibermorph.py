@@ -156,15 +156,15 @@ def parse_args():
         "--demo_real_section", action="store_true", default=False,
         help="A demo of fibermorph section analysis with real data.")
     
-    module_group.add_argument(
-        "--demo_dummy_curv", action="store_true", default=False,
-        help="A demo of fibermorph curvature with dummy data. Arcs and lines are generated, analyzed and error is "
-             "calculated.")
-    
-    module_group.add_argument(
-        "--demo_dummy_section", action="store_true", default=False,
-        help="A demo of fibermorph section with dummy data. Circles and ellipses are generated, analyzed and error is "
-             "calculated.")
+    # module_group.add_argument(
+    #     "--demo_dummy_curv", action="store_true", default=False,
+    #     help="A demo of fibermorph curvature with dummy data. Arcs and lines are generated, analyzed and error is "
+    #          "calculated.")
+    #
+    # module_group.add_argument(
+    #     "--demo_dummy_section", action="store_true", default=False,
+    #     help="A demo of fibermorph section with dummy data. Circles and ellipses are generated, analyzed and error is "
+    #          "calculated.")
     
     module_group.add_argument(
         "--delete_dir", action="store_true", default=False,
@@ -172,12 +172,18 @@ def parse_args():
     
     args = parser.parse_args()
     
-    # Validate arguments
+    # # Validate arguments
+    # demo_mods = [
+    #     args.demo_real_curv,
+    #     args.demo_real_section,
+    #     args.demo_dummy_curv,
+    #     args.demo_dummy_section,
+    #     args.delete_dir]
+    
+    # Validate arguments (without dummy data)
     demo_mods = [
         args.demo_real_curv,
         args.demo_real_section,
-        args.demo_dummy_curv,
-        args.demo_dummy_section,
         args.delete_dir]
     
     if any(demo_mods) is False:
@@ -1666,12 +1672,12 @@ def main():
     elif args.demo_real_section is True:
         demo.real_section(args.output_directory)
         sys.exit(0)
-    elif args.demo_dummy_curv is True:
-        demo.dummy_curv(args.output_directory, args.repeats, args.window_size)
-        sys.exit(0)
-    elif args.demo_dummy_section is True:
-        demo.dummy_section(args.output_directory, args.repeats)
-        sys.exit(0)
+    # elif args.demo_dummy_curv is True:
+    #     demo.dummy_curv(args.output_directory, args.repeats, args.window_size)
+    #     sys.exit(0)
+    # elif args.demo_dummy_section is True:
+    #     demo.dummy_section(args.output_directory, args.repeats)
+    #     sys.exit(0)
     
     # Check for output directory and create it if it doesn't exist
     output_dir = make_subdirectory(args.output_directory)
