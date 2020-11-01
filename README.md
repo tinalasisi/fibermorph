@@ -18,13 +18,7 @@ For those who want to run the program immediately, just follow these commands in
 	and  
 
 	`fibermorph --demo_real_section --output_directory /Users/<UserName>/<ExistingPath>/<NewFolderName`
-5. Test fibermorph with dummy data and check the error in the spreadsheets generated with the command.  
-`fibermorph --demo_dummy_curv --output_directory /Users/<UserName>/<ExistingPath>/<NewFolderName> --repeats 2`
-
-	and
-
-	`fibermorph --demo_dummy_section --output_directory /Users/<UserName>/<ExistingPath>/<NewFolderName> --repeats 2`
-6. Use fibermorph on your own grayscale TIFFs of longitudinal or cross-sectional hair images.  
+5. Use fibermorph on your own grayscale TIFFs of longitudinal or cross-sectional hair images.  
 
 	`fibermorph --curvature --input_directory /Users/<UserName>/<ImageFolderPath> --output_directory /Users/<UserName>/<ExistingPath>/ --window_size 0.5 --window_unit mm --resolution 132 --save_image --within_element --jobs 2`  
 
@@ -91,64 +85,6 @@ This flag will run  a demo of fibermorph section analysis with real data. You wi
 
 To run the demo, you will input something like:
 `fibermorph --demo_real_section --output_directory /Users/<UserName>/<ExistingPath>/<NewFolderName`
-
-## Calculating image analysis error
-In order to validate the image analysis program, the fibermorph package includes two modules that will generate and analyze dummy data, then run the appropriate analysis and generate error data.
-
-Both `--demo_dummy` modules require the following flags:
-
-```
--o , --output_directory
-                        Required. Full path to and name of desired output directory.
-                        Will be created if it doesn't exist.
-
---repeats               Integer. Number of times to repeat validation module
-                        (i.e. number of sets of dummy data to generate).
-
-```
-
-The modules create a `fibermorph_demo` within the given path. In this folder there will be another folder named `<MonthDay_HourMinute>_ValidationTest_<Curv or Section>` where the generated dummy images and corresponding parameters in spreadsheets will be in a folder named `ValidationData` and the error data will be in a folder named `ValidationAnalysis`.
-
-Running the module once will create a set of data and analyses for a single randomly generated arc and line (for curvature) or circle and ellipse (for section). To produce more data, simply add the flag `--repeats`  with the number of times you would like to repeat it, e.g. `fibermorph --repeats <integer>`. This flag is optional.
-
-### Validating curvature analysis
-`--demo_dummy_curv`
-
-This flag will run a demo of fibermorph curvature with dummy data. Arcs and lines are generated, analyzed and error is calculated.
-
-For this module, you can optionally include `--window_size`. This will allow you to edit the window size used to fit the circle used to estimate curvature. By default, this is 10 pixels. The images generated are 3900 x 5200 pixels, and you can use a range of values between 10 and 3900.
-
-To run the demo, you can enter e.g. `fibermorph --demo_dummy_curv --output_directory /Users/<UserName>/<ExistingPath>/<NewFolderName> --repeats 4`
-
-Rather than repeating this analysis with various window_sizes, you can simply use the curvature module (see below) and set the `--input_directory` to the `/ValidationData` folder created above. You will need to set `--resolution 1`, `--window_size 10`, and `--window_unit px` or whatever number of pixels you would like to use as a window size.
-
-### Validating section analysis
-`--demo_dummy_section`
-
-This flag will run a demo of fibermorph curvature with dummy data. Arcs and lines are generated, analyzed and error is calculated.
-
-To run the demo, you can enter e.g. `fibermorph --demo_dummy_section --output_directory /Users/<UserName>/<ExistingPath>/<NewFolderName> --repeats 4`
-
-### Deleting demo folders
-`--delete_dir`
-Can be used to delete directories generated in the demo modules.
-
-Example usage: `fibermorph --delete_dir --output_directory /Users/<UserName>/<ExistingPath>/<ResultsFolderName>`
-
-This will delete the folder (with all its contents) and print a confirmation of which folder has been deleted.
-
-## Using the fibermorph packages
-The main modules of the fibermorph package are `--curvature` and `--section`. Both require the following flags to run:
-
-```
--o , --output_directory
-                        Required. Full path to and name of desired output directory. Will be created
-                           if it doesn't exist.
--i , --input_directory
-                        Required. Full path to and name of desired directory containing input files.
---jobs                  Integer. Number of parallel jobs to run. Default is 1.
-
-```
 
 ### Curvature
 To calculate curvature from grayscale TIFF images of hair fibers, the flag `--curvature` is used with the following flags in addition to input and output directories:
