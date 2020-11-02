@@ -1,5 +1,13 @@
 # %% import
 
+import sympy
+
+from skimage import draw
+import random
+from random import randint
+import matplotlib.pyplot as plt
+from sympy import geometry
+
 import os
 import pathlib
 import shutil
@@ -157,6 +165,66 @@ def validation_curv(output_location, repeats, window_size_px, resolution=1):
     return main_output_path
 
 
+def sim_ellipse(output_directory, im_width_px, im_height_px, min_diam_um, max_diam_um, px_per_um, angle_deg):
+    # conversions
+    um_per_inch = 25400
+    dpi = int(px_per_um * um_per_inch)
+    min_rad_um = min_diam_um / 2
+    max_rad_um = max_diam_um / 2
+    
+    # image size in inches
+    im_width_inch = (im_width_px / px_per_um) / um_per_inch
+    im_height_inch = (im_height_px / px_per_um) / um_per_inch
+    
+    imsize_inch = im_height_inch, im_width_inch
+    imsize_px = im_height_px, im_width_px
+    
+    min_rad_px = min_rad_um * px_per_um
+    max_rad_px = max_rad_um * px_per_um
+    
+    # generate array of ones (will show up as white background)
+    img = np.ones(imsize_px, dtype=np.uint8)
+    
+    # generate ellipse in center of image
+    rr, cc = draw.ellipse(im_height_px / 2, im_width_px / 2, min_rad_px, max_rad_px, shape=img.shape,
+                          rotation=np.deg2rad(angle_deg))
+    img[rr, cc] = 0
+    
+    fig = plt.figure(frameon=False)
+    fig.set_size_inches(im_width_inch, im_height_inch)
+    ax = plt.Axes(fig, [0, 0, 1, 1])
+    ax.set_axis_off()
+    fig.add_axes(ax)
+    
+    p1 = geometry.Point((im_height_px / px_per_um) / 2, (im_width_px / px_per_um) / 2)
+    e1 = geometry.Ellipse(p1, hradius=max_rad_um, vradius=min_rad_um)
+    area = sympy.N(e1.area)
+    eccentricity = e1.eccentricity
+    ax.imshow(img, cmap="gray", aspect='auto')
+    
+    jetzt = datetime.now()
+    timestamp = jetzt.strftime("%b%d_%H%M_%S_%f")
+    
+    name = "sim_ellipse_" + str(timestamp)
+    
+    im_path = pathlib.Path(output_directory).joinpath("im_" + name + ".tiff")
+    df_path = pathlib.Path(output_directory).joinpath("df_" + name + ".csv")
+
+    data = {'name': [name], 'area': [area], 'eccentricity': [eccentricity], 'ref_min_diam': [min_diam_um],
+            'ref_max_diam': [max_diam_um]}
+
+    df = pd.DataFrame(data)
+    
+    df.to_csv(df_path)
+    
+    plt.ioff()
+    fig.savefig(fname=im_path, dpi=dpi)
+    plt.cla()
+    plt.close()
+    
+    return df
+
+
 def validation_section(output_location, repeats):
     
     jetzt = datetime.now()
@@ -166,52 +234,28 @@ def validation_section(output_location, repeats):
     main_output_path = fibermorph.make_subdirectory(output_location, append_name=testname)
 
     dummy_dir = fibermorph.make_subdirectory(main_output_path, append_name="ValidationData")
-    shape_list = ["circle", "ellipse"]
+    
+    # create list of random variables from range
+    def gen_ellipse_data():
+        max_diam_um = random.uniform(50, 120)
+        min_diam_um = random.uniform(30, max_diam_um)
+        angle_deg = random.randint(0, 360)
+        list = [max_diam_um, min_diam_um, angle_deg]
+        return list
+    
+    tempdf = [gen_ellipse_data() for i in range(repeats)]
+    
+    gen_ellipse_df = pd.DataFrame(tempdf, columns=['max_diam_um', 'min_diam_um', 'angle_deg'])
+    
+    df_list = []
+    for index, row in tqdm(gen_ellipse_df.iterrows(), desc="Generating ellipses", position=0, unit="datasets", leave=True):
+        df = sim_ellipse(dummy_dir, 5200, 3900, row['min_diam_um'], row['max_diam_um'], 4.25, row['angle_deg'])
+        df_list.append(df)
+    
+    sim_ellipse_sum_df = pd.concat(df_list)
 
-    replist = [el for el in shape_list for i in range(repeats)]
-
-    output_path = fibermorph.make_subdirectory(main_output_path, append_name="ValidationAnalysis")
-
-    for shape in tqdm(replist, desc="Generating & analyzing dummy data", position=0, unit="datasets", leave=True):
-        # print(shape)
-        df, img, im_path, df_path = dummy_data.dummy_data_gen(
-            output_directory=dummy_dir,
-            shape=shape,
-            min_elem=1,
-            max_elem=1,
-            im_width=5200,
-            im_height=3900,
-            width=1)
-
-        valid_df = pd.DataFrame(df).sort_values(by=[0], axis=1)
-        min_ax = np.asarray(valid_df)[0][0]
-        max_ax = np.asarray(valid_df)[0][1]
-        valid_df['ref_min'] = min_ax
-        valid_df['ref_max'] = max_ax
-        valid_df['ref_eccentricity'] = np.sqrt(1 - (min_ax ** 2) / (max_ax ** 2))
-        valid_df.drop(columns=['ref_height', 'ref_width'])
-
-        test_df = fibermorph.analyze_section(im_path, output_path, minsize=0, maxsize=3900, resolution=1.0)
-
-        test_df['error_min'] = abs(valid_df['ref_min'] - test_df['min']) / valid_df['ref_min']
-        test_df['error_max'] = abs(valid_df['ref_max'] - test_df['max']) / valid_df['ref_max']
-
-        test_df['error_area'] = abs(valid_df['ref_area'] - test_df['area']) / valid_df['ref_area']
-        test_df['error_eccentricity'] = np.nan_to_num(
-            abs(valid_df['ref_eccentricity'] - test_df['eccentricity']) / valid_df['ref_eccentricity'], posinf=0)
-
-        valid_df2 = valid_df.join(test_df)
-
-        col_list = ['error_min', 'error_max', 'error_area', 'error_eccentricity']
-
-        error_df = valid_df2
-        # error_df = valid_df2[col_list]
-
-        im_name = im_path.stem
-        df_path = pathlib.Path(output_path).joinpath(str(im_name) + "_errordata.csv")
-        error_df.to_csv(df_path)
-
-        # tqdm.write("\nResults saved as:\n{}\n\n".format(df_path))
+    with pathlib.Path(main_output_path).joinpath("summary_" + testname + ".csv") as savename:
+        sim_ellipse_sum_df.to_csv(savename)
     
     return main_output_path
 
