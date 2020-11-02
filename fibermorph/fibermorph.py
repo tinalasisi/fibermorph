@@ -466,11 +466,12 @@ def analyze_section(input_file, output_path, minsize=20, maxsize=150, resolution
             
             section = props[section_id]
             
-            section_data = [section.filled_area, section.minor_axis_length, section.major_axis_length, section.eccentricity]
+            area_mu = section.filled_area/np.square(resolution)
+            min_diam = section.minor_axis_length/resolution
+            max_diam = section.major_axis_length/resolution
+            eccentricity = section.eccentricity
             
-            section_data = pd.DataFrame([float(x) / resolution for x in section_data]).T
-            section_data.columns = ['area', 'min', 'max', 'eccentricity']
-            section_data['ID'] = im_name
+            section_data = pd.DataFrame({'ID': [im_name], 'area': [area_mu], 'eccentricity': [eccentricity], 'min': [min_diam], 'max': [max_diam]})
 
             pbar.update(1)
             
@@ -1666,10 +1667,9 @@ def section(input_directory, main_output_path, jobs, resolution, minsize, maxsiz
             delayed(analyze_section)(f, output_im_path, minsize, maxsize, resolution) for f in file_list))
     
     section_df = pd.concat(section_df)
-    section_df.columns = ['area', 'min', 'max', 'eccentricity', 'ID']
     section_df.set_index('ID', inplace=True)
     
-    with pathlib.Path(output_path).joinpath("section_data.csv") as df_output_path:
+    with pathlib.Path(output_path).joinpath("summary_section_data.csv") as df_output_path:
         section_df.to_csv(df_output_path)
     
     # End the timer and then print out the how long it took
