@@ -1711,7 +1711,7 @@ def main():
     elif args.curvature is True:
         curvature(
             args.input_directory, output_dir, args.jobs,
-            args.resolution, args.window_size, args.window_unit, args.save_image, args.within_element)
+            args.resolution_mm, args.window_size, args.window_unit, args.save_image, args.within_element)
     elif args.section is True:
         section(
             args.input_directory, output_dir, args.jobs,
