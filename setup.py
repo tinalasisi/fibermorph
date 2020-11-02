@@ -22,7 +22,7 @@ setup(
     long_description_content_type='text/markdown',
     python_requires='>3.8.2',
     install_requires=[
-        'numpy', 'scipy', 'matplotlib', 'joblib', 'pandas', 'opencv-python',
+        'numpy', 'scipy', 'matplotlib', 'joblib', 'pandas',
         'scikit-learn', 'Pillow', 'rawpy', 'requests', 'sympy', 'argparse',
         'scikit-image', 'joblib', 'matplotlib', 'tqdm'],
     entry_points={

@@ -11,7 +11,7 @@ from datetime import datetime
 from functools import wraps
 from timeit import default_timer as timer
 
-import cv2
+# import cv2
 import numpy as np
 import pandas as pd
 import rawpy
@@ -543,13 +543,15 @@ def filter_curv(input_file, output_path, save_img):
     # create pathlib object for input Image
     input_path = pathlib.Path(input_file)
     
-    # extract image name
-    im_name = input_path.stem
+    gray_img, im_name = imread(input_path)
     
-    # read in Image
-    gray_img = cv2.imread(str(input_path), 0)
-    type(gray_img)
-    # print("Image size is:", gray_img.shape)
+    # # extract image name
+    # im_name = input_path.stem
+    #
+    # # read in Image
+    # gray_img = cv2.imread(str(input_path), 0)
+    # type(gray_img)
+    # # print("Image size is:", gray_img.shape)
     
     # use frangi ridge filter to find hairs, the output will be inverted
     filter_img = skimage.filters.frangi(gray_img)
