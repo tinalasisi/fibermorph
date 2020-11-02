@@ -20,7 +20,7 @@ For those who want to run the program immediately, just follow these commands in
 	`fibermorph --demo_real_section --output_directory /Users/<UserName>/<ExistingPath>/<NewFolderName`
 5. Use fibermorph on your own grayscale TIFFs of longitudinal or cross-sectional hair images.  
 
-	`fibermorph --curvature --input_directory /Users/<UserName>/<ImageFolderPath> --output_directory /Users/<UserName>/<ExistingPath>/ --window_size 0.5 --window_unit mm --resolution 132 --save_image --within_element --jobs 2`  
+	`fibermorph --curvature --input_directory /Users/<UserName>/<ImageFolderPath> --output_directory /Users/<UserName>/<ExistingPath>/ --resolution_mm 132 --jobs 2`  
 
 	and
 
@@ -29,36 +29,27 @@ For those who want to run the program immediately, just follow these commands in
 
 ## Setting up
 1. We recommend you download [miniconda](https://docs.conda.io/en/latest/miniconda.html) for your operating system.
+	You may also download [Anaconda](https://docs.anaconda.com/anaconda/install/). The only difference is that Anaconda comes preloaded with more libraries (500 Mb). You won't need this to run fibermorph, so we recommend you stick to minconda which is the smaller (58 Mb) and quicker to download.
 
-You may also download [Anaconda](https://docs.anaconda.com/anaconda/install/). The only difference is that Anaconda comes preloaded with more libraries (500 Mb). You won't need this to run fibermorph, so we recommend you stick to minconda which is the smaller (58 Mb) and quicker to download.
-
-Whichever you choose *be sure to download the version with Python 3.X and not Python 2.X*.
-
+	Whichever you choose *be sure to download the version with Python 3.X and not Python 2.X*.
 2. Open a terminal.
-
-#### Mac OS:
-- Open the *Terminal* application.
-#### Windows:
-- Type `miniconda` in the search box and open the application.
-#### Linux:
-- Open the *Terminal* application.
-
+	#### Mac OS:
+	- Open the *Terminal* application.
+	#### Windows:
+	- Type `miniconda` in the search box and open the application.
+	#### Linux:
+	- Open the *Terminal* application.
 3.  Now you can set up a virtual environment.
 
-Create an empty conda environment, e.g. `conda create -n <fibermorph_env python=3.8` and load it `conda activate fibermorph_env`
-
-You are now ready to install fibermorph!
-
+	Create an empty conda environment, e.g. `conda create -n <fibermorph_env python=3.8` and load it `conda activate fibermorph_env`
+	You are now ready to install fibermorph!
 
 ## Install the package
 
 1. After having activated your new virtual environment, you can simply run `pip install fibermorph`.
-
-You can find the latest release [here](https://github.com/tinalasisi/fibermorph/) on this GitHub page and on the [fibermorph PyPI page](https://pypi.org/project/fibermorph/).
-
+	You can find the latest release [here](https://github.com/tinalasisi/fibermorph/) on this GitHub page and on the [fibermorph PyPI page](https://pypi.org/project/fibermorph/).
 2. You have successfully installed fibermorph.
-
-The package is now ready for use. Enter `fibermorph -h` or `fibermorph --help` to see all the flags. You can keep reading to try out the demos and read instructions on the various modules within the package.
+	The package is now ready for use. Enter `fibermorph -h` or `fibermorph --help` to see all the flags. You can keep reading to try out the demos and read instructions on the various modules within the package.
 
 ## Demo data
 Before using this on any of your own data, it's recommended that you test that you test whether fibermorph is working properly on your machine. There are a few `demo` modules you can use to check whether fibermorph is running correctly.
@@ -89,19 +80,19 @@ To run the demo, you will input something like:
 ### Curvature
 To calculate curvature from grayscale TIFF images of hair fibers, the flag `--curvature` is used with the following flags in addition to input and output directories:
 ```
---resolution_mm       Integer. Number of pixels per mm for curvature analysis.
---window_size  [ ...]
-                      Float or integer. Desired size for window of measurement for curvature
-                      analysis in pixels or mm (given the flag --window_unit). Default is 10.
-                      Works when the --window_unit is pixels.
---window_unit {px,mm}
-                      String. Unit of measurement for window of measurement for curvature
-                      analysis. Can be 'px' (pixels) or 'mm'. Default is 'px'.
--s, --save_image      Default is False. Will save intermediate curvature processing images if
-                      --save_image flag is included.
--W, --within_element  Boolean. Default is False. Will create an additional directory with
-                      spreadsheets of raw curvature measurements for each hair if the
-                      --within_element flag is included.
+--resolution_mm       	Integer. Number of pixels per mm for curvature analysis.
+						Default is 132.
+--window_size  [ ...] 	Float or integer or None. Desired size for window of measurement
+						for curvature analysis in pixels or mm (given
+						the flag --window_unit). If nothing is entered, the default
+						is None and the entire hair will be used to for the curve fitting."
+--window_unit {px,mm}	String. Unit of measurement for window of measurement for curvature
+                      	analysis. Can be 'px' (pixels) or 'mm'. Default is 'px'.
+-s, --save_image      	Default is False. Will save intermediate curvature processing images if
+                      	--save_image flag is included.
+-W, --within_element  	Boolean. Default is False. Will create an additional directory with
+                      	spreadsheets of raw curvature measurements for each hair if the
+                      	--within_element flag is included.
 
 ```
 
@@ -113,7 +104,7 @@ fibermorph --curvature --input_directory /Users/<UserName>/<ImageFolderPath> --o
 ### Section
 To calculate cross-sectional properties from grayscale TIFF images of hair fibers, the flag `--section` is used with the following flags:
 ```
---resolution_mu       Float. Number of pixels per micron for section analysis.
+--resolution_mu       Float. Number of pixels per micron for section analysis. Default is 4.25.
 --minsize             Integer. Minimum diameter in microns for sections. Default is 20.
 --maxsize             Integer. Maximum diameter in microns for sections. Default is 150.
 

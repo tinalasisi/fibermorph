@@ -73,13 +73,13 @@ def parse_args():
     )
     
     gr_curv.add_argument(
-        "--resolution", type=int, metavar="", default=132,
-        help="Integer. Number of pixels per mm for curvature analysis.")
+        "--resolution_mm", type=int, metavar="", default=132,
+        help="Integer. Number of pixels per mm for curvature analysis. Default is 132.")
 
     gr_curv.add_argument(
-        "--window_size", type=float, metavar="", default=10, nargs='+',
-        help="Float or integer. Desired size for window of measurement for curvature analysis in pixels or mm (given "
-             "the flag --window_unit). Default is 10. Works when the --window_unit is pixels.")
+        "--window_size", metavar="", default=None, nargs='+',
+        help="Float or integer or None. Desired size for window of measurement for curvature analysis in pixels or mm (given "
+             "the flag --window_unit). If nothing is entered, the default is None and the entire hair will be used to for the curve fitting.")
 
     gr_curv.add_argument(
         "--window_unit", type=str, default="px", choices=["px", "mm"],
@@ -102,7 +102,7 @@ def parse_args():
     
     gr_sect.add_argument(
         "--resolution_mu", type=float, metavar="", default=4.25,
-        help="Float. Number of pixels per micron for section analysis.")
+        help="Float. Number of pixels per micron for section analysis. Default is 4.25.")
 
     gr_sect.add_argument(
         "--minsize", type=int, metavar="", default=20,
@@ -1197,47 +1197,58 @@ def analyze_each_curv(element, window_size_px, resolution, output_path, name, wi
 
     length_mm = float(corr_element_pixel_length / resolution)
     
-    window_size_px = int(window_size_px)
+    if not window_size_px is None:
+        window_size_px = int(window_size_px)
+        
+        subset_loop = (subset_gen(element_pixel_length, window_size_px, element_label))  # generates subset loop
+        
+        # Safe generator expression in case of errors
+        curv = [taubin_curv(element_coords, resolution) for element_coords in subset_loop]
     
-    subset_loop = (subset_gen(element_pixel_length, window_size_px, element_label))  # generates subset loop
+        taubin_df = pd.Series(curv).astype('float')
+        # print("\nCurv dataframe is:")
+        # print(taubin_df)
+        # print(type(taubin_df))
+        # print("\nCurv df min is:{}".format(taubin_df.min()))
+        # print("\nCurv df max is:{}".format(taubin_df.max()))
+        
+        # print("\nTrimming outliers...")
+        taubin_df2 = taubin_df[taubin_df.between(taubin_df.quantile(.01), taubin_df.quantile(.99))]  # without outliers
+        
+        # print("\nAfter trimming outliers...")
+        # print("\nCurv dataframe is:")
+        # print(taubin_df2)
+        # print(type(taubin_df2))
+        # print("\nCurv df min is:{}".format(taubin_df2.min()))
+        # print("\nCurv df max is:{}".format(taubin_df2.max()))
+        
+        curv_mean = taubin_df2.mean()
+        # print("\nCurv mean is:{}".format(curv_mean))
+        
+        curv_median = taubin_df2.median()
+        # print("\nCurv median is:{}".format(curv_median))
+        
+        within_element_df = [curv_mean, curv_median, length_mm]
+        # print("\nThe curvature summary stats for this element are:")
+        # print(within_element_df)
+        
+        if within_element:
+            within_element_func(output_path, name, element, taubin_df)
+            
+        if within_element_df is not None or np.nan:
+            return within_element_df
+        else:
+            pass
+        
+    elif window_size_px is None:
+        curv = taubin_curv(element.coords, resolution)
     
-    # Safe generator expression in case of errors
-    curv = [taubin_curv(element_coords, resolution) for element_coords in subset_loop]
+        within_element_df = pd.DataFrame({'curv': [curv], 'length': [length_mm]})
     
-    taubin_df = pd.Series(curv).astype('float')
-    # print("\nCurv dataframe is:")
-    # print(taubin_df)
-    # print(type(taubin_df))
-    # print("\nCurv df min is:{}".format(taubin_df.min()))
-    # print("\nCurv df max is:{}".format(taubin_df.max()))
-    
-    # print("\nTrimming outliers...")
-    taubin_df2 = taubin_df[taubin_df.between(taubin_df.quantile(.01), taubin_df.quantile(.99))]  # without outliers
-    
-    # print("\nAfter trimming outliers...")
-    # print("\nCurv dataframe is:")
-    # print(taubin_df2)
-    # print(type(taubin_df2))
-    # print("\nCurv df min is:{}".format(taubin_df2.min()))
-    # print("\nCurv df max is:{}".format(taubin_df2.max()))
-    
-    curv_mean = taubin_df2.mean()
-    # print("\nCurv mean is:{}".format(curv_mean))
-    
-    curv_median = taubin_df2.median()
-    # print("\nCurv median is:{}".format(curv_median))
-    
-    within_element_df = [curv_mean, curv_median, length_mm]
-    # print("\nThe curvature summary stats for this element are:")
-    # print(within_element_df)
-    
-    if within_element:
-        within_element_func(output_path, name, element, taubin_df)
-    
-    if within_element_df is not None or np.nan:
-        return within_element_df
-    else:
-        pass
+        if within_element_df is not None or np.nan:
+            return within_element_df
+        else:
+            pass
 
 
 # # @timing
@@ -1313,10 +1324,11 @@ def analyze_all_curv(img, name, output_path, resolution, window_size, window_uni
         # print(window_size)
         # print("First item is:")
         # print(window_size[0])
+        
         window_size = [window_size]
         
-    window_size = [float(i) for i in window_size]
-    
+        # window_size = [float(i) for i in window_size]
+        
     name = "ID-" + name
     
     im_sumdf = [window_iter(props, name, i, window_unit, resolution, output_path, test, within_element) for i in window_size]
@@ -1328,49 +1340,76 @@ def analyze_all_curv(img, name, output_path, resolution, window_size, window_uni
 @blockPrint
 def window_iter(props, name, window_size, window_unit, resolution, output_path, test, within_element):
     
-    if not window_unit == "px":
-        window_size_px = int(window_size * resolution)
-    else:
-        window_size_px = int(window_size)
-        window_size = int(window_size)
+    tempdf = []
     
-    # print("\nWindow size for analysis is {} {}".format(window_size_px, window_unit))
-    # print("Analysis of curvature for each element begins...")
+    if not window_size is None:
+        if not window_unit == "px":
+            window_size_px = int(window_size * resolution)
+        else:
+            window_size_px = int(window_size)
+            window_size = int(window_size)
+        
+        # print("\nWindow size for analysis is {} {}".format(window_size_px, window_unit))
+        # print("Analysis of curvature for each element begins...")
+        
+        name = str(name + "_WindowSize-" + str(window_size) + str(window_unit))
+        # print(name)
+        # print(window_size)
+        
+        tempdf = [analyze_each_curv(hair, window_size_px, resolution, output_path, name, within_element) for hair in props if hair.area > window_size]
     
-    name = str(name + "_WindowSize-" + str(window_size) + str(window_unit))
-    # print(name)
-    # print(window_size)
+        within_im_curvdf = pd.DataFrame(tempdf, columns=['curv_mean', 'curv_median', 'length'])
+        
+        within_im_curvdf2 = pd.DataFrame(within_im_curvdf, columns=['curv_mean', 'curv_median', 'length']).dropna()
+        
+        output_path = make_subdirectory(output_path, append_name="analysis")
+        with pathlib.Path(output_path).joinpath("ImageSum_" + name + ".csv") as save_path:
+            within_im_curvdf2.to_csv(save_path)
+        
+        curv_mean_im_mean = within_im_curvdf2['curv_mean'].mean()
+        curv_mean_im_median = within_im_curvdf2['curv_mean'].median()
+        curv_median_im_mean = within_im_curvdf2['curv_median'].mean()
+        curv_median_im_median = within_im_curvdf2['curv_median'].median()
+        length_mean = within_im_curvdf2['length'].mean()
+        length_median = within_im_curvdf2['length'].median()
+        hair_count = len(within_im_curvdf2.index)
+        
+        im_sumdf = pd.DataFrame(
+            {"ID": [name], "curv_mean_mean": [curv_mean_im_mean], "curv_mean_median": [curv_mean_im_median], "curv_median_mean": [curv_median_im_mean], "curv_median_median": [curv_median_im_median], "length_mean": [length_mean],"length_median": [length_median], "hair_count": [hair_count]})
+
+        if test:
+            return within_im_curvdf2
+        else:
+            return im_sumdf
     
-    tempdf = [analyze_each_curv(hair, window_size_px, resolution, output_path, name, within_element) for hair in props if hair.area > window_size]
+    elif window_size is None:
+        window_size_px = None
+        within_element = None
+        minsize = 0.5 * resolution
+        tempdf = [analyze_each_curv(hair, window_size_px, resolution, output_path, name, within_element) for hair in
+                  props if hair.area > minsize]
+
+        within_im_curvdf = pd.concat(tempdf)
+
+        within_im_curvdf2 = within_im_curvdf.dropna()
+
+        output_path = make_subdirectory(output_path, append_name="analysis")
+        with pathlib.Path(output_path).joinpath("ImageSum_" + name + ".csv") as save_path:
+            within_im_curvdf2.to_csv(save_path)
+
+        im_mean = within_im_curvdf2['curv'].mean()
+        im_median = within_im_curvdf2['curv'].median()
+        length_mean = within_im_curvdf2['length'].mean()
+        length_median = within_im_curvdf2['length'].median()
+        hair_count = len(within_im_curvdf2.index)
+
+        im_sumdf = pd.DataFrame({'ID': name, 'curv_mean': [im_mean], 'curv_median': [im_median], 'length_mean': [length_mean], 'length_median': [length_median], 'hair_count': [hair_count]})
+        
+        if test:
+            return within_im_curvdf2
+        else:
+            return im_sumdf
     
-    within_im_curvdf = pd.DataFrame(tempdf, columns=['curv_mean', 'curv_median', 'length'])
-    
-    within_im_curvdf2 = pd.DataFrame(within_im_curvdf, columns=['curv_mean', 'curv_median', 'length']).dropna()
-    
-    output_path = make_subdirectory(output_path, append_name="analysis")
-    with pathlib.Path(output_path).joinpath("ImageSum_" + name + ".csv") as save_path:
-        within_im_curvdf2.to_csv(save_path)
-    
-    curv_mean_im_mean = within_im_curvdf2['curv_mean'].mean()
-    curv_mean_im_median = within_im_curvdf2['curv_mean'].median()
-    curv_median_im_mean = within_im_curvdf2['curv_median'].mean()
-    curv_median_im_median = within_im_curvdf2['curv_median'].median()
-    length_mean = within_im_curvdf2['length'].mean()
-    length_median = within_im_curvdf2['length'].median()
-    hair_count = len(within_im_curvdf2.index)
-    
-    im_sumdf = pd.DataFrame(
-        [name, curv_mean_im_mean, curv_mean_im_median, curv_median_im_mean, curv_median_im_median, length_mean,
-         length_median, hair_count]).T
-    
-    # print("\nDataframe for {} is:".format(name))
-    # print(im_sumdf)
-    # print("\n")
-    
-    if test:
-        return within_im_curvdf2
-    else:
-        return im_sumdf
 
 # # @timing
 @blockPrint
@@ -1554,22 +1593,6 @@ def curvature(input_directory, main_output_path, jobs, resolution, window_size, 
     
     # print("This is the summary dataframe for the current sample")
     # print(summary_df)
-    
-    summary_df.columns = [
-        "ID", "curv_mean_mean", "curv_mean_median", "curv_median_mean", "curv_median_median",
-        "length_mean", "length_median", "hair_count"]
-    
-    cols1 = [
-        "curv_mean_mean", "curv_mean_median", "curv_median_mean",
-        "curv_median_median", "length_mean", "length_median"]
-    
-    cols2 = ["length_mean", "length_median"]
-    
-    summary_df[cols1] = summary_df[cols1].astype(float).round(5)
-    
-    summary_df[cols2] = summary_df[cols2].astype(float).round(2)
-    
-    summary_df.set_index('ID', inplace=True)
     
     # print("You've got data...")
     # print(summary_df)
