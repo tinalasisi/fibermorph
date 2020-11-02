@@ -40,7 +40,7 @@ from tqdm import tqdm
 # %%
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from fibermorph import fibermorph
-from fibermorph import dummy_data
+from fibermorph import demo
 
 # Get current directory
 dir = os.path.dirname(os.path.abspath(__file__))
@@ -159,6 +159,19 @@ def test_length_measurement():
     print("Uncorrected length is: {}".format(element.area))
     print("Corrected length is: {}".format(corr_px_length))
 
+def test_sim_ellipse():
+    im_width_px = 5200
+    im_height_px = 3900
+    min_diam_um = 40
+    max_diam_um = 80
+    
+    px_per_um = 4.25
+    angle_deg = 30
+    
+    output_directory = '/Users/tinalasisi/Desktop'
+    
+    df = demo.sim_ellipse(output_directory, im_width_px, im_height_px, min_diam_um, max_diam_um, px_per_um, angle_deg)
+    pass
 
 def test_copy_if_exist():
     # fibermorph.copy_if_exist()
