@@ -80,19 +80,24 @@ To run the demo, you will input something like:
 ### Curvature
 To calculate curvature from grayscale TIFF images of hair fibers, the flag `--curvature` is used with the following flags in addition to input and output directories:
 ```
---resolution_mm       	Integer. Number of pixels per mm for curvature analysis.
+--resolution_mm       	Integer. Number of pixels per mm for
+						curvature analysis.
 						Default is 132.
---window_size  [ ...] 	Float or integer or None. Desired size for window of measurement
+--window_size  [ ...] 	Float or integer or None. Desired size for
+						window of measurement
 						for curvature analysis in pixels or mm (given
 						the flag --window_unit). If nothing is entered, the default
 						is None and the entire hair will be used to for the curve fitting."
---window_unit {px,mm}	String. Unit of measurement for window of measurement for curvature
+--window_unit {px,mm}	String. Unit of measurement for window of
+						measurement for curvature
                       	analysis. Can be 'px' (pixels) or 'mm'. Default is 'px'.
--s, --save_image      	Default is False. Will save intermediate curvature processing images if
-                      	--save_image flag is included.
--W, --within_element  	Boolean. Default is False. Will create an additional directory with
+-W, --within_element  	Boolean. Default is False. Will create
+						an additional directory with
                       	spreadsheets of raw curvature measurements for each hair if the
                       	--within_element flag is included.
+-s, --save_image      	Default is False. Will save intermediate
+						curvature/section processing images if
+						--save_image flag is included.
 
 ```
 
@@ -112,7 +117,7 @@ To calculate cross-sectional properties from grayscale TIFF images of hair fiber
 
 An example command would be:
 ```
-fibermorph --section --input_directory /Users/<UserName>/<ImageFolderPath> --output_directory /Users/<UserName>/<ExistingPath>/ --minsize 30 --maxsize 180 --resolution_mu 4.25 --jobs 2
+fibermorph --section --input_directory /Users/<UserName>/<ImageFolderPath> --output_directory /Users/<UserName>/<ExistingPath>/ --minsize 20 --maxsize 150 --resolution_mu 4.25 --jobs 2
 ```
 
 

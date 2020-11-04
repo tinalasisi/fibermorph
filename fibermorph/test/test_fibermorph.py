@@ -4,6 +4,8 @@ import sys
 import pathlib
 import numpy as np
 
+from skimage import io
+
 import argparse
 import datetime
 import os
@@ -173,20 +175,61 @@ def test_sim_ellipse():
     df = demo.sim_ellipse(output_directory, im_width_px, im_height_px, min_diam_um, max_diam_um, px_per_um, angle_deg)
     pass
 
+#%%
+def section_props(props, im_name, resolution, minpixel, maxpixel, im_center):
+    
+    props_df = [
+        [region.label, region.centroid, scipy.spatial.distance.euclidean(im_center, region.centroid)]
+        for region
+        in props if minpixel <= region.area <= maxpixel]
+    props_df = pd.DataFrame(props_df, columns=['label', 'centroid', 'distance'])
+    
+    section_id = props_df['distance'].astype(float).idxmin()
+    # print(section_id)
+    
+    section = props[section_id]
+    
+    area_mu = section.filled_area / np.square(resolution)
+    min_diam = section.minor_axis_length / resolution
+    max_diam = section.major_axis_length / resolution
+    eccentricity = section.eccentricity
+    
+    section_data = pd.DataFrame(
+        {'ID': [im_name], 'area': [area_mu], 'eccentricity': [eccentricity], 'min': [min_diam],
+         'max': [max_diam]})
+    
+    gray_im = section.intensity_image
+    bin_im = section.filled_image
+    bbox = section.bbox
+            
+    return section_data, gray_im, bin_im, bbox
+#%%
+def test_segment_section():
+    
+    
+    #input
+    input_directory = pathlib.Path("/Users/tinalasisi/Desktop/Nov01_2338_ValidationTest_Section/ValidationData")
+    # input_directory = pathlib.Path("/Users/tinalasisi/Desktop/Nov3_TestSectionsImages")
+    file_list = fibermorph.list_images(input_directory)
+    main_output_path = "/Users/tinalasisi/Desktop"
+    output_path = main_output_path
+    minsize = 20
+    maxsize = 150
+    resolution = 4.25
+    save_img = True
+    jobs = 2
+    
+    input_file = file_list[0]
+    
+    # section sequence
+
+#%%
+    
+
+
 def test_copy_if_exist():
     # fibermorph.copy_if_exist()
     pass
-
-
-def test_analyze_each_curv():
-    # fibermorph.analyze_each_curv()
-    pass
-
-
-def test_analyze_section():
-    # fibermorph.analyze_section()
-    pass
-
 
 from tqdm import tqdm
 import pandas as pd
