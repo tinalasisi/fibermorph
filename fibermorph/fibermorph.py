@@ -461,11 +461,9 @@ def crop_section(img, im_name, resolution, minpixel, maxpixel, im_center):
 def segment_section(crop_im, im_name, resolution, minpixel, maxpixel, im_center):
     try:
         thresh = skimage.filters.threshold_minimum(crop_im)
-        bin_img = crop_im < thresh
-        # bin_img = skimage.segmentation.clear_border(crop_im < thresh)
-        
-        # seg_im_inv = skimage.segmentation.chan_vese(crop_im, max_iter=200, init_level_set=bin_img)
-        seg_im = skimage.segmentation.morphological_chan_vese(np.asarray(crop_im), 40, init_level_set=bin_img, smoothing=4)
+        bin_ls_set = crop_im < thresh
+
+        seg_im = skimage.segmentation.morphological_chan_vese(np.asarray(crop_im), 40, init_level_set=bin_ls_set, smoothing=4)
         
         seg_im_inv = np.asarray(seg_im != 0)
         
@@ -480,7 +478,7 @@ def segment_section(crop_im, im_name, resolution, minpixel, maxpixel, im_center)
             {'ID': [np.nan], 'area': [np.nan], 'eccentricity': [np.nan], 'min': [np.nan],
              'max': [np.nan]})
         thresh = skimage.filters.threshold_minimum(crop_im)
-        bin_im = skimage.segmentation.clear_border(crop_im < thresh)
+        bin_im = crop_im < thresh
         
     return section_data, bin_im
 
@@ -518,53 +516,57 @@ def section_seq(input_file, output_path, resolution, minsize, maxsize, save_img)
     
     with tqdm(total=3, desc="section analysis sequence", unit="steps", position=1, leave=None) as pbar:
         for i in [input_file]:
-
-            # read in file
-            img, im_name = imread(input_file, use_skimage=True)
-        
-            # Gets the unique values in the image matrix. Since it is binary, there should only be 2.
-            unique, counts = np.unique(img, return_counts=True)
-        
-            # find center of image
-            im_center = list(np.divide(img.shape, 2))  # returns array of two floats
-        
-            minpixel = np.pi * (((minsize / 2) * resolution) ** 2)
-            maxpixel = np.pi * (((maxsize / 2) * resolution) ** 2)
             
-            pbar.update(1)
+            try:
+
+                # read in file
+                img, im_name = imread(input_file, use_skimage=True)
             
-            if len(unique) == 2:
-                seg_im = skimage.util.invert(img)
-                pbar.update(1)
-                label_im, num_elem = skimage.measure.label(seg_im, connectivity=2, return_num=True)
-        
-                props = skimage.measure.regionprops(label_image=label_im, intensity_image=img)
-        
-                section_data, bin_im, bbox = section_props(props, im_name, resolution, minpixel, maxpixel, im_center)
-
-                pad = 100
-                minr = bbox[0] - pad
-                minc = bbox[1] - pad
-                maxr = bbox[2] + pad
-                maxc = bbox[3] + pad
-                bbox_pad = [minc, minr, maxc, maxr]
-                crop_im = Image.fromarray(img).crop(bbox_pad)
-
-                if save_img:
-                    save_sections(output_path, im_name, crop_im, save_crop=True)
-                    save_sections(output_path, im_name, bin_im, save_crop=False)
+                # Gets the unique values in the image matrix. Since it is binary, there should only be 2.
+                unique, counts = np.unique(img, return_counts=True)
+            
+                # find center of image
+                im_center = list(np.divide(img.shape, 2))  # returns array of two floats
+            
+                minpixel = np.pi * (((minsize / 2) * resolution) ** 2)
+                maxpixel = np.pi * (((maxsize / 2) * resolution) ** 2)
                 
                 pbar.update(1)
-            else:
-                crop_im = crop_section(img, im_name, resolution, minpixel, maxpixel, im_center)
-                pbar.update(1)
-        
-                section_data, bin_im = segment_section(crop_im, im_name, resolution, minpixel, maxpixel, im_center)
                 
-                if save_img:
-                    save_sections(output_path, im_name, crop_im, save_crop=True)
-                    save_sections(output_path, im_name, bin_im, save_crop=False)
-                pbar.update(1)
+                if len(unique) == 2:
+                    seg_im = skimage.util.invert(img)
+                    pbar.update(1)
+                    label_im, num_elem = skimage.measure.label(seg_im, connectivity=2, return_num=True)
+            
+                    props = skimage.measure.regionprops(label_image=label_im, intensity_image=img)
+            
+                    section_data, bin_im, bbox = section_props(props, im_name, resolution, minpixel, maxpixel, im_center)
+    
+                    pad = 100
+                    minr = bbox[0] - pad
+                    minc = bbox[1] - pad
+                    maxr = bbox[2] + pad
+                    maxc = bbox[3] + pad
+                    bbox_pad = [minc, minr, maxc, maxr]
+                    crop_im = Image.fromarray(img).crop(bbox_pad)
+    
+                    if save_img:
+                        save_sections(output_path, im_name, crop_im, save_crop=True)
+                        save_sections(output_path, im_name, bin_im, save_crop=False)
+                    
+                    pbar.update(1)
+                else:
+                    crop_im = crop_section(img, im_name, resolution, minpixel, maxpixel, im_center)
+                    pbar.update(1)
+            
+                    section_data, bin_im = segment_section(crop_im, im_name, resolution, minpixel, maxpixel, im_center)
+                    
+                    if save_img:
+                        save_sections(output_path, im_name, crop_im, save_crop=True)
+                        save_sections(output_path, im_name, bin_im, save_crop=False)
+                    pbar.update(1)
+            except:
+                pass
         
             return section_data
     
