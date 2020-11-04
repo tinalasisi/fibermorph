@@ -27,12 +27,12 @@ from joblib import Parallel, delayed
 from matplotlib import pyplot as plt
 from scipy import ndimage
 from scipy.spatial import distance as dist
-from skimage import filters
+from skimage import filters, io
 from skimage.filters import threshold_minimum
 from skimage.segmentation import clear_border
 from skimage.util import invert
 from tqdm import tqdm
-
+#%%
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 import demo
 
@@ -68,6 +68,11 @@ def parse_args():
         "--jobs", type=int, metavar="", default=1,
         help="Integer. Number of parallel jobs to run. Default is 1.")
 
+    parser.add_argument(
+        "-s", "--save_image", action="store_true", default=False,
+        help="Default is False. Will save intermediate curvature/section processing images if --save_image flag is "
+             "included.")
+
     gr_curv = parser.add_argument_group(
         "curvature options", "arguments used specifically for curvature module"
     )
@@ -85,10 +90,6 @@ def parse_args():
         "--window_unit", type=str, default="px", choices=["px", "mm"],
         help="String. Unit of measurement for window of measurement for curvature analysis. Can be 'px' (pixels) or "
              "'mm'. Default is 'px'.")
-
-    gr_curv.add_argument(
-        "-s", "--save_image", action="store_true", default=False,
-        help="Default is False. Will save intermediate curvature processing images if --save_image flag is included.")
 
     gr_curv.add_argument(
         "-W", "--within_element", action="store_true", default=False,
@@ -121,14 +122,14 @@ def parse_args():
         help="Optional. String. Extension of input files to use in input_directory when using raw2gray function. "
              "Default is .RW2.")
 
-    gr_demo = parser.add_argument_group(
-        "demo options", "arguments used specifically for section and curvature demo_dummy modules"
-    )
-    
-    gr_demo.add_argument(
-        "--repeats", type=int, metavar="", default=1,
-        help="Integer. Number of times to repeat validation module (i.e. number of sets of dummy data to generate)."
-    )
+    # gr_demo = parser.add_argument_group(
+    #     "demo options", "arguments used specifically for section and curvature demo_dummy modules"
+    # )
+    #
+    # gr_demo.add_argument(
+    #     "--repeats", type=int, metavar="", default=1,
+    #     help="Integer. Number of times to repeat validation module (i.e. number of sets of dummy data to generate)."
+    # )
 
     # Create mutually exclusive flags for each of fibermorph's modules
     group = parser.add_argument_group(
@@ -166,9 +167,9 @@ def parse_args():
     #     help="A demo of fibermorph section with dummy data. Circles and ellipses are generated, analyzed and error is "
     #          "calculated.")
     
-    module_group.add_argument(
-        "--delete_dir", action="store_true", default=False,
-        help="Delete any directory generated in analysis.")
+    # module_group.add_argument(
+    #     "--delete_dir", action="store_true", default=False,
+    #     help="Delete any directory generated in analysis.")
     
     args = parser.parse_args()
     
@@ -183,8 +184,7 @@ def parse_args():
     # Validate arguments (without dummy data)
     demo_mods = [
         args.demo_real_curv,
-        args.demo_real_section,
-        args.delete_dir]
+        args.demo_real_section]
     
     if any(demo_mods) is False:
         if args.input_directory is None and args.output_directory is None:
@@ -397,98 +397,110 @@ def raw_to_gray(imgfile, output_directory):
     return output_name
 
 
-# # @timing
-@blockPrint
-def analyze_section(input_file, output_path, minsize=20, maxsize=150, resolution=1.0):
-    """This function executes a series of functions on the input file to segment and analyze the cross-section found
-    in the image.
-
-    Parameters
-    ----------
-    input_file : str or pathlib object
-        Path to the input file (should be .tif or .tiff).
-    output_path : str or pathlib object
-        Path where the output should be created.
-    minsize : int
-        An integer describing the minimum diameter a section is expected to have.
-    maxsize : int
-        An integer describing the maximum diameter a section is expected to have.
-    resolution : float
-        A float describing the number of pixels per micron in the input image.
-
-    Returns
-    -------
-    pd Dataframe
-        Pandas Dataframe with section information for image.
-
-    """
+def section_props(props, im_name, resolution, minpixel, maxpixel, im_center):
+    props_df = [
+        [region.label, region.centroid, scipy.spatial.distance.euclidean(im_center, region.centroid), region.filled_area, region.minor_axis_length, region.major_axis_length, region.eccentricity, region.filled_image, region.bbox]
+        for region
+        in props if minpixel <= region.area <= maxpixel]
+    props_df = pd.DataFrame(props_df, columns=['label', 'centroid', 'distance', 'area', 'min', 'max', 'eccentricity', 'image', 'bbox'])
     
-    with tqdm(total=4, desc="section analysis sequence", unit="steps", position=1, leave=None) as pbar:
-        for i in [input_file]:
-            # segment the image first
-            img, im_name = imread(input_file)
-            
-            img_bool = np.asarray(img, dtype=np.bool)
-            
-            # Gets the unique values in the image matrix. Since it is binary, there should only be 2.
-            unique, counts = np.unique(img_bool, return_counts=True)
-            
-            if len(unique) != 2:
-                # print("Image is not binarized!")
-                seg_im = segment_section(img)
-            else:
-                seg_im = skimage.util.invert(img_bool)
+    section_id = props_df['distance'].astype(float).idxmin()
+    # print(section_id)
+    
+    section = props_df.iloc[section_id]
+    
+    area_mu = section['area'] / np.square(resolution)
+    min_diam = section['min'] / resolution
+    max_diam = section['max'] / resolution
+    eccentricity = section['eccentricity']
+    
+    section_data = pd.DataFrame(
+        {'ID': [im_name], 'area': [area_mu], 'eccentricity': [eccentricity], 'min': [min_diam],
+         'max': [max_diam]})
+    
+    bin_im = section['image']
+    bbox = section['bbox']
+    
+    return section_data, bin_im, bbox
 
-            pbar.update(1)
-            
-            # label the image
-            label_im, num_elem = skimage.measure.label(seg_im, connectivity=2, return_num=True)
-            
-            # find center of image
-            im_center = list(np.divide(label_im.shape, 2))  # returns array of two floats
-            
-            minpixel = np.pi * (((minsize / 2) * resolution) ** 2)
-            maxpixel = np.pi * (((maxsize / 2) * resolution) ** 2)
-            
-            props = skimage.measure.regionprops(label_image=label_im, intensity_image=img)
-            
-            props_df = [[region.label, region.centroid, scipy.spatial.distance.euclidean(im_center, region.centroid)] for region
-                        in props if minpixel <= region.area <= maxpixel]
 
-            pbar.update(1)
-            
-            props_df = pd.DataFrame(props_df, columns=['label', 'centroid', 'distance'])
-            
-            # print(props_df)
-            
-            section_id = props_df['distance'].astype(float).idxmin()
-            # print(section_id)
-            
-            section = props[section_id]
-            
-            area_mu = section.filled_area/np.square(resolution)
-            min_diam = section.minor_axis_length/resolution
-            max_diam = section.major_axis_length/resolution
-            eccentricity = section.eccentricity
-            
-            section_data = pd.DataFrame({'ID': [im_name], 'area': [area_mu], 'eccentricity': [eccentricity], 'min': [min_diam], 'max': [max_diam]})
-
-            pbar.update(1)
-            
-            cropped_bin = props[section_id].filled_image
-            
-            img_inv = skimage.util.invert(cropped_bin)
-            with pathlib.Path(output_path).joinpath(im_name + ".tiff") as savename:
-                plt.imsave(savename, img_inv, cmap='gray')
-
-            pbar.update(1)
+def crop_section(img, im_name, resolution, minpixel, maxpixel, im_center):
+    
+    try:
+        # binarize
+        thresh = skimage.filters.threshold_minimum(img)
+        bin_img = skimage.segmentation.clear_border(img < thresh)
+        # label the image
+        label_im, num_elem = skimage.measure.label(bin_img, connectivity=2, return_num=True)
         
-            return section_data
+        props = skimage.measure.regionprops(label_image=label_im, intensity_image=img)
+        
+        section_data, bin_im, bbox = section_props(props, im_name, resolution, minpixel, maxpixel, im_center)
+        
+        pad = 100
+        minr = bbox[0] - pad
+        minc = bbox[1] - pad
+        maxr = bbox[2] + pad
+        maxc = bbox[3] + pad
+        bbox_pad = [minc, minr, maxc, maxr]
+        crop_im = np.asarray(Image.fromarray(img).crop(bbox_pad))
+    
+    except:
+        minr = int(im_center[0] / 2)
+        minc = int(im_center[1] / 2)
+        maxr = int(im_center[0] * 1.5)
+        maxc = int(im_center[1] * 1.5)
+        
+        bbox_pad = [minc, minr, maxc, maxr]
+        print("Error: \n Found no bbox for {} \n Used center 25% of image instead: {}".format(im_name, str(bbox_pad)))
+        
+        crop_im = np.asarray(Image.fromarray(img).crop(bbox_pad))
+        
+    return crop_im
 
+def segment_section(crop_im, im_name, resolution, minpixel, maxpixel, im_center):
+    try:
+        
+        seg_im_inv = skimage.segmentation.chan_vese(crop_im)
+        # seg_im = skimage.segmentation.morphological_chan_vese(np.asarray(crop_im), 35, init_level_set='checkerboard', smoothing=2)
+        
+        # seg_im_inv = np.asarray(seg_im != 0)
+        
+        # seg_im_inv = invert(seg_im.astype(np.uint8).astype(np.bool))
+        
+        crop_label_im, num_elem = skimage.measure.label(seg_im_inv, connectivity=2, return_num=True)
+        
+        crop_props = skimage.measure.regionprops(label_image=crop_label_im, intensity_image=np.asarray(crop_im))
+        
+        section_data, bin_im, bbox = section_props(crop_props, im_name, resolution, minpixel, maxpixel, im_center)
+    
+    except:
+        section_data = pd.DataFrame(
+            {'ID': [np.nan], 'area': [np.nan], 'eccentricity': [np.nan], 'min': [np.nan],
+             'max': [np.nan]})
+        thresh = skimage.filters.threshold_minimum(crop_im)
+        bin_im = skimage.segmentation.clear_border(crop_im < thresh)
+        
+    return section_data, bin_im
 
+def save_sections(output_path, im_name, im, save_crop=False):
+    if save_crop:
+        crop_path = make_subdirectory(output_path, "crop")
+        with pathlib.Path(crop_path).joinpath(im_name + ".tiff") as savename:
+            try:
+                skimage.io.imsave(str(savename), im)
+            except AttributeError:
+                im.save(savename)
+                
+    else:
+        binary_path = make_subdirectory(output_path, "binary")
+        with pathlib.Path(binary_path).joinpath(im_name + ".tiff") as savename:
+            im = Image.fromarray(im)
+            im.save(savename)
+            
 # # @timing
 @blockPrint
-def segment_section(img):
+def section_seq(input_file, output_path, resolution, minsize, maxsize, save_img):
     """Segments the input image to isolate the section(s).
 
     Parameters
@@ -503,19 +515,58 @@ def segment_section(img):
 
     """
     
-    try:
-        # thresh = skimage.filters.threshold_otsu(img)
-        thresh = skimage.filters.threshold_minimum(img)
-    except:
-        thresh = img
-    
-    init_ls = skimage.segmentation.clear_border(img < thresh)
-    
-    seg_im = skimage.segmentation.morphological_chan_vese(img, 30, init_level_set=init_ls, smoothing=4, lambda1=1,
-                                                          lambda2=1)
-    
-    return seg_im
+    with tqdm(total=3, desc="section analysis sequence", unit="steps", position=1, leave=None) as pbar:
+        for i in [input_file]:
 
+            # read in file
+            img, im_name = imread(input_file, use_skimage=True)
+        
+            # Gets the unique values in the image matrix. Since it is binary, there should only be 2.
+            unique, counts = np.unique(img, return_counts=True)
+        
+            # find center of image
+            im_center = list(np.divide(img.shape, 2))  # returns array of two floats
+        
+            minpixel = np.pi * (((minsize / 2) * resolution) ** 2)
+            maxpixel = np.pi * (((maxsize / 2) * resolution) ** 2)
+            
+            pbar.update(1)
+            
+            if len(unique) == 2:
+                seg_im = skimage.util.invert(img)
+                pbar.update(1)
+                label_im, num_elem = skimage.measure.label(seg_im, connectivity=2, return_num=True)
+        
+                props = skimage.measure.regionprops(label_image=label_im, intensity_image=img)
+        
+                section_data, bin_im, bbox = section_props(props, im_name, resolution, minpixel, maxpixel, im_center)
+
+                pad = 100
+                minr = bbox[0] - pad
+                minc = bbox[1] - pad
+                maxr = bbox[2] + pad
+                maxc = bbox[3] + pad
+                bbox_pad = [minc, minr, maxc, maxr]
+                crop_im = Image.fromarray(img).crop(bbox_pad)
+
+                if save_img:
+                    save_sections(output_path, im_name, crop_im, save_crop=True)
+                    save_sections(output_path, im_name, bin_im, save_crop=False)
+                
+                pbar.update(1)
+            else:
+                crop_im = crop_section(img, im_name, resolution, minpixel, maxpixel, im_center)
+                pbar.update(1)
+        
+                section_data, bin_im = segment_section(crop_im, im_name, resolution, minpixel, maxpixel, im_center)
+                
+                if save_img:
+                    save_sections(output_path, im_name, crop_im, save_crop=True)
+                    save_sections(output_path, im_name, bin_im, save_crop=False)
+                pbar.update(1)
+        
+            return section_data
+    
 
 # # @timing
 @blockPrint
@@ -1256,7 +1307,7 @@ def analyze_each_curv(element, window_size_px, resolution, output_path, name, wi
 
 # # @timing
 @blockPrint
-def imread(input_file):
+def imread(input_file, use_skimage=False):
     """Reads in image as grayscale array.
 
     Parameters
@@ -1273,7 +1324,11 @@ def imread(input_file):
 
     """
     input_path = pathlib.Path(input_file)
-    img = np.array(Image.open(str(input_path)).convert('L'))
+    if use_skimage:
+        img_float = skimage.io.imread(input_file, as_gray=True)
+        img = skimage.img_as_ubyte(img_float)
+    else:
+        img = np.array(Image.open(str(input_path)).convert('L'))
     im_name = input_path.stem
     return img, im_name
 
@@ -1527,7 +1582,7 @@ def raw2gray(input_directory, output_location, file_type, jobs):
     
     tiff_directory = make_subdirectory(output_location, append_name="tiff")
     
-    with tqdm_joblib(tqdm(desc="section", total=len(file_list), unit="files", miniters=1)) as progress_bar:
+    with tqdm_joblib(tqdm(desc="raw2gray", total=len(file_list), unit="files", miniters=1)) as progress_bar:
         progress_bar.monitor_interval = 2
         Parallel(n_jobs=jobs, verbose=0)(delayed(raw_to_gray)(f, tiff_directory) for f in file_list)
     
@@ -1617,7 +1672,7 @@ def curvature(input_directory, main_output_path, jobs, resolution, window_size, 
     return True
 
 
-def section(input_directory, main_output_path, jobs, resolution, minsize, maxsize):
+def section(input_directory, main_output_path, jobs, resolution, minsize, maxsize, save_img):
     """Takes directory of grayscale images (and locates central section where necessary) and analyzes cross-sectional
     properties for each image.
 
@@ -1659,14 +1714,12 @@ def section(input_directory, main_output_path, jobs, resolution, minsize, maxsiz
     dir_name = str(timestamp + "fibermorph_section")
     output_path = make_subdirectory(main_output_path, append_name=dir_name)
     
-    output_im_path = make_subdirectory(output_path, "cropped_binary")
-    
     # section_df = [analyze_section(f, output_im_path, minsize, maxsize, resolution) for f in file_list]
     
     with tqdm_joblib(tqdm(desc="section", total=len(file_list), unit="files", miniters=1)) as progress_bar:
         progress_bar.monitor_interval = 2
         section_df = (Parallel(n_jobs=jobs, verbose=0)(
-            delayed(analyze_section)(f, output_im_path, minsize, maxsize, resolution) for f in file_list))
+            delayed(section_seq)(f, output_path, resolution, minsize, maxsize, save_img) for f in file_list))
     
     section_df = pd.concat(section_df)
     section_df.set_index('ID', inplace=True)
@@ -1688,10 +1741,7 @@ def main():
     
     # Run fibermorph
     
-    if args.delete_dir is True:
-        demo.delete_dir(args.output_directory)
-        sys.exit(0)
-    elif args.demo_real_curv is True:
+    if args.demo_real_curv is True:
         demo.real_curv(args.output_directory)
         sys.exit(0)
     elif args.demo_real_section is True:
@@ -1717,7 +1767,7 @@ def main():
     elif args.section is True:
         section(
             args.input_directory, output_dir, args.jobs,
-            args.resolution_mu, args.minsize, args.maxsize)
+            args.resolution_mu, args.minsize, args.maxsize, args.save_image)
     else:
         sys.exit("Error. Tim didn't exhaust all module options")
     
