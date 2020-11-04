@@ -452,7 +452,7 @@ def crop_section(img, im_name, resolution, minpixel, maxpixel, im_center):
         maxc = int(im_center[1] * 1.5)
         
         bbox_pad = [minc, minr, maxc, maxr]
-        print("Error: \n Found no bbox for {} \n Used center 25% of image instead: {}".format(im_name, str(bbox_pad)))
+        # print("Error: \n Found no bbox for {} \n Used center 25% of image instead: {}".format(im_name, str(bbox_pad)))
         
         crop_im = np.asarray(Image.fromarray(img).crop(bbox_pad))
         
