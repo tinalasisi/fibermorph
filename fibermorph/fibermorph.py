@@ -452,7 +452,7 @@ def crop_section(img, im_name, resolution, minpixel, maxpixel, im_center):
         maxc = int(im_center[1] * 1.5)
         
         bbox_pad = [minc, minr, maxc, maxr]
-        print("Error: \n Found no bbox for {} \n Used center 25% of image instead: {}".format(im_name, str(bbox_pad)))
+        # print("Error: \n Found no bbox for {} \n Used center 25% of image instead: {}".format(im_name, str(bbox_pad)))
         
         crop_im = np.asarray(Image.fromarray(img).crop(bbox_pad))
         
@@ -461,7 +461,8 @@ def crop_section(img, im_name, resolution, minpixel, maxpixel, im_center):
 def segment_section(crop_im, im_name, resolution, minpixel, maxpixel, im_center):
     try:
         thresh = skimage.filters.threshold_minimum(crop_im)
-        bin_img = skimage.segmentation.clear_border(crop_im < thresh)
+        bin_img = crop_im < thresh
+        # bin_img = skimage.segmentation.clear_border(crop_im < thresh)
         
         # seg_im_inv = skimage.segmentation.chan_vese(crop_im, max_iter=200, init_level_set=bin_img)
         seg_im = skimage.segmentation.morphological_chan_vese(np.asarray(crop_im), 40, init_level_set=bin_img, smoothing=4)
