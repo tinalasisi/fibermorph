@@ -1325,8 +1325,11 @@ def imread(input_file, use_skimage=False):
     """
     input_path = pathlib.Path(input_file)
     if use_skimage:
-        img_float = skimage.io.imread(input_file, as_gray=True)
-        img = skimage.img_as_ubyte(img_float)
+        try:
+            img_float = skimage.io.imread(input_file, as_gray=True)
+            img = skimage.img_as_ubyte(img_float)
+        except ValueError:
+            img = np.array(Image.open(str(input_path)).convert('L'))
     else:
         img = np.array(Image.open(str(input_path)).convert('L'))
     im_name = input_path.stem

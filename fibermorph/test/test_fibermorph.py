@@ -209,7 +209,7 @@ def test_segment_section():
     
     #input
     # input_directory = pathlib.Path("/Users/tinalasisi/Desktop/Nov01_2338_ValidationTest_Section/ValidationData")
-    input_directory = pathlib.Path("/Users/tinalasisi/Desktop/Nov3_RealSections/Images")
+    input_directory = pathlib.Path("/Users/tinalasisi/Box/01_TPL5158/Box_Dissertation/HairPhenotyping_Methods/data/fibermorph_input/admixed_real_hair/section/AfrEu_SectionImages_RawJPG/AfrEu_SectionImages_GrayTIFF/tiff")
     file_list = fibermorph.list_images(input_directory)
     main_output_path = "/Users/tinalasisi/Desktop"
     output_path = main_output_path
