@@ -460,13 +460,13 @@ def crop_section(img, im_name, resolution, minpixel, maxpixel, im_center):
 
 def segment_section(crop_im, im_name, resolution, minpixel, maxpixel, im_center):
     try:
+        thresh = skimage.filters.threshold_minimum(crop_im)
+        bin_img = skimage.segmentation.clear_border(crop_im < thresh)
         
-        seg_im_inv = skimage.segmentation.chan_vese(crop_im)
-        # seg_im = skimage.segmentation.morphological_chan_vese(np.asarray(crop_im), 35, init_level_set='checkerboard', smoothing=2)
+        # seg_im_inv = skimage.segmentation.chan_vese(crop_im, max_iter=200, init_level_set=bin_img)
+        seg_im = skimage.segmentation.morphological_chan_vese(np.asarray(crop_im), 40, init_level_set=bin_img, smoothing=4)
         
-        # seg_im_inv = np.asarray(seg_im != 0)
-        
-        # seg_im_inv = invert(seg_im.astype(np.uint8).astype(np.bool))
+        seg_im_inv = np.asarray(seg_im != 0)
         
         crop_label_im, num_elem = skimage.measure.label(seg_im_inv, connectivity=2, return_num=True)
         

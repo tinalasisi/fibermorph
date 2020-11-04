@@ -208,8 +208,8 @@ def test_segment_section():
     
     
     #input
-    input_directory = pathlib.Path("/Users/tinalasisi/Desktop/Nov01_2338_ValidationTest_Section/ValidationData")
-    # input_directory = pathlib.Path("/Users/tinalasisi/Desktop/Nov3_TestSectionsImages")
+    # input_directory = pathlib.Path("/Users/tinalasisi/Desktop/Nov01_2338_ValidationTest_Section/ValidationData")
+    input_directory = pathlib.Path("/Users/tinalasisi/Desktop/Nov3_RealSections/Images")
     file_list = fibermorph.list_images(input_directory)
     main_output_path = "/Users/tinalasisi/Desktop"
     output_path = main_output_path
