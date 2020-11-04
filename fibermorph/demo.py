@@ -310,7 +310,7 @@ def real_section(path):
 
     output_dir = fibermorph.make_subdirectory(fibermorph_demo_dir, append_name=testname)
 
-    fibermorph.section(input_directory, output_dir, jobs=4, resolution=1.06, minsize=20, maxsize=150)
+    fibermorph.section(input_directory, output_dir, jobs=4, resolution=1.06, minsize=20, maxsize=150, save_img=True)
     
     tqdm.write("\n\nDemo data for fibermorph section are in {}\n\nDemo results are in {}\n\n".format(input_directory, output_dir))
 
