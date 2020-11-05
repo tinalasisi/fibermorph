@@ -517,6 +517,8 @@ def section_seq(input_file, output_path, resolution, minsize, maxsize, save_img)
     with tqdm(total=3, desc="section analysis sequence", unit="steps", position=1, leave=None) as pbar:
         for i in [input_file]:
             
+            section_data = pd.DataFrame()
+            
             try:
 
                 # read in file
