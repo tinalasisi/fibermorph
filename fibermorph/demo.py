@@ -22,6 +22,7 @@ from tqdm import tqdm
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from fibermorph import dummy_data
 from fibermorph import fibermorph
+from joblib import Parallel, delayed
 
 
 # %% functions
@@ -207,8 +208,8 @@ def sim_ellipse(output_directory, im_width_px, im_height_px, min_diam_um, max_di
     
     name = "sim_ellipse_" + str(timestamp)
     
-    im_path = pathlib.Path(output_directory).joinpath("im_" + name + ".tiff")
-    df_path = pathlib.Path(output_directory).joinpath("df_" + name + ".csv")
+    im_path = pathlib.Path(output_directory).joinpath(name + ".tiff")
+    df_path = pathlib.Path(output_directory).joinpath(name + ".csv")
 
     data = {'ID': [name], 'area': [area], 'eccentricity': [eccentricity], 'ref_min_diam': [min_diam_um],
             'ref_max_diam': [max_diam_um]}
@@ -225,7 +226,7 @@ def sim_ellipse(output_directory, im_width_px, im_height_px, min_diam_um, max_di
     return df
 
 
-def validation_section(output_location, repeats):
+def validation_section(output_location, repeats, jobs=2):
     
     jetzt = datetime.now()
     timestamp = jetzt.strftime("%b%d_%H%M_")
@@ -237,8 +238,10 @@ def validation_section(output_location, repeats):
     
     # create list of random variables from range
     def gen_ellipse_data():
-        max_diam_um = random.uniform(50, 120)
-        min_diam_um = random.uniform(30, max_diam_um)
+        min_diam_um = random.uniform(30, 120)
+        ecc = random.uniform(0.0, 1.0)
+        # min_diam_um = random.uniform(30, max_diam_um)
+        max_diam_um = geometry.Ellipse(geometry.Point(0,0), vradius=min_diam_um, eccentricity=ecc).hradius
         angle_deg = random.randint(0, 360)
         list = [max_diam_um, min_diam_um, angle_deg]
         return list
@@ -248,9 +251,13 @@ def validation_section(output_location, repeats):
     gen_ellipse_df = pd.DataFrame(tempdf, columns=['max_diam_um', 'min_diam_um', 'angle_deg'])
     
     df_list = []
-    for index, row in tqdm(gen_ellipse_df.iterrows(), desc="Generating ellipses", position=0, unit="datasets", leave=True):
-        df = sim_ellipse(dummy_dir, 5200, 3900, row['min_diam_um'], row['max_diam_um'], 4.25, row['angle_deg'])
-        df_list.append(df)
+    # for index, row in tqdm(gen_ellipse_df.iterrows(), desc="Generating ellipses", position=0, unit="datasets", leave=True):
+    #     df = sim_ellipse(dummy_dir, 5200, 3900, row['min_diam_um'], row['max_diam_um'], 4.25, row['angle_deg'])
+    #     df_list.append(df)
+
+    with fibermorph.tqdm_joblib(tqdm(desc="Generating ellipses", position=0, unit="datasets", leave=True, total=len(gen_ellipse_df), miniters=1)) as progress_bar:
+        progress_bar.monitor_interval = 1
+        df_list = Parallel(n_jobs=jobs, verbose=0)(delayed(sim_ellipse)(dummy_dir, 5200, 3900, row['min_diam_um'], row['max_diam_um'], 4.25, row['angle_deg']) for index, row in gen_ellipse_df.iterrows())
     
     sim_ellipse_sum_df = pd.concat(df_list)
     sim_ellipse_sum_df.set_index('ID', inplace=True)
@@ -260,6 +267,7 @@ def validation_section(output_location, repeats):
     
     return main_output_path
 
+# validation_section(output_location="/Users/tpl5158/2020_HairPheno_manuscript/data/raw/fibermorph_input/validation_simulated_hair/section", repeats=100, jobs=4)
 
 # %% Main modules
 

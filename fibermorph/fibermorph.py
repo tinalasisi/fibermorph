@@ -401,7 +401,7 @@ def section_props(props, im_name, resolution, minpixel, maxpixel, im_center):
     props_df = [
         [region.label, region.centroid, scipy.spatial.distance.euclidean(im_center, region.centroid), region.filled_area, region.minor_axis_length, region.major_axis_length, region.eccentricity, region.filled_image, region.bbox]
         for region
-        in props if minpixel <= region.area <= maxpixel]
+        in props if region.minor_axis_length >= minpixel and region.major_axis_length <= maxpixel]
     props_df = pd.DataFrame(props_df, columns=['label', 'centroid', 'distance', 'area', 'min', 'max', 'eccentricity', 'image', 'bbox'])
     
     section_id = props_df['distance'].astype(float).idxmin()
@@ -530,8 +530,8 @@ def section_seq(input_file, output_path, resolution, minsize, maxsize, save_img)
                 # find center of image
                 im_center = list(np.divide(img.shape, 2))  # returns array of two floats
             
-                minpixel = np.pi * (((minsize / 2) * resolution) ** 2)
-                maxpixel = np.pi * (((maxsize / 2) * resolution) ** 2)
+                minpixel = minsize * resolution
+                maxpixel = maxsize * resolution
                 
                 pbar.update(1)
                 
@@ -1395,7 +1395,7 @@ def analyze_all_curv(img, name, output_path, resolution, window_size, window_uni
         
         # window_size = [float(i) for i in window_size]
         
-    name = "ID-" + name
+    name = name
     
     im_sumdf = [window_iter(props, name, i, window_unit, resolution, output_path, test, within_element) for i in window_size]
     
@@ -1729,7 +1729,7 @@ def section(input_directory, main_output_path, jobs, resolution, minsize, maxsiz
         section_df = (Parallel(n_jobs=jobs, verbose=0)(
             delayed(section_seq)(f, output_path, resolution, minsize, maxsize, save_img) for f in file_list))
     
-    section_df = pd.concat(section_df)
+    section_df = pd.concat(section_df).dropna()
     section_df.set_index('ID', inplace=True)
     
     with pathlib.Path(output_path).joinpath("summary_section_data.csv") as df_output_path:
