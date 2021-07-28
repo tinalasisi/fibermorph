@@ -27,27 +27,28 @@ class Curvature(Fibermorph):
     def __init__(self):
         super().__init__()
 
-    def run(self):
+    def run(self, args):
         '''
         Executes the curv analysis
         '''
-        args = self.configure_args().parse_args()
         fiblog = self.get_logger('fiblog')
         try:
-            fiblog.info('Section analysis initiated with arguments parsed below.')
+            fiblog.info('Curvature analysis initiated with arguments parsed below.')
             fiblog.info(args)
 
             start = timer()
 
             files_list = self.read_files(args.input_directory)
 
+            od = self.make_directory(args.output_directory, fiblog)
+
             # im_df =(Parallel(n_jobs=args.jobs, verbose=0)(delayed(self.curvature_seq)(args.input_directory, args.output_directory, args.resolution_mm, args.window_size, args.window_unit, args.save_image, False, args.within_element) for input_file in files_list))
             for images in files_list:
-                im_df = self.curvature_seq(images, main_output_path, args.resolution_mm, args.window_size, args.window_unit, args.save_image, False, args.within_element)
+                im_df = self.curvature_seq(images, od, args.resolution_mm, args.window_size, args.window_unit, args.save_image, False, args.within_element)
                 summary_df = pd.concat(im_df)
 
-            with pathlib.Path(output_path).joinpath("curvature_summary_data{}.csv".format(timestamp)) as output_path:
-                summary_df.to_csv(output_path)
+            with pathlib.Path(od).joinpath('summary_curvature_data{}.csv') as df_output_path:
+                summary_df.to_csv(df_output_path)
                 # print(output_path)
 
             sys.exit(0)
