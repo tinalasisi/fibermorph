@@ -10,6 +10,7 @@ import multiprocessing
 import os
 import pathlib
 import re
+import skimage
 import sys
 from tqdm import tqdm
 import unittest
@@ -53,11 +54,11 @@ class Fibermorph:
             joblib.parallel.BatchCompletionCallBack = old_batch_callback
             tqdm_object.close()
     
-    def make_directory(self, odir, flogger):
+    def make_directory(self, odir, foldername, flogger):
         flogger.info('Making the output directory if needed.')
         directory = pathlib.Path(odir)
-        output_path = pathlib.Path(directory).joinpath(str(self.timenow + "fibermorph_analysis"))
-        if not pathlib.Path(output_path).exists():
+        output_path = pathlib.Path(directory).joinpath(foldername)
+        if not output_path.exists():
             flogger.info('No corresponding output directory found: ' + str(output_path))
             pathlib.Path.mkdir(output_path, parents=True, exist_ok=True)
             flogger.info('The output directory has been created: ' + str(output_path))
@@ -104,6 +105,27 @@ class Fibermorph:
 
         return flist
     
+    def save_image(self, output_directory, folder_name, filename, img, flogger):
+        folder_path = self.make_directory(output_directory, folder_name, flogger)
+        with pathlib.Path(folder_path).joinpath(filename) as img_output_path:
+                simg = skimage.img_as_ubyte(img)
+                skimage.io.imsave(str(img_output_path), simg)
+                flogger.info('{} has been saved to its corresponding directory. '.format(filename))
+        return
+    
+    # def within_element_func(self, output_path, name, element, taubin_df):
+    #     # for within hair distribution
+    #     label_name = str(element.label)
+    #     element_df = pd.DataFrame(taubin_df)
+    #     element_df.columns = ['curv']
+    #     element_df['label'] = label_name
+        
+    #     output_path = make_subdirectory(output_path, append_name="WithinElement")
+    #     with pathlib.Path(output_path).joinpath("WithinElement_" + name + "_Label-" + label_name + ".csv") as save_path:
+    #         element_df.to_csv(save_path)
+        
+    #     return True
+    
     def get_logger(self, logger_name):
         '''
         A logger for fibermorph subprocesses
@@ -113,7 +135,7 @@ class Fibermorph:
         logger
         '''
         FORMATTER = logging.Formatter('%(asctime)s - %(levelname)s : %(message)s')
-        LOG_FILE = os.path.join(os.getcwd(), 'fibermorph' + datetime.now().strftime('%b%d') + '.log')
+        LOG_FILE = os.path.join(os.getcwd(), 'fibermorphlog_' + datetime.now().strftime('%b%d') + '.log')
         FHANDLER = TimedRotatingFileHandler(LOG_FILE, when='midnight')
         FHANDLER.setFormatter(FORMATTER)
 
@@ -123,7 +145,7 @@ class Fibermorph:
         logger.propagate = False
         return logger
 
-class FibermorphTest(unittest.Testcase):
+class FibermorphTest:
     def section_test(self):
         urllist = [
             "https://github.com/tinalasisi/fibermorph_DemoData/raw/master/test_input/section/140918_demo_section.tiff",

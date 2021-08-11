@@ -25,7 +25,68 @@ class Section(Fibermorph):
     def __init__(self):
         super().__init__()
     
-    def impreprocess(self, filepath, fiblog):
+    def run(self, args):
+        '''
+        Executes the section analysis
+        '''
+        fiblog = self.get_logger('fiblog')
+        try:
+            fiblog.info('Section analysis initiated with arguments parsed below.')
+            fiblog.info(args)
+
+            start = timer()
+
+            files = self.read_files(args.input_directory, fiblog)
+            foldername = str(self.timenow + "fibermorph_section_analysis")
+            od = self.make_directory(args.output_directory, foldername, fiblog)
+
+            with self.tqdm_joblib(tqdm(desc="section", total=len(files), unit="files", miniters=1)) as progress_bar:
+                progress_bar.monitor_interval = 2
+                num_process = len(files) if args.jobs > len(files) else args.jobs
+                section_df = (Parallel(n_jobs=num_process, verbose=0)(
+                    delayed(self.section_seq)(
+                        f, od, args.resolution_mu, args.minsize, args.maxsize, args.save_img, fiblog) for f in files))
+            
+            fiblog.info('Processing data for csv.')
+            section_df = pd.concat(section_df).dropna()
+            section_df.set_index('ID', inplace=True)
+            with pathlib.Path(od).joinpath("summary_section_data.csv") as df_output_path:
+                section_df.to_csv(df_output_path)
+                fiblog.info('The summary has been written onto a csv file: ' + str(df_output_path))
+            
+            end = timer()
+            m, s = divmod(int(end - start), 60)
+            h, m = divmod(m, 60)
+            tqdm.write("\n\nComplete analysis took: {}\n\n".format("%dh: %02dm: %02ds" % (h, m, s)))
+            fiblog.info("\n\nComplete analysis took: {}\n\n".format("%dh: %02dm: %02ds" % (h, m, s)))
+            
+        except KeyboardInterrupt:
+            fiblog.error('KeyboardInterrupt detected.')
+        
+        finally:
+            fiblog.info('Section analysis terminated. \n')
+            sys.exit(0)
+
+    def section_seq(self, file, output_directory, resolution_mu, minsize, maxsize, save_img, fiblog):
+        _, fn = os.path.split(file)
+        fiblog.handlers.clear()
+        fiblog = self.get_logger('fiblog')
+        fiblog.info('Section analysis for {} has been started'.format(fn))
+
+        minpixel = minsize * resolution_mu
+        maxpixel = maxsize * resolution_mu
+        img, im_center = self.impreprocess(file)
+        section_data, bin_im = self.segment(img, fn, resolution_mu, minpixel, maxpixel, im_center)
+
+        if save_img:
+            imgname = fn.split('.')[0] + '_section_cut.jpg'
+            self.save_image(output_directory, 'results', imgname, bin_im, fiblog)
+        
+        fiblog.info('Section analysis for {} has been finished'.format(fn))
+
+        return section_data
+    
+    def impreprocess(self, filepath):
         '''
         Preprocesses an input image file
 
@@ -99,69 +160,3 @@ class Section(Fibermorph):
         bin_im = section['image']
         bbox = section['bbox']
         return section_data, bin_im, bbox
-
-    
-    def section_seq(self, file, output_directory, resolution_mu, minsize, maxsize, save_img, fiblog):
-        _, fn = os.path.split(file)
-        fiblog.handlers.clear()
-        fiblog = self.get_logger('fiblog')
-        fiblog.info('Section analysis for {} has been started'.format(fn))
-
-        minpixel = minsize * resolution_mu
-        maxpixel = maxsize * resolution_mu
-        img, im_center = self.impreprocess(file, fiblog)
-        section_data, bin_im = self.segment(img, fn, resolution_mu, minpixel, maxpixel, im_center)
-
-        if save_img:
-            imgname = fn.split('.')[0] + '_section_cut.jpg'
-            with pathlib.Path(output_directory).joinpath(imgname) as img_output_path:
-                simg = skimage.img_as_ubyte(bin_im)
-                skimage.io.imsave(str(img_output_path), simg)
-                fiblog.info('{} has been saved to the output directory. '.format(imgname))
-        
-        fiblog.info('Section analysis for {} has been finished'.format(fn))
-
-        return section_data
-
-    def run(self, args):
-        '''
-        Executes the section analysis
-        '''
-        fiblog = self.get_logger('fiblog')
-        try:
-            fiblog.info('Section analysis initiated with arguments parsed below.')
-            fiblog.info(args)
-
-            start = timer()
-
-            files = self.read_files(args.input_directory, fiblog)
-
-            od = self.make_directory(args.output_directory, fiblog)
-
-            with self.tqdm_joblib(tqdm(desc="section", total=len(files), unit="files", miniters=1)) as progress_bar:
-                progress_bar.monitor_interval = 2
-                num_process = len(files) if args.jobs > len(files) else args.jobs
-                section_df = (Parallel(n_jobs=num_process, verbose=0)(
-                    delayed(self.section_seq)(
-                        f, od, args.resolution_mu, args.minsize, args.maxsize, args.save_img, fiblog) for f in files))
-            
-            fiblog.info('Processing data for csv.')
-            section_df = pd.concat(section_df).dropna()
-            section_df.set_index('ID', inplace=True)
-            with pathlib.Path(od).joinpath("summary_section_data.csv") as df_output_path:
-                section_df.to_csv(df_output_path)
-                fiblog.info('The summary has been written onto a csv file: ' + str(df_output_path))
-            
-            end = timer()
-            m, s = divmod(int(end - start), 60)
-            h, m = divmod(m, 60)
-            tqdm.write("\n\nComplete analysis took: {}\n\n".format("%dh: %02dm: %02ds" % (h, m, s)))
-            fiblog.info("\n\nComplete analysis took: {}\n\n".format("%dh: %02dm: %02ds" % (h, m, s)))
-            sys.exit(0)
-            
-        except KeyboardInterrupt:
-            fiblog.error('KeyboardInterrupt detected.')
-        
-        finally:
-            fiblog.info('Section analysis terminated. \n')
-            sys.exit(0)

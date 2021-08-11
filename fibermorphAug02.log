@@ -1,0 +1,49 @@
+2021-08-02 10:02:30,485 - INFO : Section analysis initiated with arguments parsed below.
+2021-08-02 10:02:30,485 - INFO : Namespace(curvature=False, demo_real_curv=False, demo_real_section=False, input_directory='/mnt/d/Documents/Research/fib/140025/140025_output/tiff', jobs=16, maxsize=159, minsize=20, output_directory='/mnt/d/Documents/Research/fib/140025/oo/', raw2gray=False, resolution_mm=132, resolution_mu=4.25, save_img=True, section=True, window_size=None, window_unit='px', within_element=False)
+2021-08-02 10:02:30,485 - INFO : Reading image files in the input directory. 
+2021-08-02 10:02:30,530 - INFO : Iterating over the input directory for TIFF images. 
+2021-08-02 10:02:30,539 - INFO : TIFF images were found in the input directory. 
+/mnt/d/Documents/Research/fib/140025/140025_output/tiff/140025_A_1.tiff
+/mnt/d/Documents/Research/fib/140025/140025_output/tiff/140025_A_2.tiff
+/mnt/d/Documents/Research/fib/140025/140025_output/tiff/140025_A_3.tiff
+/mnt/d/Documents/Research/fib/140025/140025_output/tiff/140025_A_4.tiff
+/mnt/d/Documents/Research/fib/140025/140025_output/tiff/140025_A_5.tiff
+/mnt/d/Documents/Research/fib/140025/140025_output/tiff/140025_A_6.tiff
+/mnt/d/Documents/Research/fib/140025/140025_output/tiff/140025_B_1.tiff
+/mnt/d/Documents/Research/fib/140025/140025_output/tiff/140025_B_2.tiff
+2021-08-02 10:02:30,540 - INFO : Making the output directory if needed.
+2021-08-02 10:02:30,576 - INFO : No corresponding output directory found: /mnt/d/Documents/Research/fib/140025/oo/Aug02_1002_fibermorph_analysis
+2021-08-02 10:02:30,577 - INFO : The output directory has been created: /mnt/d/Documents/Research/fib/140025/oo/Aug02_1002_fibermorph_analysis
+2021-08-02 10:02:31,893 - INFO : Section analysis for 140025_A_3.tiff has been started
+2021-08-02 10:02:31,894 - INFO : Section analysis for 140025_A_2.tiff has been started
+2021-08-02 10:02:31,894 - INFO : Section analysis for 140025_A_1.tiff has been started
+2021-08-02 10:02:31,914 - INFO : Section analysis for 140025_A_4.tiff has been started
+2021-08-02 10:02:31,933 - INFO : Section analysis for 140025_A_5.tiff has been started
+2021-08-02 10:02:31,940 - INFO : Section analysis for 140025_A_6.tiff has been started
+2021-08-02 10:02:31,974 - INFO : Section analysis for 140025_B_1.tiff has been started
+2021-08-02 10:02:32,016 - INFO : Section analysis for 140025_B_2.tiff has been started
+2021-08-02 10:02:46,468 - INFO : 140025_A_6_section_cut.jpg has been saved to the output directory. 
+2021-08-02 10:02:46,468 - INFO : 140025_B_1_section_cut.jpg has been saved to the output directory. 
+2021-08-02 10:02:46,468 - INFO : Section analysis for 140025_A_6.tiff has been finished
+2021-08-02 10:02:46,468 - INFO : 140025_A_3_section_cut.jpg has been saved to the output directory. 
+2021-08-02 10:02:46,468 - INFO : Section analysis for 140025_B_1.tiff has been finished
+2021-08-02 10:02:46,468 - INFO : Section analysis for 140025_A_3.tiff has been finished
+2021-08-02 10:02:46,501 - INFO : 140025_A_5_section_cut.jpg has been saved to the output directory. 
+2021-08-02 10:02:46,501 - INFO : Section analysis for 140025_A_5.tiff has been finished
+2021-08-02 10:02:46,564 - INFO : 140025_A_2_section_cut.jpg has been saved to the output directory. 
+2021-08-02 10:02:46,564 - INFO : Section analysis for 140025_A_2.tiff has been finished
+2021-08-02 10:02:46,609 - INFO : 140025_A_1_section_cut.jpg has been saved to the output directory. 
+2021-08-02 10:02:46,609 - INFO : Section analysis for 140025_A_1.tiff has been finished
+2021-08-02 10:02:46,882 - INFO : 140025_B_2_section_cut.jpg has been saved to the output directory. 
+2021-08-02 10:02:46,882 - INFO : Section analysis for 140025_B_2.tiff has been finished
+2021-08-02 10:02:46,992 - INFO : 140025_A_4_section_cut.jpg has been saved to the output directory. 
+2021-08-02 10:02:46,992 - INFO : Section analysis for 140025_A_4.tiff has been finished
+2021-08-02 10:02:46,997 - INFO : Processing data for csv.
+2021-08-02 10:02:47,117 - INFO : The summary has been written onto a csv file: /mnt/d/Documents/Research/fib/140025/oo/Aug02_1002_fibermorph_analysis/summary_section_data.csv
+2021-08-02 10:02:47,118 - INFO : 
+
+Complete analysis took: 0h: 00m: 16s
+
+
+2021-08-02 10:02:47,118 - INFO : Section analysis terminated. 
+

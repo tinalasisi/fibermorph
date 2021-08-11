@@ -1,0 +1,564 @@
+2021-08-11 11:41:53,803 - INFO : Section analysis initiated with arguments parsed below.
+2021-08-11 11:41:53,803 - INFO : Namespace(curvature=False, demo_real_curv=False, demo_real_section=False, input_directory='/mnt/d/Documents/Research/140025sectiontiff/', jobs=16, maxsize=159, minsize=20, output_directory='/mnt/d/Documents/Research/', raw2gray=False, resolution_mm=132, resolution_mu=4.25, save_img=True, section=True, window_size=None, window_unit='px', within_element=False)
+2021-08-11 11:41:53,803 - INFO : Reading image files in the input directory. 
+2021-08-11 11:41:53,803 - INFO : Iterating over the input directory for TIFF images. 
+2021-08-11 11:41:53,803 - INFO : TIFF images were found in the input directory. 
+/mnt/d/Documents/Research/140025sectiontiff/140025_A_1.tiff
+/mnt/d/Documents/Research/140025sectiontiff/140025_A_2.tiff
+/mnt/d/Documents/Research/140025sectiontiff/140025_A_3.tiff
+/mnt/d/Documents/Research/140025sectiontiff/140025_A_4.tiff
+/mnt/d/Documents/Research/140025sectiontiff/140025_A_5.tiff
+/mnt/d/Documents/Research/140025sectiontiff/140025_A_6.tiff
+/mnt/d/Documents/Research/140025sectiontiff/140025_B_1.tiff
+/mnt/d/Documents/Research/140025sectiontiff/140025_B_2.tiff
+2021-08-11 11:41:53,804 - INFO : Making the output directory if needed.
+2021-08-11 11:41:53,805 - INFO : No corresponding output directory found: /mnt/d/Documents/Research/Aug11_1141_fibermorph_section_analysis
+2021-08-11 11:41:53,805 - INFO : The output directory has been created: /mnt/d/Documents/Research/Aug11_1141_fibermorph_section_analysis
+2021-08-11 11:41:55,179 - INFO : Section analysis for 140025_A_1.tiff has been started
+2021-08-11 11:41:55,239 - INFO : Section analysis for 140025_A_2.tiff has been started
+2021-08-11 11:41:55,254 - INFO : Section analysis for 140025_A_4.tiff has been started
+2021-08-11 11:41:55,266 - INFO : Section analysis for 140025_A_3.tiff has been started
+2021-08-11 11:41:55,273 - INFO : Section analysis for 140025_A_6.tiff has been started
+2021-08-11 11:41:55,278 - INFO : Section analysis for 140025_B_1.tiff has been started
+2021-08-11 11:41:55,299 - INFO : Section analysis for 140025_A_5.tiff has been started
+2021-08-11 11:41:55,370 - INFO : Section analysis for 140025_B_2.tiff has been started
+2021-08-11 11:42:28,147 - INFO : Making the output directory if needed.
+2021-08-11 11:42:28,147 - INFO : No corresponding output directory found: /mnt/d/Documents/Research/Aug11_1141_fibermorph_section_analysis/results
+2021-08-11 11:42:28,148 - INFO : The output directory has been created: /mnt/d/Documents/Research/Aug11_1141_fibermorph_section_analysis/results
+2021-08-11 11:42:28,187 - INFO : Making the output directory if needed.
+2021-08-11 11:42:28,187 - INFO : The output directory already exists: /mnt/d/Documents/Research/Aug11_1141_fibermorph_section_analysis/results
+2021-08-11 11:42:28,327 - INFO : 140025_B_1_section_cut.jpg has been saved to its corresponding directory. 
+2021-08-11 11:42:28,327 - INFO : 140025_A_2_section_cut.jpg has been saved to its corresponding directory. 
+2021-08-11 11:42:28,327 - INFO : Section analysis for 140025_B_1.tiff has been finished
+2021-08-11 11:42:28,327 - INFO : Section analysis for 140025_A_2.tiff has been finished
+2021-08-11 11:42:28,383 - INFO : Making the output directory if needed.
+2021-08-11 11:42:28,383 - INFO : The output directory already exists: /mnt/d/Documents/Research/Aug11_1141_fibermorph_section_analysis/results
+2021-08-11 11:42:28,390 - INFO : Making the output directory if needed.
+2021-08-11 11:42:28,411 - INFO : The output directory already exists: /mnt/d/Documents/Research/Aug11_1141_fibermorph_section_analysis/results
+2021-08-11 11:42:28,414 - INFO : 140025_A_5_section_cut.jpg has been saved to its corresponding directory. 
+2021-08-11 11:42:28,414 - INFO : Section analysis for 140025_A_5.tiff has been finished
+2021-08-11 11:42:28,416 - INFO : Making the output directory if needed.
+2021-08-11 11:42:28,416 - INFO : The output directory already exists: /mnt/d/Documents/Research/Aug11_1141_fibermorph_section_analysis/results
+2021-08-11 11:42:28,419 - INFO : 140025_A_6_section_cut.jpg has been saved to its corresponding directory. 
+2021-08-11 11:42:28,419 - INFO : Section analysis for 140025_A_6.tiff has been finished
+2021-08-11 11:42:28,425 - INFO : 140025_A_1_section_cut.jpg has been saved to its corresponding directory. 
+2021-08-11 11:42:28,425 - INFO : Section analysis for 140025_A_1.tiff has been finished
+2021-08-11 11:42:28,484 - INFO : Making the output directory if needed.
+2021-08-11 11:42:28,484 - INFO : The output directory already exists: /mnt/d/Documents/Research/Aug11_1141_fibermorph_section_analysis/results
+2021-08-11 11:42:28,488 - INFO : Making the output directory if needed.
+2021-08-11 11:42:28,488 - INFO : The output directory already exists: /mnt/d/Documents/Research/Aug11_1141_fibermorph_section_analysis/results
+2021-08-11 11:42:28,493 - INFO : 140025_B_2_section_cut.jpg has been saved to its corresponding directory. 
+2021-08-11 11:42:28,493 - INFO : Section analysis for 140025_B_2.tiff has been finished
+2021-08-11 11:42:28,497 - INFO : 140025_A_3_section_cut.jpg has been saved to its corresponding directory. 
+2021-08-11 11:42:28,497 - INFO : Section analysis for 140025_A_3.tiff has been finished
+2021-08-11 11:42:28,613 - INFO : Making the output directory if needed.
+2021-08-11 11:42:28,613 - INFO : The output directory already exists: /mnt/d/Documents/Research/Aug11_1141_fibermorph_section_analysis/results
+2021-08-11 11:42:28,619 - INFO : 140025_A_4_section_cut.jpg has been saved to its corresponding directory. 
+2021-08-11 11:42:28,620 - INFO : Section analysis for 140025_A_4.tiff has been finished
+2021-08-11 11:42:28,643 - INFO : Processing data for csv.
+2021-08-11 11:42:28,767 - INFO : The summary has been written onto a csv file: /mnt/d/Documents/Research/Aug11_1141_fibermorph_section_analysis/summary_section_data.csv
+2021-08-11 11:42:28,768 - INFO : 
+
+Complete analysis took: 0h: 00m: 34s
+
+
+2021-08-11 11:42:28,768 - INFO : Section analysis terminated. 
+
+2021-08-11 11:42:34,053 - INFO : Section analysis initiated with arguments parsed below.
+2021-08-11 11:42:34,053 - INFO : Namespace(curvature=False, demo_real_curv=False, demo_real_section=False, input_directory='/mnt/d/Documents/Research/140025sectiontiff/', jobs=16, maxsize=159, minsize=20, output_directory='/mnt/d/Documents/Research/', raw2gray=False, resolution_mm=132, resolution_mu=4.25, save_img=True, section=True, window_size=None, window_unit='px', within_element=False)
+2021-08-11 11:42:34,053 - INFO : Reading image files in the input directory. 
+2021-08-11 11:42:34,053 - INFO : Iterating over the input directory for TIFF images. 
+2021-08-11 11:42:34,053 - INFO : TIFF images were found in the input directory. 
+/mnt/d/Documents/Research/140025sectiontiff/140025_A_1.tiff
+/mnt/d/Documents/Research/140025sectiontiff/140025_A_2.tiff
+/mnt/d/Documents/Research/140025sectiontiff/140025_A_3.tiff
+/mnt/d/Documents/Research/140025sectiontiff/140025_A_4.tiff
+/mnt/d/Documents/Research/140025sectiontiff/140025_A_5.tiff
+/mnt/d/Documents/Research/140025sectiontiff/140025_A_6.tiff
+/mnt/d/Documents/Research/140025sectiontiff/140025_B_1.tiff
+/mnt/d/Documents/Research/140025sectiontiff/140025_B_2.tiff
+2021-08-11 11:42:34,053 - INFO : Making the output directory if needed.
+2021-08-11 11:42:34,053 - INFO : No corresponding output directory found: /mnt/d/Documents/Research/Aug11_1142_fibermorph_section_analysis
+2021-08-11 11:42:34,053 - INFO : The output directory has been created: /mnt/d/Documents/Research/Aug11_1142_fibermorph_section_analysis
+2021-08-11 11:42:35,261 - INFO : Section analysis for 140025_A_2.tiff has been started
+2021-08-11 11:42:35,274 - INFO : Section analysis for 140025_A_1.tiff has been started
+2021-08-11 11:42:35,275 - INFO : Section analysis for 140025_A_3.tiff has been started
+2021-08-11 11:42:35,308 - INFO : Section analysis for 140025_A_6.tiff has been started
+2021-08-11 11:42:35,332 - INFO : Section analysis for 140025_A_5.tiff has been started
+2021-08-11 11:42:35,332 - INFO : Section analysis for 140025_A_4.tiff has been started
+2021-08-11 11:42:35,386 - INFO : Section analysis for 140025_B_1.tiff has been started
+2021-08-11 11:42:35,394 - INFO : Section analysis for 140025_B_2.tiff has been started
+2021-08-11 11:42:45,828 - INFO : Making the output directory if needed.
+2021-08-11 11:42:45,828 - INFO : No corresponding output directory found: /mnt/d/Documents/Research/Aug11_1142_fibermorph_section_analysis/results
+2021-08-11 11:42:45,828 - INFO : The output directory has been created: /mnt/d/Documents/Research/Aug11_1142_fibermorph_section_analysis/results
+2021-08-11 11:42:45,834 - INFO : 140025_A_2_section_cut.jpg has been saved to its corresponding directory. 
+2021-08-11 11:42:45,834 - INFO : Section analysis for 140025_A_2.tiff has been finished
+2021-08-11 11:42:45,992 - INFO : Making the output directory if needed.
+2021-08-11 11:42:45,992 - INFO : The output directory already exists: /mnt/d/Documents/Research/Aug11_1142_fibermorph_section_analysis/results
+2021-08-11 11:42:46,018 - INFO : 140025_A_1_section_cut.jpg has been saved to its corresponding directory. 
+2021-08-11 11:42:46,018 - INFO : Section analysis for 140025_A_1.tiff has been finished
+2021-08-11 11:42:46,217 - INFO : Making the output directory if needed.
+2021-08-11 11:42:46,218 - INFO : The output directory already exists: /mnt/d/Documents/Research/Aug11_1142_fibermorph_section_analysis/results
+2021-08-11 11:42:46,219 - INFO : Making the output directory if needed.
+2021-08-11 11:42:46,219 - INFO : The output directory already exists: /mnt/d/Documents/Research/Aug11_1142_fibermorph_section_analysis/results
+2021-08-11 11:42:46,223 - INFO : 140025_A_3_section_cut.jpg has been saved to its corresponding directory. 
+2021-08-11 11:42:46,223 - INFO : Section analysis for 140025_A_3.tiff has been finished
+2021-08-11 11:42:46,225 - INFO : 140025_A_5_section_cut.jpg has been saved to its corresponding directory. 
+2021-08-11 11:42:46,225 - INFO : Section analysis for 140025_A_5.tiff has been finished
+2021-08-11 11:42:46,363 - INFO : Making the output directory if needed.
+2021-08-11 11:42:46,363 - INFO : The output directory already exists: /mnt/d/Documents/Research/Aug11_1142_fibermorph_section_analysis/results
+2021-08-11 11:42:46,368 - INFO : 140025_A_4_section_cut.jpg has been saved to its corresponding directory. 
+2021-08-11 11:42:46,368 - INFO : Section analysis for 140025_A_4.tiff has been finished
+2021-08-11 11:42:46,412 - INFO : Making the output directory if needed.
+2021-08-11 11:42:46,413 - INFO : The output directory already exists: /mnt/d/Documents/Research/Aug11_1142_fibermorph_section_analysis/results
+2021-08-11 11:42:46,418 - INFO : 140025_B_2_section_cut.jpg has been saved to its corresponding directory. 
+2021-08-11 11:42:46,418 - INFO : Section analysis for 140025_B_2.tiff has been finished
+2021-08-11 11:42:46,487 - INFO : Making the output directory if needed.
+2021-08-11 11:42:46,487 - INFO : The output directory already exists: /mnt/d/Documents/Research/Aug11_1142_fibermorph_section_analysis/results
+2021-08-11 11:42:46,492 - INFO : 140025_B_1_section_cut.jpg has been saved to its corresponding directory. 
+2021-08-11 11:42:46,492 - INFO : Section analysis for 140025_B_1.tiff has been finished
+2021-08-11 11:42:46,539 - INFO : Making the output directory if needed.
+2021-08-11 11:42:46,539 - INFO : The output directory already exists: /mnt/d/Documents/Research/Aug11_1142_fibermorph_section_analysis/results
+2021-08-11 11:42:46,544 - INFO : 140025_A_6_section_cut.jpg has been saved to its corresponding directory. 
+2021-08-11 11:42:46,544 - INFO : Section analysis for 140025_A_6.tiff has been finished
+2021-08-11 11:42:46,549 - INFO : Processing data for csv.
+2021-08-11 11:42:46,557 - INFO : The summary has been written onto a csv file: /mnt/d/Documents/Research/Aug11_1142_fibermorph_section_analysis/summary_section_data.csv
+2021-08-11 11:42:46,557 - INFO : 
+
+Complete analysis took: 0h: 00m: 12s
+
+
+2021-08-11 11:42:46,557 - INFO : Section analysis terminated. 
+
+2021-08-11 11:47:59,071 - INFO : Curvature analysis initiated with arguments parsed below.
+2021-08-11 11:47:59,071 - INFO : Namespace(curvature=True, demo_real_curv=False, demo_real_section=False, input_directory='/mnt/d/Documents/Research/validationcurvaturetiff/', jobs=16, maxsize=150, minsize=20, output_directory='/mnt/d/Documents/Research/', raw2gray=False, resolution_mm=132, resolution_mu=4.25, save_img=True, section=False, window_size=['0.5'], window_unit='mm', within_element=True)
+2021-08-11 11:47:59,071 - INFO : Curvature analysis terminated. 
+
+2021-08-11 11:49:03,580 - INFO : Curvature analysis initiated with arguments parsed below.
+2021-08-11 11:49:03,580 - INFO : Namespace(curvature=True, demo_real_curv=False, demo_real_section=False, input_directory='/mnt/d/Documents/Research/validationcurvaturetiff/', jobs=16, maxsize=150, minsize=20, output_directory='/mnt/d/Documents/Research/', raw2gray=False, resolution_mm=132, resolution_mu=4.25, save_img=True, section=False, window_size=['0.5'], window_unit='mm', within_element=True)
+2021-08-11 11:49:03,580 - INFO : Curvature analysis terminated. 
+
+2021-08-11 11:49:51,853 - INFO : Curvature analysis initiated with arguments parsed below.
+2021-08-11 11:49:51,853 - INFO : Namespace(curvature=True, demo_real_curv=False, demo_real_section=False, input_directory='/mnt/d/Documents/Research/validationcurvaturetiff/', jobs=16, maxsize=150, minsize=20, output_directory='/mnt/d/Documents/Research/', raw2gray=False, resolution_mm=132, resolution_mu=4.25, save_img=True, section=False, window_size=['0.5'], window_unit='mm', within_element=True)
+2021-08-11 11:49:51,853 - INFO : a
+2021-08-11 11:49:51,853 - INFO : Curvature analysis terminated. 
+
+2021-08-11 11:50:17,674 - INFO : Curvature analysis initiated with arguments parsed below.
+2021-08-11 11:50:17,674 - INFO : Namespace(curvature=True, demo_real_curv=False, demo_real_section=False, input_directory='/mnt/d/Documents/Research/validationcurvaturetiff/', jobs=16, maxsize=150, minsize=20, output_directory='/mnt/d/Documents/Research/', raw2gray=False, resolution_mm=132, resolution_mu=4.25, save_img=True, section=False, window_size=['0.5'], window_unit='mm', within_element=True)
+2021-08-11 11:50:17,674 - INFO : Curvature analysis terminated. 
+
+2021-08-11 11:51:48,019 - INFO : Curvature analysis initiated with arguments parsed below.
+2021-08-11 11:51:48,019 - INFO : Namespace(curvature=True, demo_real_curv=False, demo_real_section=False, input_directory='/mnt/d/Documents/Research/validationcurvaturetiff/', jobs=16, maxsize=150, minsize=20, output_directory='/mnt/d/Documents/Research/', raw2gray=False, resolution_mm=132, resolution_mu=4.25, save_img=True, section=False, window_size=['0.5'], window_unit='mm', within_element=True)
+2021-08-11 11:51:48,019 - INFO : Reading image files in the input directory. 
+2021-08-11 11:51:48,019 - INFO : Iterating over the input directory for TIFF images. 
+2021-08-11 11:51:48,020 - INFO : TIFF images were found in the input directory. 
+/mnt/d/Documents/Research/validationcurvaturetiff/001.tiff
+/mnt/d/Documents/Research/validationcurvaturetiff/002.tiff
+/mnt/d/Documents/Research/validationcurvaturetiff/003.tiff
+/mnt/d/Documents/Research/validationcurvaturetiff/004.tiff
+/mnt/d/Documents/Research/validationcurvaturetiff/005.tiff
+/mnt/d/Documents/Research/validationcurvaturetiff/006.tiff
+/mnt/d/Documents/Research/validationcurvaturetiff/027.tiff
+/mnt/d/Documents/Research/validationcurvaturetiff/028.tiff
+2021-08-11 11:51:48,020 - INFO : a
+2021-08-11 11:51:48,020 - INFO : Making the output directory if needed.
+2021-08-11 11:51:48,020 - INFO : No corresponding output directory found: /mnt/d/Documents/Research/Aug11_1151_fibermorph_curvature_analysis
+2021-08-11 11:51:48,020 - INFO : The output directory has been created: /mnt/d/Documents/Research/Aug11_1151_fibermorph_curvature_analysis
+2021-08-11 11:51:48,020 - INFO : a
+2021-08-11 11:51:49,283 - INFO : Curvature analysis for 003.tiff has been started
+2021-08-11 11:51:49,297 - INFO : Curvature analysis for 002.tiff has been started
+2021-08-11 11:51:49,317 - INFO : Curvature analysis for 001.tiff has been started
+2021-08-11 11:51:49,350 - INFO : Curvature analysis for 006.tiff has been started
+2021-08-11 11:51:49,367 - INFO : Curvature analysis for 004.tiff has been started
+2021-08-11 11:51:49,372 - INFO : Curvature analysis for 027.tiff has been started
+2021-08-11 11:51:49,399 - INFO : Curvature analysis for 005.tiff has been started
+2021-08-11 11:51:49,457 - INFO : Curvature analysis for 028.tiff has been started
+2021-08-11 12:02:34,845 - INFO : Making the output directory if needed.
+2021-08-11 12:02:35,593 - INFO : No corresponding output directory found: /mnt/d/Documents/Research/Aug11_1151_fibermorph_curvature_analysis/filtered
+2021-08-11 12:02:35,828 - INFO : The output directory has been created: /mnt/d/Documents/Research/Aug11_1151_fibermorph_curvature_analysis/filtered
+2021-08-11 12:02:41,831 - INFO : Making the output directory if needed.
+2021-08-11 12:02:42,009 - INFO : The output directory already exists: /mnt/d/Documents/Research/Aug11_1151_fibermorph_curvature_analysis/filtered
+2021-08-11 12:02:42,528 - INFO : 004_filtered.jpg has been saved to its corresponding directory. 
+2021-08-11 12:02:42,749 - INFO : Making the output directory if needed.
+2021-08-11 12:02:43,016 - INFO : The output directory already exists: /mnt/d/Documents/Research/Aug11_1151_fibermorph_curvature_analysis/filtered
+2021-08-11 12:02:42,889 - INFO : Making the output directory if needed.
+2021-08-11 12:02:43,120 - INFO : The output directory already exists: /mnt/d/Documents/Research/Aug11_1151_fibermorph_curvature_analysis/filtered
+2021-08-11 12:02:44,318 - INFO : 002_filtered.jpg has been saved to its corresponding directory. 
+2021-08-11 12:02:44,520 - INFO : 003_filtered.jpg has been saved to its corresponding directory. 
+2021-08-11 12:02:44,569 - INFO : 027_filtered.jpg has been saved to its corresponding directory. 
+2021-08-11 12:02:45,236 - INFO : Making the output directory if needed.
+2021-08-11 12:02:45,237 - INFO : No corresponding output directory found: /mnt/d/Documents/Research/Aug11_1151_fibermorph_curvature_analysis/binarized
+2021-08-11 12:02:45,242 - INFO : The output directory has been created: /mnt/d/Documents/Research/Aug11_1151_fibermorph_curvature_analysis/binarized
+2021-08-11 12:02:45,546 - INFO : Making the output directory if needed.
+2021-08-11 12:02:45,751 - INFO : The output directory already exists: /mnt/d/Documents/Research/Aug11_1151_fibermorph_curvature_analysis/filtered
+2021-08-11 12:02:45,795 - INFO : 004.tiff_binarized.jpg has been saved to its corresponding directory. 
+2021-08-11 12:02:46,441 - INFO : Making the output directory if needed.
+2021-08-11 12:02:46,446 - INFO : No corresponding output directory found: /mnt/d/Documents/Research/Aug11_1151_fibermorph_curvature_analysis/particles_removed_clean
+2021-08-11 12:02:46,446 - INFO : The output directory has been created: /mnt/d/Documents/Research/Aug11_1151_fibermorph_curvature_analysis/particles_removed_clean
+2021-08-11 12:02:46,668 - INFO : 004.tiff_particles_removed_clean.jpg has been saved to its corresponding directory. 
+2021-08-11 12:02:46,930 - INFO : Making the output directory if needed.
+2021-08-11 12:02:46,931 - INFO : The output directory already exists: /mnt/d/Documents/Research/Aug11_1151_fibermorph_curvature_analysis/binarized
+2021-08-11 12:02:47,037 - INFO : Making the output directory if needed.
+2021-08-11 12:02:47,037 - INFO : The output directory already exists: /mnt/d/Documents/Research/Aug11_1151_fibermorph_curvature_analysis/binarized
+2021-08-11 12:02:47,099 - INFO : 006_filtered.jpg has been saved to its corresponding directory. 
+2021-08-11 12:02:47,151 - INFO : 002.tiff_binarized.jpg has been saved to its corresponding directory. 
+2021-08-11 12:02:47,249 - INFO : 003.tiff_binarized.jpg has been saved to its corresponding directory. 
+2021-08-11 12:02:47,350 - INFO : Making the output directory if needed.
+2021-08-11 12:02:47,350 - INFO : The output directory already exists: /mnt/d/Documents/Research/Aug11_1151_fibermorph_curvature_analysis/binarized
+2021-08-11 12:02:47,674 - INFO : 027.tiff_binarized.jpg has been saved to its corresponding directory. 
+2021-08-11 12:02:47,802 - INFO : Making the output directory if needed.
+2021-08-11 12:02:47,803 - INFO : The output directory already exists: /mnt/d/Documents/Research/Aug11_1151_fibermorph_curvature_analysis/particles_removed_clean
+2021-08-11 12:02:47,891 - INFO : Making the output directory if needed.
+2021-08-11 12:02:47,891 - INFO : The output directory already exists: /mnt/d/Documents/Research/Aug11_1151_fibermorph_curvature_analysis/particles_removed_clean
+2021-08-11 12:02:48,015 - INFO : 002.tiff_particles_removed_clean.jpg has been saved to its corresponding directory. 
+2021-08-11 12:02:48,096 - INFO : 003.tiff_particles_removed_clean.jpg has been saved to its corresponding directory. 
+2021-08-11 12:02:48,349 - INFO : Making the output directory if needed.
+2021-08-11 12:02:48,349 - INFO : The output directory already exists: /mnt/d/Documents/Research/Aug11_1151_fibermorph_curvature_analysis/particles_removed_clean
+2021-08-11 12:02:48,329 - INFO : Making the output directory if needed.
+2021-08-11 12:02:48,434 - INFO : The output directory already exists: /mnt/d/Documents/Research/Aug11_1151_fibermorph_curvature_analysis/filtered
+2021-08-11 12:02:48,562 - INFO : 027.tiff_particles_removed_clean.jpg has been saved to its corresponding directory. 
+2021-08-11 12:02:48,853 - INFO : Making the output directory if needed.
+2021-08-11 12:02:48,891 - INFO : The output directory already exists: /mnt/d/Documents/Research/Aug11_1151_fibermorph_curvature_analysis/filtered
+2021-08-11 12:02:49,078 - INFO : Making the output directory if needed.
+2021-08-11 12:02:49,233 - INFO : The output directory already exists: /mnt/d/Documents/Research/Aug11_1151_fibermorph_curvature_analysis/filtered
+2021-08-11 12:02:49,235 - INFO : 001_filtered.jpg has been saved to its corresponding directory. 
+2021-08-11 12:02:49,766 - INFO : Making the output directory if needed.
+2021-08-11 12:02:49,766 - INFO : The output directory already exists: /mnt/d/Documents/Research/Aug11_1151_fibermorph_curvature_analysis/binarized
+2021-08-11 12:02:49,945 - INFO : 028_filtered.jpg has been saved to its corresponding directory. 
+2021-08-11 12:02:49,984 - INFO : 006.tiff_binarized.jpg has been saved to its corresponding directory. 
+2021-08-11 12:02:50,151 - INFO : 005_filtered.jpg has been saved to its corresponding directory. 
+2021-08-11 12:02:50,899 - INFO : Making the output directory if needed.
+2021-08-11 12:02:50,899 - INFO : The output directory already exists: /mnt/d/Documents/Research/Aug11_1151_fibermorph_curvature_analysis/particles_removed_clean
+2021-08-11 12:02:51,129 - INFO : 006.tiff_particles_removed_clean.jpg has been saved to its corresponding directory. 
+2021-08-11 12:02:52,269 - INFO : Making the output directory if needed.
+2021-08-11 12:02:52,270 - INFO : The output directory already exists: /mnt/d/Documents/Research/Aug11_1151_fibermorph_curvature_analysis/binarized
+2021-08-11 12:02:52,475 - INFO : 001.tiff_binarized.jpg has been saved to its corresponding directory. 
+2021-08-11 12:02:52,850 - INFO : Making the output directory if needed.
+2021-08-11 12:02:52,850 - INFO : The output directory already exists: /mnt/d/Documents/Research/Aug11_1151_fibermorph_curvature_analysis/binarized
+2021-08-11 12:02:53,049 - INFO : 028.tiff_binarized.jpg has been saved to its corresponding directory. 
+2021-08-11 12:02:53,052 - INFO : Making the output directory if needed.
+2021-08-11 12:02:53,052 - INFO : The output directory already exists: /mnt/d/Documents/Research/Aug11_1151_fibermorph_curvature_analysis/binarized
+2021-08-11 12:02:53,275 - INFO : 005.tiff_binarized.jpg has been saved to its corresponding directory. 
+2021-08-11 12:02:53,283 - INFO : Making the output directory if needed.
+2021-08-11 12:02:53,284 - INFO : The output directory already exists: /mnt/d/Documents/Research/Aug11_1151_fibermorph_curvature_analysis/particles_removed_clean
+2021-08-11 12:02:53,528 - INFO : 001.tiff_particles_removed_clean.jpg has been saved to its corresponding directory. 
+2021-08-11 12:02:53,837 - INFO : Making the output directory if needed.
+2021-08-11 12:02:53,837 - INFO : The output directory already exists: /mnt/d/Documents/Research/Aug11_1151_fibermorph_curvature_analysis/particles_removed_clean
+2021-08-11 12:02:54,040 - INFO : Making the output directory if needed.
+2021-08-11 12:02:54,040 - INFO : The output directory already exists: /mnt/d/Documents/Research/Aug11_1151_fibermorph_curvature_analysis/particles_removed_clean
+2021-08-11 12:02:54,069 - INFO : 028.tiff_particles_removed_clean.jpg has been saved to its corresponding directory. 
+2021-08-11 12:02:54,263 - INFO : 005.tiff_particles_removed_clean.jpg has been saved to its corresponding directory. 
+2021-08-11 12:03:09,319 - INFO : Making the output directory if needed.
+2021-08-11 12:03:09,319 - INFO : No corresponding output directory found: /mnt/d/Documents/Research/Aug11_1151_fibermorph_curvature_analysis/skeletonized
+2021-08-11 12:03:09,336 - INFO : The output directory has been created: /mnt/d/Documents/Research/Aug11_1151_fibermorph_curvature_analysis/skeletonized
+2021-08-11 12:03:09,513 - INFO : 004.tiff_skeletonized.jpg has been saved to its corresponding directory. 
+2021-08-11 12:03:09,807 - INFO : Making the output directory if needed.
+2021-08-11 12:03:09,808 - INFO : The output directory already exists: /mnt/d/Documents/Research/Aug11_1151_fibermorph_curvature_analysis/skeletonized
+2021-08-11 12:03:09,994 - INFO : 027.tiff_skeletonized.jpg has been saved to its corresponding directory. 
+2021-08-11 12:03:10,368 - INFO : Making the output directory if needed.
+2021-08-11 12:03:10,368 - INFO : The output directory already exists: /mnt/d/Documents/Research/Aug11_1151_fibermorph_curvature_analysis/skeletonized
+2021-08-11 12:03:10,533 - INFO : 002.tiff_skeletonized.jpg has been saved to its corresponding directory. 
+2021-08-11 12:03:10,740 - INFO : Making the output directory if needed.
+2021-08-11 12:03:10,740 - INFO : The output directory already exists: /mnt/d/Documents/Research/Aug11_1151_fibermorph_curvature_analysis/skeletonized
+2021-08-11 12:03:10,902 - INFO : 003.tiff_skeletonized.jpg has been saved to its corresponding directory. 
+2021-08-11 12:03:13,180 - INFO : Making the output directory if needed.
+2021-08-11 12:03:13,180 - INFO : The output directory already exists: /mnt/d/Documents/Research/Aug11_1151_fibermorph_curvature_analysis/skeletonized
+2021-08-11 12:03:13,327 - INFO : 006.tiff_skeletonized.jpg has been saved to its corresponding directory. 
+2021-08-11 12:03:14,676 - INFO : Making the output directory if needed.
+2021-08-11 12:03:14,677 - INFO : The output directory already exists: /mnt/d/Documents/Research/Aug11_1151_fibermorph_curvature_analysis/skeletonized
+2021-08-11 12:03:14,874 - INFO : 028.tiff_skeletonized.jpg has been saved to its corresponding directory. 
+2021-08-11 12:03:15,202 - INFO : Making the output directory if needed.
+2021-08-11 12:03:15,203 - INFO : The output directory already exists: /mnt/d/Documents/Research/Aug11_1151_fibermorph_curvature_analysis/skeletonized
+2021-08-11 12:03:15,361 - INFO : 001.tiff_skeletonized.jpg has been saved to its corresponding directory. 
+2021-08-11 12:03:16,177 - INFO : Making the output directory if needed.
+2021-08-11 12:03:16,178 - INFO : The output directory already exists: /mnt/d/Documents/Research/Aug11_1151_fibermorph_curvature_analysis/skeletonized
+2021-08-11 12:03:16,366 - INFO : 005.tiff_skeletonized.jpg has been saved to its corresponding directory. 
+2021-08-11 12:03:17,959 - INFO : Making the output directory if needed.
+2021-08-11 12:03:17,960 - INFO : No corresponding output directory found: /mnt/d/Documents/Research/Aug11_1151_fibermorph_curvature_analysis/particles_removed_pruned
+2021-08-11 12:03:17,960 - INFO : The output directory has been created: /mnt/d/Documents/Research/Aug11_1151_fibermorph_curvature_analysis/particles_removed_pruned
+2021-08-11 12:03:18,194 - INFO : 004.tiff_particles_removed_pruned.jpg has been saved to its corresponding directory. 
+2021-08-11 12:03:18,333 - INFO : Making the output directory if needed.
+2021-08-11 12:03:18,333 - INFO : The output directory already exists: /mnt/d/Documents/Research/Aug11_1151_fibermorph_curvature_analysis/particles_removed_pruned
+2021-08-11 12:03:18,506 - INFO : 027.tiff_particles_removed_pruned.jpg has been saved to its corresponding directory. 
+2021-08-11 12:03:18,845 - INFO : Making the output directory if needed.
+2021-08-11 12:03:18,845 - INFO : The output directory already exists: /mnt/d/Documents/Research/Aug11_1151_fibermorph_curvature_analysis/particles_removed_pruned
+2021-08-11 12:03:19,019 - INFO : 002.tiff_particles_removed_pruned.jpg has been saved to its corresponding directory. 
+2021-08-11 12:03:19,250 - INFO : Making the output directory if needed.
+2021-08-11 12:03:19,251 - INFO : The output directory already exists: /mnt/d/Documents/Research/Aug11_1151_fibermorph_curvature_analysis/particles_removed_pruned
+2021-08-11 12:03:19,436 - INFO : 003.tiff_particles_removed_pruned.jpg has been saved to its corresponding directory. 
+2021-08-11 12:03:21,009 - INFO : Making the output directory if needed.
+2021-08-11 12:03:21,009 - INFO : The output directory already exists: /mnt/d/Documents/Research/Aug11_1151_fibermorph_curvature_analysis/particles_removed_pruned
+2021-08-11 12:03:21,176 - INFO : 006.tiff_particles_removed_pruned.jpg has been saved to its corresponding directory. 
+2021-08-11 12:03:22,563 - INFO : Making the output directory if needed.
+2021-08-11 12:03:22,563 - INFO : The output directory already exists: /mnt/d/Documents/Research/Aug11_1151_fibermorph_curvature_analysis/particles_removed_pruned
+2021-08-11 12:03:22,729 - INFO : 028.tiff_particles_removed_pruned.jpg has been saved to its corresponding directory. 
+2021-08-11 12:03:22,838 - INFO : Making the output directory if needed.
+2021-08-11 12:03:22,838 - INFO : The output directory already exists: /mnt/d/Documents/Research/Aug11_1151_fibermorph_curvature_analysis/particles_removed_pruned
+2021-08-11 12:03:23,000 - INFO : 001.tiff_particles_removed_pruned.jpg has been saved to its corresponding directory. 
+2021-08-11 12:03:23,548 - INFO : Curvature analysis terminated. 
+
+2021-08-11 13:07:48,230 - INFO : Curvature analysis initiated with arguments parsed below.
+2021-08-11 13:07:48,230 - INFO : Namespace(curvature=True, demo_real_curv=False, demo_real_section=False, input_directory='/mnt/d/Documents/Research/ko', jobs=16, maxsize=150, minsize=20, output_directory='/mnt/d/Documents/Research/', raw2gray=False, resolution_mm=132, resolution_mu=4.25, save_img=True, section=False, window_size=['0.5'], window_unit='mm', within_element=True)
+2021-08-11 13:07:48,230 - INFO : Reading image files in the input directory. 
+2021-08-11 13:07:48,231 - INFO : Iterating over the input directory for TIFF images. 
+2021-08-11 13:07:48,231 - INFO : TIFF images were found in the input directory. 
+/mnt/d/Documents/Research/ko/001.tiff
+2021-08-11 13:07:48,231 - INFO : a
+2021-08-11 13:07:48,232 - INFO : Making the output directory if needed.
+2021-08-11 13:07:48,232 - INFO : No corresponding output directory found: /mnt/d/Documents/Research/Aug11_1307_fibermorph_curvature_analysis
+2021-08-11 13:07:48,232 - INFO : The output directory has been created: /mnt/d/Documents/Research/Aug11_1307_fibermorph_curvature_analysis
+2021-08-11 13:07:48,232 - INFO : a
+2021-08-11 13:07:48,241 - INFO : Curvature analysis for 001.tiff has been started
+2021-08-11 13:08:22,841 - INFO : Making the output directory if needed.
+2021-08-11 13:08:22,841 - INFO : No corresponding output directory found: /mnt/d/Documents/Research/Aug11_1307_fibermorph_curvature_analysis/filtered
+2021-08-11 13:08:22,841 - INFO : The output directory has been created: /mnt/d/Documents/Research/Aug11_1307_fibermorph_curvature_analysis/filtered
+2021-08-11 13:08:23,206 - INFO : 001_filtered.jpg has been saved to its corresponding directory. 
+2021-08-11 13:08:25,058 - INFO : Making the output directory if needed.
+2021-08-11 13:08:25,058 - INFO : No corresponding output directory found: /mnt/d/Documents/Research/Aug11_1307_fibermorph_curvature_analysis/binarized
+2021-08-11 13:08:25,058 - INFO : The output directory has been created: /mnt/d/Documents/Research/Aug11_1307_fibermorph_curvature_analysis/binarized
+2021-08-11 13:08:25,219 - INFO : 001.tiff_binarized.jpg has been saved to its corresponding directory. 
+2021-08-11 13:08:25,710 - INFO : Making the output directory if needed.
+2021-08-11 13:08:25,710 - INFO : No corresponding output directory found: /mnt/d/Documents/Research/Aug11_1307_fibermorph_curvature_analysis/particles_removed_clean
+2021-08-11 13:08:25,710 - INFO : The output directory has been created: /mnt/d/Documents/Research/Aug11_1307_fibermorph_curvature_analysis/particles_removed_clean
+2021-08-11 13:08:25,870 - INFO : 001.tiff_particles_removed_clean.jpg has been saved to its corresponding directory. 
+2021-08-11 13:08:44,180 - INFO : Making the output directory if needed.
+2021-08-11 13:08:44,180 - INFO : No corresponding output directory found: /mnt/d/Documents/Research/Aug11_1307_fibermorph_curvature_analysis/skeletonized
+2021-08-11 13:08:44,180 - INFO : The output directory has been created: /mnt/d/Documents/Research/Aug11_1307_fibermorph_curvature_analysis/skeletonized
+2021-08-11 13:08:44,320 - INFO : 001.tiff_skeletonized.jpg has been saved to its corresponding directory. 
+2021-08-11 13:08:50,628 - INFO : Making the output directory if needed.
+2021-08-11 13:08:50,628 - INFO : No corresponding output directory found: /mnt/d/Documents/Research/Aug11_1307_fibermorph_curvature_analysis/particles_removed_pruned
+2021-08-11 13:08:50,628 - INFO : The output directory has been created: /mnt/d/Documents/Research/Aug11_1307_fibermorph_curvature_analysis/particles_removed_pruned
+2021-08-11 13:08:50,785 - INFO : 001.tiff_particles_removed_pruned.jpg has been saved to its corresponding directory. 
+2021-08-11 13:08:50,833 - INFO : Curvature analysis terminated. 
+
+2021-08-11 13:11:47,334 - INFO : Curvature analysis initiated with arguments parsed below.
+2021-08-11 13:11:47,334 - INFO : Namespace(curvature=True, demo_real_curv=False, demo_real_section=False, input_directory='/mnt/d/Documents/Research/ko', jobs=16, maxsize=150, minsize=20, output_directory='/mnt/d/Documents/Research/', raw2gray=False, resolution_mm=132, resolution_mu=4.25, save_img=True, section=False, window_size=['0.5'], window_unit='mm', within_element=True)
+2021-08-11 13:11:47,334 - INFO : Reading image files in the input directory. 
+2021-08-11 13:11:47,334 - INFO : Iterating over the input directory for TIFF images. 
+2021-08-11 13:11:47,335 - INFO : TIFF images were found in the input directory. 
+/mnt/d/Documents/Research/ko/001.tiff
+2021-08-11 13:11:47,335 - INFO : Making the output directory if needed.
+2021-08-11 13:11:47,335 - INFO : No corresponding output directory found: /mnt/d/Documents/Research/Aug11_1311_fibermorph_curvature_analysis
+2021-08-11 13:11:47,335 - INFO : The output directory has been created: /mnt/d/Documents/Research/Aug11_1311_fibermorph_curvature_analysis
+2021-08-11 13:11:47,337 - INFO : Curvature analysis for 001.tiff has been started
+2021-08-11 13:12:21,991 - INFO : Making the output directory if needed.
+2021-08-11 13:12:21,991 - INFO : No corresponding output directory found: /mnt/d/Documents/Research/Aug11_1311_fibermorph_curvature_analysis/filtered
+2021-08-11 13:12:21,991 - INFO : The output directory has been created: /mnt/d/Documents/Research/Aug11_1311_fibermorph_curvature_analysis/filtered
+2021-08-11 13:12:22,325 - INFO : 001_filtered.jpg has been saved to its corresponding directory. 
+2021-08-11 13:12:24,207 - INFO : Making the output directory if needed.
+2021-08-11 13:12:24,207 - INFO : No corresponding output directory found: /mnt/d/Documents/Research/Aug11_1311_fibermorph_curvature_analysis/binarized
+2021-08-11 13:12:24,207 - INFO : The output directory has been created: /mnt/d/Documents/Research/Aug11_1311_fibermorph_curvature_analysis/binarized
+2021-08-11 13:12:24,367 - INFO : 001.tiff_binarized.jpg has been saved to its corresponding directory. 
+2021-08-11 13:12:24,872 - INFO : Making the output directory if needed.
+2021-08-11 13:12:24,872 - INFO : No corresponding output directory found: /mnt/d/Documents/Research/Aug11_1311_fibermorph_curvature_analysis/particles_removed_clean
+2021-08-11 13:12:24,872 - INFO : The output directory has been created: /mnt/d/Documents/Research/Aug11_1311_fibermorph_curvature_analysis/particles_removed_clean
+2021-08-11 13:12:25,042 - INFO : 001.tiff_particles_removed_clean.jpg has been saved to its corresponding directory. 
+2021-08-11 13:12:43,507 - INFO : Making the output directory if needed.
+2021-08-11 13:12:43,508 - INFO : No corresponding output directory found: /mnt/d/Documents/Research/Aug11_1311_fibermorph_curvature_analysis/skeletonized
+2021-08-11 13:12:43,508 - INFO : The output directory has been created: /mnt/d/Documents/Research/Aug11_1311_fibermorph_curvature_analysis/skeletonized
+2021-08-11 13:12:43,650 - INFO : 001.tiff_skeletonized.jpg has been saved to its corresponding directory. 
+2021-08-11 13:12:50,011 - INFO : Making the output directory if needed.
+2021-08-11 13:12:50,012 - INFO : No corresponding output directory found: /mnt/d/Documents/Research/Aug11_1311_fibermorph_curvature_analysis/particles_removed_pruned
+2021-08-11 13:12:50,012 - INFO : The output directory has been created: /mnt/d/Documents/Research/Aug11_1311_fibermorph_curvature_analysis/particles_removed_pruned
+2021-08-11 13:12:50,171 - INFO : 001.tiff_particles_removed_pruned.jpg has been saved to its corresponding directory. 
+2021-08-11 13:12:50,221 - INFO : Curvature analysis terminated. 
+
+2021-08-11 13:16:01,827 - INFO : Curvature analysis initiated with arguments parsed below.
+2021-08-11 13:16:01,827 - INFO : Namespace(curvature=True, demo_real_curv=False, demo_real_section=False, input_directory='/mnt/d/Documents/Research/ko', jobs=16, maxsize=150, minsize=20, output_directory='/mnt/d/Documents/Research/', raw2gray=False, resolution_mm=132, resolution_mu=4.25, save_img=True, section=False, window_size=['0.5'], window_unit='mm', within_element=True)
+2021-08-11 13:16:01,827 - INFO : Reading image files in the input directory. 
+2021-08-11 13:16:01,828 - INFO : Iterating over the input directory for TIFF images. 
+2021-08-11 13:16:01,828 - INFO : TIFF images were found in the input directory. 
+/mnt/d/Documents/Research/ko/001.tiff
+2021-08-11 13:16:01,828 - INFO : Making the output directory if needed.
+2021-08-11 13:16:01,828 - INFO : No corresponding output directory found: /mnt/d/Documents/Research/Aug11_1316_fibermorph_curvature_analysis
+2021-08-11 13:16:01,828 - INFO : The output directory has been created: /mnt/d/Documents/Research/Aug11_1316_fibermorph_curvature_analysis
+2021-08-11 13:16:01,830 - INFO : Curvature analysis for 001.tiff has been started
+2021-08-11 13:16:36,542 - INFO : Making the output directory if needed.
+2021-08-11 13:16:36,542 - INFO : No corresponding output directory found: /mnt/d/Documents/Research/Aug11_1316_fibermorph_curvature_analysis/filtered
+2021-08-11 13:16:36,542 - INFO : The output directory has been created: /mnt/d/Documents/Research/Aug11_1316_fibermorph_curvature_analysis/filtered
+2021-08-11 13:16:36,874 - INFO : 001_filtered.jpg has been saved to its corresponding directory. 
+2021-08-11 13:16:38,744 - INFO : Making the output directory if needed.
+2021-08-11 13:16:38,744 - INFO : No corresponding output directory found: /mnt/d/Documents/Research/Aug11_1316_fibermorph_curvature_analysis/binarized
+2021-08-11 13:16:38,745 - INFO : The output directory has been created: /mnt/d/Documents/Research/Aug11_1316_fibermorph_curvature_analysis/binarized
+2021-08-11 13:16:38,923 - INFO : 001.tiff_binarized.jpg has been saved to its corresponding directory. 
+2021-08-11 13:16:39,423 - INFO : Making the output directory if needed.
+2021-08-11 13:16:39,423 - INFO : No corresponding output directory found: /mnt/d/Documents/Research/Aug11_1316_fibermorph_curvature_analysis/particles_removed_clean
+2021-08-11 13:16:39,424 - INFO : The output directory has been created: /mnt/d/Documents/Research/Aug11_1316_fibermorph_curvature_analysis/particles_removed_clean
+2021-08-11 13:16:39,586 - INFO : 001.tiff_particles_removed_clean.jpg has been saved to its corresponding directory. 
+2021-08-11 13:16:58,182 - INFO : Making the output directory if needed.
+2021-08-11 13:16:58,182 - INFO : No corresponding output directory found: /mnt/d/Documents/Research/Aug11_1316_fibermorph_curvature_analysis/skeletonized
+2021-08-11 13:16:58,183 - INFO : The output directory has been created: /mnt/d/Documents/Research/Aug11_1316_fibermorph_curvature_analysis/skeletonized
+2021-08-11 13:16:58,326 - INFO : 001.tiff_skeletonized.jpg has been saved to its corresponding directory. 
+2021-08-11 13:17:04,721 - INFO : Making the output directory if needed.
+2021-08-11 13:17:04,721 - INFO : No corresponding output directory found: /mnt/d/Documents/Research/Aug11_1316_fibermorph_curvature_analysis/particles_removed_pruned
+2021-08-11 13:17:04,721 - INFO : The output directory has been created: /mnt/d/Documents/Research/Aug11_1316_fibermorph_curvature_analysis/particles_removed_pruned
+2021-08-11 13:17:04,882 - INFO : 001.tiff_particles_removed_pruned.jpg has been saved to its corresponding directory. 
+2021-08-11 13:17:04,939 - INFO : Curvature analysis terminated. 
+
+2021-08-11 13:17:53,143 - INFO : Curvature analysis initiated with arguments parsed below.
+2021-08-11 13:17:53,143 - INFO : Namespace(curvature=True, demo_real_curv=False, demo_real_section=False, input_directory='/mnt/d/Documents/Research/ko', jobs=16, maxsize=150, minsize=20, output_directory='/mnt/d/Documents/Research/', raw2gray=False, resolution_mm=132, resolution_mu=4.25, save_img=True, section=False, window_size=['0.5'], window_unit='mm', within_element=True)
+2021-08-11 13:17:53,143 - INFO : Reading image files in the input directory. 
+2021-08-11 13:17:53,143 - INFO : Iterating over the input directory for TIFF images. 
+2021-08-11 13:17:53,144 - INFO : TIFF images were found in the input directory. 
+/mnt/d/Documents/Research/ko/001.tiff
+2021-08-11 13:17:53,144 - INFO : Making the output directory if needed.
+2021-08-11 13:17:53,144 - INFO : No corresponding output directory found: /mnt/d/Documents/Research/Aug11_1317_fibermorph_curvature_analysis
+2021-08-11 13:17:53,144 - INFO : The output directory has been created: /mnt/d/Documents/Research/Aug11_1317_fibermorph_curvature_analysis
+2021-08-11 13:17:53,147 - INFO : Curvature analysis for 001.tiff has been started
+2021-08-11 13:18:27,899 - INFO : Making the output directory if needed.
+2021-08-11 13:18:27,899 - INFO : No corresponding output directory found: /mnt/d/Documents/Research/Aug11_1317_fibermorph_curvature_analysis/filtered
+2021-08-11 13:18:27,899 - INFO : The output directory has been created: /mnt/d/Documents/Research/Aug11_1317_fibermorph_curvature_analysis/filtered
+2021-08-11 13:18:28,233 - INFO : 001_filtered.jpg has been saved to its corresponding directory. 
+2021-08-11 13:18:30,116 - INFO : Making the output directory if needed.
+2021-08-11 13:18:30,117 - INFO : No corresponding output directory found: /mnt/d/Documents/Research/Aug11_1317_fibermorph_curvature_analysis/binarized
+2021-08-11 13:18:30,117 - INFO : The output directory has been created: /mnt/d/Documents/Research/Aug11_1317_fibermorph_curvature_analysis/binarized
+2021-08-11 13:18:30,280 - INFO : 001.tiff_binarized.jpg has been saved to its corresponding directory. 
+2021-08-11 13:18:30,778 - INFO : Making the output directory if needed.
+2021-08-11 13:18:30,778 - INFO : No corresponding output directory found: /mnt/d/Documents/Research/Aug11_1317_fibermorph_curvature_analysis/particles_removed_clean
+2021-08-11 13:18:30,778 - INFO : The output directory has been created: /mnt/d/Documents/Research/Aug11_1317_fibermorph_curvature_analysis/particles_removed_clean
+2021-08-11 13:18:30,940 - INFO : 001.tiff_particles_removed_clean.jpg has been saved to its corresponding directory. 
+2021-08-11 13:18:49,457 - INFO : Making the output directory if needed.
+2021-08-11 13:18:49,457 - INFO : No corresponding output directory found: /mnt/d/Documents/Research/Aug11_1317_fibermorph_curvature_analysis/skeletonized
+2021-08-11 13:18:49,457 - INFO : The output directory has been created: /mnt/d/Documents/Research/Aug11_1317_fibermorph_curvature_analysis/skeletonized
+2021-08-11 13:18:49,601 - INFO : 001.tiff_skeletonized.jpg has been saved to its corresponding directory. 
+2021-08-11 13:18:55,953 - INFO : Making the output directory if needed.
+2021-08-11 13:18:55,953 - INFO : No corresponding output directory found: /mnt/d/Documents/Research/Aug11_1317_fibermorph_curvature_analysis/particles_removed_pruned
+2021-08-11 13:18:55,953 - INFO : The output directory has been created: /mnt/d/Documents/Research/Aug11_1317_fibermorph_curvature_analysis/particles_removed_pruned
+2021-08-11 13:18:56,112 - INFO : 001.tiff_particles_removed_pruned.jpg has been saved to its corresponding directory. 
+2021-08-11 13:18:56,746 - INFO : a
+2021-08-11 13:18:56,747 - INFO : Curvature analysis terminated. 
+
+2021-08-11 13:20:06,647 - INFO : Curvature analysis initiated with arguments parsed below.
+2021-08-11 13:20:06,647 - INFO : Namespace(curvature=True, demo_real_curv=False, demo_real_section=False, input_directory='/mnt/d/Documents/Research/ko', jobs=16, maxsize=150, minsize=20, output_directory='/mnt/d/Documents/Research/', raw2gray=False, resolution_mm=132, resolution_mu=4.25, save_img=True, section=False, window_size=['0.5'], window_unit='mm', within_element=True)
+2021-08-11 13:20:06,647 - INFO : Reading image files in the input directory. 
+2021-08-11 13:20:06,647 - INFO : Iterating over the input directory for TIFF images. 
+2021-08-11 13:20:06,647 - INFO : TIFF images were found in the input directory. 
+/mnt/d/Documents/Research/ko/001.tiff
+2021-08-11 13:20:06,647 - INFO : Making the output directory if needed.
+2021-08-11 13:20:06,648 - INFO : No corresponding output directory found: /mnt/d/Documents/Research/Aug11_1320_fibermorph_curvature_analysis
+2021-08-11 13:20:06,648 - INFO : The output directory has been created: /mnt/d/Documents/Research/Aug11_1320_fibermorph_curvature_analysis
+2021-08-11 13:20:06,650 - INFO : Curvature analysis for 001.tiff has been started
+2021-08-11 13:20:41,318 - INFO : Making the output directory if needed.
+2021-08-11 13:20:41,318 - INFO : No corresponding output directory found: /mnt/d/Documents/Research/Aug11_1320_fibermorph_curvature_analysis/filtered
+2021-08-11 13:20:41,319 - INFO : The output directory has been created: /mnt/d/Documents/Research/Aug11_1320_fibermorph_curvature_analysis/filtered
+2021-08-11 13:20:41,653 - INFO : 001_filtered.jpg has been saved to its corresponding directory. 
+2021-08-11 13:20:43,527 - INFO : Making the output directory if needed.
+2021-08-11 13:20:43,527 - INFO : No corresponding output directory found: /mnt/d/Documents/Research/Aug11_1320_fibermorph_curvature_analysis/binarized
+2021-08-11 13:20:43,527 - INFO : The output directory has been created: /mnt/d/Documents/Research/Aug11_1320_fibermorph_curvature_analysis/binarized
+2021-08-11 13:20:43,692 - INFO : 001.tiff_binarized.jpg has been saved to its corresponding directory. 
+2021-08-11 13:20:44,190 - INFO : Making the output directory if needed.
+2021-08-11 13:20:44,190 - INFO : No corresponding output directory found: /mnt/d/Documents/Research/Aug11_1320_fibermorph_curvature_analysis/particles_removed_clean
+2021-08-11 13:20:44,191 - INFO : The output directory has been created: /mnt/d/Documents/Research/Aug11_1320_fibermorph_curvature_analysis/particles_removed_clean
+2021-08-11 13:20:44,355 - INFO : 001.tiff_particles_removed_clean.jpg has been saved to its corresponding directory. 
+2021-08-11 13:21:02,973 - INFO : Making the output directory if needed.
+2021-08-11 13:21:02,973 - INFO : No corresponding output directory found: /mnt/d/Documents/Research/Aug11_1320_fibermorph_curvature_analysis/skeletonized
+2021-08-11 13:21:02,973 - INFO : The output directory has been created: /mnt/d/Documents/Research/Aug11_1320_fibermorph_curvature_analysis/skeletonized
+2021-08-11 13:21:03,115 - INFO : 001.tiff_skeletonized.jpg has been saved to its corresponding directory. 
+2021-08-11 13:21:09,526 - INFO : Making the output directory if needed.
+2021-08-11 13:21:09,526 - INFO : No corresponding output directory found: /mnt/d/Documents/Research/Aug11_1320_fibermorph_curvature_analysis/particles_removed_pruned
+2021-08-11 13:21:09,527 - INFO : The output directory has been created: /mnt/d/Documents/Research/Aug11_1320_fibermorph_curvature_analysis/particles_removed_pruned
+2021-08-11 13:21:09,687 - INFO : 001.tiff_particles_removed_pruned.jpg has been saved to its corresponding directory. 
+2021-08-11 13:21:10,308 - INFO : a
+2021-08-11 13:21:10,308 - INFO : Curvature analysis terminated. 
+
+2021-08-11 13:26:43,102 - INFO : Curvature analysis initiated with arguments parsed below.
+2021-08-11 13:26:43,102 - INFO : Namespace(curvature=True, demo_real_curv=False, demo_real_section=False, input_directory='/mnt/d/Documents/Research/ko', jobs=16, maxsize=150, minsize=20, output_directory='/mnt/d/Documents/Research/', raw2gray=False, resolution_mm=132, resolution_mu=4.25, save_img=True, section=False, window_size=['0.5'], window_unit='mm', within_element=True)
+2021-08-11 13:26:43,102 - INFO : Reading image files in the input directory. 
+2021-08-11 13:26:43,102 - INFO : Iterating over the input directory for TIFF images. 
+2021-08-11 13:26:43,102 - INFO : TIFF images were found in the input directory. 
+/mnt/d/Documents/Research/ko/001.tiff
+2021-08-11 13:26:43,102 - INFO : Making the output directory if needed.
+2021-08-11 13:26:43,102 - INFO : No corresponding output directory found: /mnt/d/Documents/Research/Aug11_1326_fibermorph_curvature_analysis
+2021-08-11 13:26:43,102 - INFO : The output directory has been created: /mnt/d/Documents/Research/Aug11_1326_fibermorph_curvature_analysis
+2021-08-11 13:26:43,105 - INFO : Curvature analysis for 001.tiff has been started
+2021-08-11 13:27:18,016 - INFO : Making the output directory if needed.
+2021-08-11 13:27:18,016 - INFO : No corresponding output directory found: /mnt/d/Documents/Research/Aug11_1326_fibermorph_curvature_analysis/filtered
+2021-08-11 13:27:18,053 - INFO : The output directory has been created: /mnt/d/Documents/Research/Aug11_1326_fibermorph_curvature_analysis/filtered
+2021-08-11 13:27:18,389 - INFO : 001_filtered.jpg has been saved to its corresponding directory. 
+2021-08-11 13:27:20,278 - INFO : Making the output directory if needed.
+2021-08-11 13:27:20,278 - INFO : No corresponding output directory found: /mnt/d/Documents/Research/Aug11_1326_fibermorph_curvature_analysis/binarized
+2021-08-11 13:27:20,278 - INFO : The output directory has been created: /mnt/d/Documents/Research/Aug11_1326_fibermorph_curvature_analysis/binarized
+2021-08-11 13:27:20,443 - INFO : 001.tiff_binarized.jpg has been saved to its corresponding directory. 
+2021-08-11 13:27:20,941 - INFO : Making the output directory if needed.
+2021-08-11 13:27:20,941 - INFO : No corresponding output directory found: /mnt/d/Documents/Research/Aug11_1326_fibermorph_curvature_analysis/particles_removed_clean
+2021-08-11 13:27:20,941 - INFO : The output directory has been created: /mnt/d/Documents/Research/Aug11_1326_fibermorph_curvature_analysis/particles_removed_clean
+2021-08-11 13:27:21,104 - INFO : 001.tiff_particles_removed_clean.jpg has been saved to its corresponding directory. 
+2021-08-11 13:27:39,658 - INFO : Making the output directory if needed.
+2021-08-11 13:27:39,658 - INFO : No corresponding output directory found: /mnt/d/Documents/Research/Aug11_1326_fibermorph_curvature_analysis/skeletonized
+2021-08-11 13:27:39,658 - INFO : The output directory has been created: /mnt/d/Documents/Research/Aug11_1326_fibermorph_curvature_analysis/skeletonized
+2021-08-11 13:27:39,802 - INFO : 001.tiff_skeletonized.jpg has been saved to its corresponding directory. 
+2021-08-11 13:27:46,230 - INFO : Making the output directory if needed.
+2021-08-11 13:27:46,230 - INFO : No corresponding output directory found: /mnt/d/Documents/Research/Aug11_1326_fibermorph_curvature_analysis/particles_removed_pruned
+2021-08-11 13:27:46,231 - INFO : The output directory has been created: /mnt/d/Documents/Research/Aug11_1326_fibermorph_curvature_analysis/particles_removed_pruned
+2021-08-11 13:27:46,390 - INFO : 001.tiff_particles_removed_pruned.jpg has been saved to its corresponding directory. 
+2021-08-11 13:27:47,008 - INFO : a
+2021-08-11 13:27:47,009 - INFO : Curvature analysis terminated. 
+
+2021-08-11 13:28:35,064 - INFO : Curvature analysis initiated with arguments parsed below.
+2021-08-11 13:28:35,064 - INFO : Namespace(curvature=True, demo_real_curv=False, demo_real_section=False, input_directory='/mnt/d/Documents/Research/ko', jobs=16, maxsize=150, minsize=20, output_directory='/mnt/d/Documents/Research/', raw2gray=False, resolution_mm=132, resolution_mu=4.25, save_img=True, section=False, window_size=['0.5'], window_unit='mm', within_element=True)
+2021-08-11 13:28:35,064 - INFO : Reading image files in the input directory. 
+2021-08-11 13:28:35,064 - INFO : Iterating over the input directory for TIFF images. 
+2021-08-11 13:28:35,064 - INFO : TIFF images were found in the input directory. 
+/mnt/d/Documents/Research/ko/001.tiff
+2021-08-11 13:28:35,064 - INFO : Making the output directory if needed.
+2021-08-11 13:28:35,064 - INFO : No corresponding output directory found: /mnt/d/Documents/Research/Aug11_1328_fibermorph_curvature_analysis
+2021-08-11 13:28:35,064 - INFO : The output directory has been created: /mnt/d/Documents/Research/Aug11_1328_fibermorph_curvature_analysis
+2021-08-11 13:28:35,067 - INFO : Curvature analysis for 001.tiff has been started
+2021-08-11 13:29:10,103 - INFO : Making the output directory if needed.
+2021-08-11 13:29:10,103 - INFO : No corresponding output directory found: /mnt/d/Documents/Research/Aug11_1328_fibermorph_curvature_analysis/filtered
+2021-08-11 13:29:10,104 - INFO : The output directory has been created: /mnt/d/Documents/Research/Aug11_1328_fibermorph_curvature_analysis/filtered
+2021-08-11 13:29:10,462 - INFO : 001_filtered.jpg has been saved to its corresponding directory. 
+2021-08-11 13:29:12,344 - INFO : Making the output directory if needed.
+2021-08-11 13:29:12,344 - INFO : No corresponding output directory found: /mnt/d/Documents/Research/Aug11_1328_fibermorph_curvature_analysis/binarized
+2021-08-11 13:29:12,344 - INFO : The output directory has been created: /mnt/d/Documents/Research/Aug11_1328_fibermorph_curvature_analysis/binarized
+2021-08-11 13:29:12,507 - INFO : 001.tiff_binarized.jpg has been saved to its corresponding directory. 
+2021-08-11 13:29:13,007 - INFO : Making the output directory if needed.
+2021-08-11 13:29:13,008 - INFO : No corresponding output directory found: /mnt/d/Documents/Research/Aug11_1328_fibermorph_curvature_analysis/particles_removed_clean
+2021-08-11 13:29:13,008 - INFO : The output directory has been created: /mnt/d/Documents/Research/Aug11_1328_fibermorph_curvature_analysis/particles_removed_clean
+2021-08-11 13:29:13,172 - INFO : 001.tiff_particles_removed_clean.jpg has been saved to its corresponding directory. 
+2021-08-11 13:29:31,720 - INFO : Making the output directory if needed.
+2021-08-11 13:29:31,720 - INFO : No corresponding output directory found: /mnt/d/Documents/Research/Aug11_1328_fibermorph_curvature_analysis/skeletonized
+2021-08-11 13:29:31,720 - INFO : The output directory has been created: /mnt/d/Documents/Research/Aug11_1328_fibermorph_curvature_analysis/skeletonized
+2021-08-11 13:29:31,863 - INFO : 001.tiff_skeletonized.jpg has been saved to its corresponding directory. 
+2021-08-11 13:29:38,232 - INFO : Making the output directory if needed.
+2021-08-11 13:29:38,232 - INFO : No corresponding output directory found: /mnt/d/Documents/Research/Aug11_1328_fibermorph_curvature_analysis/particles_removed_pruned
+2021-08-11 13:29:38,233 - INFO : The output directory has been created: /mnt/d/Documents/Research/Aug11_1328_fibermorph_curvature_analysis/particles_removed_pruned
+2021-08-11 13:29:38,393 - INFO : 001.tiff_particles_removed_pruned.jpg has been saved to its corresponding directory. 
+2021-08-11 13:29:39,022 - INFO : a
+2021-08-11 13:29:39,022 - INFO : c
+2021-08-11 13:29:39,023 - INFO : Curvature analysis terminated. 
+
+2021-08-11 13:30:39,344 - INFO : Curvature analysis initiated with arguments parsed below.
+2021-08-11 13:30:39,344 - INFO : Namespace(curvature=True, demo_real_curv=False, demo_real_section=False, input_directory='/mnt/d/Documents/Research/ko', jobs=16, maxsize=150, minsize=20, output_directory='/mnt/d/Documents/Research/', raw2gray=False, resolution_mm=132, resolution_mu=4.25, save_img=True, section=False, window_size=['0.5'], window_unit='mm', within_element=True)
+2021-08-11 13:30:39,344 - INFO : Reading image files in the input directory. 
+2021-08-11 13:30:39,345 - INFO : Iterating over the input directory for TIFF images. 
+2021-08-11 13:30:39,345 - INFO : TIFF images were found in the input directory. 
+/mnt/d/Documents/Research/ko/001.tiff
+2021-08-11 13:30:39,345 - INFO : Making the output directory if needed.
+2021-08-11 13:30:39,345 - INFO : No corresponding output directory found: /mnt/d/Documents/Research/Aug11_1330_fibermorph_curvature_analysis
+2021-08-11 13:30:39,345 - INFO : The output directory has been created: /mnt/d/Documents/Research/Aug11_1330_fibermorph_curvature_analysis
+2021-08-11 13:30:39,348 - INFO : Curvature analysis for 001.tiff has been started
+2021-08-11 13:31:14,933 - INFO : Making the output directory if needed.
+2021-08-11 13:31:14,933 - INFO : No corresponding output directory found: /mnt/d/Documents/Research/Aug11_1330_fibermorph_curvature_analysis/filtered
+2021-08-11 13:31:14,933 - INFO : The output directory has been created: /mnt/d/Documents/Research/Aug11_1330_fibermorph_curvature_analysis/filtered
+2021-08-11 13:31:15,296 - INFO : 001_filtered.jpg has been saved to its corresponding directory. 
+2021-08-11 13:31:17,189 - INFO : Making the output directory if needed.
+2021-08-11 13:31:17,189 - INFO : No corresponding output directory found: /mnt/d/Documents/Research/Aug11_1330_fibermorph_curvature_analysis/binarized
+2021-08-11 13:31:17,190 - INFO : The output directory has been created: /mnt/d/Documents/Research/Aug11_1330_fibermorph_curvature_analysis/binarized
+2021-08-11 13:31:17,356 - INFO : 001.tiff_binarized.jpg has been saved to its corresponding directory. 
+2021-08-11 13:31:17,858 - INFO : Making the output directory if needed.
+2021-08-11 13:31:17,859 - INFO : No corresponding output directory found: /mnt/d/Documents/Research/Aug11_1330_fibermorph_curvature_analysis/particles_removed_clean
+2021-08-11 13:31:17,859 - INFO : The output directory has been created: /mnt/d/Documents/Research/Aug11_1330_fibermorph_curvature_analysis/particles_removed_clean
+2021-08-11 13:31:18,033 - INFO : 001.tiff_particles_removed_clean.jpg has been saved to its corresponding directory. 
+2021-08-11 13:31:36,644 - INFO : Making the output directory if needed.
+2021-08-11 13:31:36,645 - INFO : No corresponding output directory found: /mnt/d/Documents/Research/Aug11_1330_fibermorph_curvature_analysis/skeletonized
+2021-08-11 13:31:36,645 - INFO : The output directory has been created: /mnt/d/Documents/Research/Aug11_1330_fibermorph_curvature_analysis/skeletonized
+2021-08-11 13:31:36,789 - INFO : 001.tiff_skeletonized.jpg has been saved to its corresponding directory. 
+2021-08-11 13:31:43,189 - INFO : Making the output directory if needed.
+2021-08-11 13:31:43,189 - INFO : No corresponding output directory found: /mnt/d/Documents/Research/Aug11_1330_fibermorph_curvature_analysis/particles_removed_pruned
+2021-08-11 13:31:43,189 - INFO : The output directory has been created: /mnt/d/Documents/Research/Aug11_1330_fibermorph_curvature_analysis/particles_removed_pruned
+2021-08-11 13:31:43,349 - INFO : 001.tiff_particles_removed_pruned.jpg has been saved to its corresponding directory. 
+2021-08-11 13:31:43,974 - INFO : a
+2021-08-11 13:31:43,974 - INFO : c
+2021-08-11 13:31:43,975 - INFO : Curvature analysis terminated. 
+

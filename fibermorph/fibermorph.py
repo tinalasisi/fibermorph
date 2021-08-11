@@ -2,7 +2,7 @@
 from argparse import ArgumentParser as ap
 import os
 
-def parser():
+def parse_args():
     '''
     Parse command-line arguments
     Returns
@@ -95,10 +95,11 @@ def parser():
     #     '--demo_dummy_section', action='store_true', default=False,
     #     help='A demo of fibermorph section with dummy data. Circles and ellipses are generated, analyzed and error is '
     #          'calculated.')
+    return parser
 
 def main():
     # Prase command-line arguments
-    parser = parser()
+    parser = parse_args()
     args = parser.parse_args()
 
     # Run fibermorph

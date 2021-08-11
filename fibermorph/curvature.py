@@ -1,3 +1,5 @@
+import warnings
+warnings.filterwarnings("ignore")
 from base import Fibermorph
 from datetime import datetime
 import multiprocessing
@@ -37,351 +39,156 @@ class Curvature(Fibermorph):
             fiblog.info(args)
 
             start = timer()
+            files = self.read_files(args.input_directory, fiblog)
+            foldername = str(self.timenow + "fibermorph_curvature_analysis")
+            od = self.make_directory(args.output_directory, foldername, fiblog)
 
-            files_list = self.read_files(args.input_directory)
+            with self.tqdm_joblib(tqdm(desc="curvature", total=len(files), unit="files", miniters=1)) as progress_bar:
+                progress_bar.monitor_interval = 2
+                num_process = len(files) if args.jobs > len(files) else args.jobs
+                curvature_df = (Parallel(n_jobs=num_process, verbose=0)(
+                    delayed(self.curvature_seq)(
+                        f, od, args.resolution_mm, args.window_size, args.window_unit, args.save_img, args.within_element, fiblog) for f in files))
+            
+            fiblog.info('Processing data for csv.')
+            curvature_df = pd.concat(curvature_df).dropna()
+            curvature_df.set_index('ID', inplace=True)
+            with pathlib.Path(od).joinpath("summary_curvature_data.csv") as df_output_path:
+                curvature_df.to_csv(df_output_path)
+                fiblog.info('The summary has been written onto a csv file: ' + str(df_output_path))
 
-            od = self.make_directory(args.output_directory, fiblog)
-
-            # im_df =(Parallel(n_jobs=args.jobs, verbose=0)(delayed(self.curvature_seq)(args.input_directory, args.output_directory, args.resolution_mm, args.window_size, args.window_unit, args.save_image, False, args.within_element) for input_file in files_list))
-            for images in files_list:
-                im_df = self.curvature_seq(images, od, args.resolution_mm, args.window_size, args.window_unit, args.save_image, False, args.within_element)
-                summary_df = pd.concat(im_df)
-
-            with pathlib.Path(od).joinpath('summary_curvature_data{}.csv') as df_output_path:
-                summary_df.to_csv(df_output_path)
-                # print(output_path)
-
-            sys.exit(0)
+            end = timer()
+            m, s = divmod(int(end - start), 60)
+            h, m = divmod(m, 60)
+            tqdm.write("\n\nComplete analysis took: {}\n\n".format("%dh: %02dm: %02ds" % (h, m, s)))
+            fiblog.info("\n\nComplete analysis took: {}\n\n".format("%dh: %02dm: %02ds" % (h, m, s)))
 
         except KeyboardInterrupt:
             print('terminating...')
+        
+        finally:
+            fiblog.info('Curvature analysis terminated. \n')
             sys.exit(0)
 
-    def curvature_seq(self, input_file, output_path, resolution, window_size, window_unit, save_img, test, within_element):
-        """Sequence of functions to be executed for calculating curvature in fibermorph.
+    def curvature_seq(self, input_file, output_directory, resolution, window_size, window_unit, save_img, within_element, fiblog):
+        _, fn = os.path.split(input_file)
+        fiblog.handlers.clear()
+        fiblog = self.get_logger('fiblog')
+        fiblog.info('Curvature analysis for {} has been started'.format(fn))
 
-        Parameters
-        ----------
-        input_file : str or pathlib Path object
-            Path to image that needs to be analyzed.
-        output_path : str or pathlib Path object
-            Output directory
-        resolution : int
-            Number of pixels per mm in original image.
-        window_size : float or float
-            Desired size for window of measurement in mm.
-        save_img : bool
-            True or false for saving images.
-        jobs : int
-            Number of jobs to run in parallel.            
-        test : bool
-            True or false for whether this is being run for validation tests.
-        within_element
-            True or False for whether to save spreadsheets with within element curvature values
+        filter_img, im_name = self.filter_curv(input_file, output_directory, save_img, fiblog)
 
-        Returns
-        -------
-        pd DataFrame
-            Pandas DataFrame with curvature summary data for all images.
+        binary_img = self.binarize_curv(filter_img, im_name, output_directory, save_img, fiblog)
 
-        """
-        filter_img, im_name = self.filter_curv(input_file, output_path, save_img)
+        clean_im = self.remove_particles(binary_img, output_directory, im_name, int(resolution/2), False, save_img, fiblog)
 
-        binary_img = self.binarize_curv(filter_img, im_name, output_path, save_img)
+        skeleton_im = self.skeletonize(clean_im, im_name, output_directory, save_img, fiblog)
 
-        clean_im = self.remove_particles(binary_img, output_path, im_name, minpixel=int(resolution/2), prune=False, save_img=save_img)
+        pruned_im = self.prune(skeleton_im, im_name, output_directory, save_img, fiblog)
 
-        skeleton_im = self.skeletonize(clean_im, im_name, output_path, save_img)
-
-        pruned_im = self.prune(skeleton_im, im_name, output_path, save_img)
-
-        im_df = self.analyze_all_curv(pruned_im, im_name, output_path, resolution, window_size, window_unit, test, within_element)
+        im_df = self.analyze_all_curv(pruned_im, im_name, output_directory, resolution, window_size, window_unit, within_element, fiblog)
 
         return im_df
 
-    def filter_curv(self, input_file, output_path, save_img):
-        '''
-        Uses a ridge filter to extract the curved (or straight) lines from the background noise.
-
-        Parameters
-        ----------
-        input_file : str
-            A string path to the input image.
-        output_path : str
-            A string path to the output directory.
-        save_img : bool
-            True or False for saving filtered image.
-
-        Returns
-        -------
-        filter_img: np.ndarray
-            The filtered image.
-        im_name: str
-            A string with the image name.
-
-        '''
-        input_path = pathlib.Path(input_file)
-
-        # gets the image as its numpy form (int and float) and location (String)
-        gray_img, im_name = self.imread(input_path)
-
-        # use frangi ridge filter to find hairs, the output will be inverted
-        filter_img = skimage.filters.frangi(gray_img)
-        type(filter_img)
+    def filter_curv(self, file, output_directory, save_img, fiblog):
+        _, fn = os.path.split(file)
+        img = cv2.imread(file, cv2.IMREAD_GRAYSCALE)
+        filter_img = skimage.filters.frangi(img)
 
         if save_img:
-            output_path = self.make_subdirectory(
-                output_path, append_name="filtered")
-
-            # inverting and saving the filtered image
             img_inv = skimage.util.invert(filter_img)
-            # join path does this correctly rather than concatination.
-            with pathlib.Path(output_path).joinpath(im_name + ".tiff") as save_path:
-                plt.imsave(save_path, img_inv, cmap="gray")
+            imgname = fn.split('.')[0] + '_filtered.jpg'
+            self.save_image(output_directory, 'filtered', imgname, img_inv, fiblog)
 
-        return filter_img, im_name
+        return filter_img, fn
 
-    def binarize_curv(self, filter_img, im_name, output_path, save_img):
-        """Binarizes the filtered output of the fibermorph.filter_curv function.
-
-        Parameters
-        ----------
-        filter_img : np.ndarray
-            Image after ridge filter (float64).
-        im_name : str
-            Image name.
-        output_path : str or pathlib object
-            Output directory path.
-        save_img : bool
-            True or false for saving image.
-
-        Returns
-        -------
-        np.ndarray
-            An array with the binarized image.
-
-        """
-
+    def binarize_curv(self, filter_img, im_name, output_directory, save_img, fiblog):
         selem = skimage.morphology.disk(5)
-
-        # performs logrithmic corrections (exposure enhancements)
         filter_img = skimage.exposure.adjust_log(filter_img)
-
         try:
             # uses otsu's method to focus hair in foreground and enhance image. Is then compared to previously filtered image.
             thresh_im = filter_img > filters.threshold_otsu(filter_img)
         except:
             thresh_im = skimage.util.invert(filter_img)
-
         # clear the border of the image (buffer is the px width to be considered as border)
-        cleared_im = skimage.segmentation.clear_border(
-            thresh_im, buffer_size=10)
-
+        cleared_im = skimage.segmentation.clear_border(thresh_im, buffer_size=10)
         # dilate the hair fibers
         # expands the shapes of the hair in the image sample
-        binary_im = scipy.ndimage.binary_dilation(
-            cleared_im, structure=selem, iterations=2)
+        binary_im = scipy.ndimage.binary_dilation(cleared_im, structure=selem, iterations=2)
 
         if save_img:
-            output_path = self.make_subdirectory(
-                output_path, append_name="binarized")
-            # invert image
-            save_im = skimage.util.invert(binary_im)
+            img_inv = skimage.util.invert(binary_im)
+            imgname = im_name + '_binarized.jpg'
+            self.save_image(output_directory, 'binarized', imgname, img_inv, fiblog)
 
-            # save image
-            with pathlib.Path(output_path).joinpath(im_name + ".tiff") as save_name:
-                im = Image.fromarray(save_im)
-                im.save(save_name)
-
-        # return image
         return binary_im
 
-    def remove_particles(self, img, output_path, name, minpixel, prune, save_img):
-        """Removes particles under a particular size in the images.
-
-        Parameters
-        ----------
-        img : np.ndarray
-            Binary image to be cleaned.
-        output_path : str or pathlib object
-            A path to the output directory.
-        name : str
-            Input image name.
-        minpixel : int
-            Minimum pixel size below which elements should be removed.
-        prune : bool
-            True or false for whether the input is a pruned skeleton.
-        save_img : bool
-            True or false for saving image.
-
-        Returns
-        -------
-        np.ndarray
-            An array with the noise particles removed.
-
-        """
+    def remove_particles(self, img, output_directory, name, minpixel, prune, save_img, fiblog):
         img_bool = np.asarray(img, dtype=np.bool)
         img = self.check_bin(img_bool)
 
-        minimum = minpixel
-        clean = skimage.morphology.remove_small_objects(
-            img, connectivity=2, min_size=minimum)
+        clean = skimage.morphology.remove_small_objects(img, connectivity=2, min_size=minpixel)
 
         if save_img:
             img_inv = skimage.util.invert(clean)
             if prune:
-                output_path = self.make_subdirectory(
-                    output_path, append_name="pruned")
+                imgname = name + '_particles_removed_pruned.jpg'
+                self.save_image(output_directory, 'particles_removed_pruned', imgname, img_inv, fiblog)
             else:
-                output_path = self.make_subdirectory(
-                    output_path, append_name="clean")
-            with pathlib.Path(output_path).joinpath(name + ".tiff") as savename:
-                plt.imsave(savename, img_inv, cmap='gray')
+                imgname = name + '_particles_removed_clean.jpg'
+                self.save_image(output_directory, 'particles_removed_clean', imgname, img_inv, fiblog)
 
         return clean
 
     def check_bin(self, img):
-        """Checks whether image has been properly binarized. NB: works on the assumption that there should be more
-        background pixels than element pixels.
-
-        Parameters
-        ----------
-        img : np.ndarray
-            Description of parameter `img`.
-
-        Returns
-        -------
-        np.ndarray
-            A binary array of the image.
-
-        """
         img_bool = np.asarray(img, dtype=np.bool)
+        _, counts = np.unique(img_bool, return_counts=True)
+        return skimage.util.invert(img_bool) if counts[0] < counts[1] else img_bool
 
-        # Gets the unique values in the image matrix. Since it is binary, there should only be 2.
-        unique, counts = np.unique(img_bool, return_counts=True)
-
-        # If the length of unique is not 2 then print that the image isn't a binary.
-        # if len(unique) != 2:
-        #     hair_pixels = len(counts)
-        #     return hair_pixels
-
-        # If it is binarized, print out that is is and then get the amount of hair pixels to background pixels.
-        if counts[0] < counts[1]:
-            img = skimage.util.invert(img_bool)
-            return img
-
-        else:
-            img = img_bool
-            return img
-
-    def skeletonize(self, clean_img, name, output_path, save_img):
-        """Reduces curves and lines to 1 pixel width (skeletons).
-
-        Parameters
-        ----------
-        clean_img : np.ndarray
-            Binary array.
-        name : str
-            Image name.
-        output_path : str or pathlib object.
-            Output directory path.
-        save_img : bool
-            True or false for saving image.
-
-        Returns
-        -------
-        np.ndarray
-            Boolean array of skeletonized image.
-
-        """
-        # check if image is binary and properly inverted
+    def skeletonize(self, clean_img, name, output_directory, save_img, fiblog):
         clean_img = self.check_bin(clean_img)
-
-        # skeletonize the hair
         skeleton = skimage.morphology.thin(clean_img)
 
         if save_img:
-            output_path = self.make_subdirectory(
-                output_path, append_name="skeletonized")
             img_inv = skimage.util.invert(skeleton)
-            with pathlib.Path(output_path).joinpath(name + ".tiff") as output_path:
-                im = Image.fromarray(img_inv)
-                im.save(output_path)
-            return skeleton
+            imgname = name + '_skeletonized.jpg'
+            self.save_image(output_directory, 'skeletonized', imgname, img_inv, fiblog)
 
-        else:
-            # print("\n Done skeletonizing {}".format(name))
+        return skeleton
 
-            return skeleton
-
-    def prune(self, skeleton, name, pruned_dir, save_img):
-        """Prunes branches from skeletonized image.
+    def prune(self, skeleton, name, pruned_dir, save_img, fiblog):
+        '''
+        Prunes branches from skeletonized image.
         Adapted from: "http://homepages.inf.ed.ac.uk/rbf/HIPR2/thin.htm"
-
-        Parameters
-        ----------
-        skeleton : np.ndarray
-            Boolean array.
-        name : str
-            Image name.
-        pruned_dir : str or pathlib object
-            Output directory path.
-        save_img : bool
-            True or false for saving image.
-
-        Returns
-        -------
-        np.ndarray
-            Boolean array of pruned skeleton image.
-
-        """
+        '''
         # identify 3-way and 4-way branch-points
         hit_list = self.generate_hit('3way')
         hit_list += self.generate_hit('4way')
 
         skel_image = self.check_bin(skeleton)
-        # print("Converting image to binary array")
-
         branch_points = np.zeros(skel_image.shape)
-        # print("Creating empty array for branch points")
 
         for hit in hit_list:
             target = hit.sum()
             curr = ndimage.convolve(skel_image, hit, mode="constant")
-            branch_points = np.logical_or(
-                branch_points, np.where(curr == target, 1, 0))
+            branch_points = np.logical_or(branch_points, np.where(curr == target, 1, 0))
 
-        # print("Completed collection of branch points")
-
-        # pixels may "hit" multiple structure elements, ensure the output is a binary image
         branch_points_image = np.where(branch_points, 1, 0)
-        # print("Ensuring binary")
 
-        # use SciPy's ndimage module for locating and determining coordinates of each branch-point
         labels, num_labels = ndimage.label(branch_points_image)
-        # print("Labelling branches")
 
-        # use SciPy's ndimage module to determine the coordinates/pixel corresponding to the center of mass of each
-        # branchpoint
-        branch_points = ndimage.center_of_mass(
-            skel_image, labels=labels, index=range(1, num_labels + 1))
-        branch_points = np.array([value for value in branch_points if not np.isnan(value[0]) or not np.isnan(value[1])],
-                                 dtype=int)
-        # num_branch_points = len(branch_points)
+        branch_points = ndimage.center_of_mass(skel_image, labels=labels, index=range(1, num_labels + 1))
+        branch_points = np.array([value for value in branch_points if not np.isnan(value[0]) or not np.isnan(value[1])], dtype=int)
 
         hit = np.array([[0, 0, 0],
                         [0, 1, 0],
                         [0, 0, 0]], dtype=np.uint8)
 
-        dilated_branches = ndimage.convolve(
-            branch_points_image, hit, mode='constant')
+        dilated_branches = ndimage.convolve(branch_points_image, hit, mode='constant')
         dilated_branches_image = np.where(dilated_branches, 1, 0)
-        # print("Ensuring binary dilated branches")
         pruned_image = np.subtract(skel_image, dilated_branches_image)
-        # pruned_image = np.subtract(skel_image, branch_points_image)
 
-        pruned_image = self.remove_particles(
-            pruned_image, pruned_dir, name, minpixel=5, prune=True, save_img=save_img)
+        pruned_image = self.remove_particles(pruned_image, pruned_dir, name, 5, True, save_img, fiblog)
 
         return pruned_image
 
@@ -451,170 +258,38 @@ class Curvature(Fibermorph):
             out.append(base)
             out.append(base2)
             return out
-        
-    def diag(self, skeleton):
-        """Prunes branches from skeletonized image.
-        Adapted from: "http://homepages.inf.ed.ac.uk/rbf/HIPR2/thin.htm"
 
-        Parameters
-        ----------
-        skeleton : np.ndarray
-            Boolean array.
-        name : str
-            Image name.
-        pruned_dir : str or pathlib object
-            Output directory path.
-        save_img : bool
-            True or false for saving image.
-
-        Returns
-        -------
-        np.ndarray
-            Boolean array of pruned skeleton image.
-
-        """
-        mid_list = self.generate_hit('mid')
-        diag_list = self.generate_hit('diag')
-        adj_list = self.generate_hit('adj')
-
-        skel_image = self.check_bin(skeleton).astype(int)
-        # print("Converting image to binary array")
-
-        diag_points = np.zeros(skel_image.shape)
-        mid_points = np.zeros(skel_image.shape)
-        adj_points = np.zeros(skel_image.shape)
-        # print("Creating empty array for branch points")
-
-        for hit in diag_list:
-            target = hit.sum()
-            curr = ndimage.convolve(skel_image, hit, mode="constant")
-            diag_points = np.logical_or(
-                diag_points, np.where(curr == target, 1, 0))
-
-        for hit in mid_list:
-            target = hit.sum()
-            curr = ndimage.convolve(skel_image, hit, mode="constant")
-            mid_points = np.logical_or(
-                mid_points, np.where(curr == target, 1, 0))
-
-        for hit in adj_list:
-            target = hit.sum()
-            curr = ndimage.convolve(skel_image, hit, mode="constant")
-            adj_points = np.logical_or(
-                adj_points, np.where(curr == target, 1, 0))
-
-        # pixels may "hit" multiple structure elements, ensure the output is a binary image
-        diag_points_image = np.where(diag_points, 1, 0)
-        mid_points_image = np.where(mid_points, 1, 0)
-        adj_points_image = np.where(adj_points, 1, 0)
-        # print("Ensuring binary")
-
-        # use SciPy's ndimage module for locating and determining coordinates of each branch-point
-        labels, num_labels = ndimage.label(diag_points_image)
-        labels2, num_labels2 = ndimage.label(mid_points_image)
-        labels3, num_labels3 = ndimage.label(adj_points_image)
-        # print("Labelling branches")
-
-        # use SciPy's ndimage module to determine the coordinates/pixel corresponding to the center of mass of each
-        # branchpoint
-        diag_points = ndimage.center_of_mass(
-            skel_image, labels=labels, index=range(1, num_labels + 1))
-        mid_points = ndimage.center_of_mass(
-            skel_image, labels=labels2, index=range(1, num_labels2 + 1))
-        adj_points = ndimage.center_of_mass(
-            skel_image, labels=labels3, index=range(1, num_labels3 + 1))
-
-        diag_points = np.array([value for value in diag_points if not np.isnan(
-            value[0]) or not np.isnan(value[1])], dtype=int)
-        mid_points = np.array([value for value in mid_points if not np.isnan(
-            value[0]) or not np.isnan(value[1])], dtype=int)
-        adj_points = np.array([value for value in adj_points if not np.isnan(value[0]) or not np.isnan(value[1])],
-                              dtype=int)
-
-        num_diag_points = len(diag_points)
-        num_mid_points = len(mid_points)
-        num_adj_points = len(adj_points)
-
-        return num_diag_points, num_mid_points, num_adj_points
-
-    def analyze_all_curv(self, img, name, output_path, resolution, window_size, window_unit, test, within_element):
-        """Analyzes curvature for all elements in an image.
-
-        Parameters
-        ----------
-        img : np.ndarray
-            Pruned skeleton of curves/lines as a uint8 ndarray.
-        name : str
-            Image name.
-        output_path : str or pathlib object
-            Output directory.
-        resolution : int
-            Number of pixels per mm in original image.
-        window_size: float or int or list
-            Desired size for window of measurement in mm.
-        test : bool
-            True or False for whether this is being run for validation tests
-        within_element
-            True or False for whether to save spreadsheets with within element curvature values
-
-        Returns
-        -------
-        pd DataFrame
-            Pandas DataFrame with summary data for all elements in image.
-
-        """
-        if type(img) != 'np.ndarray':
-            print(type(img))
-            img = np.array(img)
-        else:
-            print(type(img))
-
-        # print("Analyzing {}".format(name))
-
+    def analyze_all_curv(self, img, name, output_path, resolution, window_size, window_unit, within_element, fiblog):
         img = self.check_bin(img)
-
-        label_image, num_elements = skimage.measure.label(
-            img.astype(int), connectivity=2, return_num=True)
-
+        label_image, _ = skimage.measure.label(img.astype(int), connectivity=2, return_num=True)
         props = skimage.measure.regionprops(label_image)
+        fiblog.info('a')
 
-        if not isinstance(window_size, list):
-            window_size = [window_size]
-
-        name = name
-
-        im_sumdf = [self.window_iter(
-            props, name, i, window_unit, resolution, output_path, test, within_element) for i in window_size]
-
+        im_sumdf = self.window_iter(props, name, window_size, window_unit, resolution, output_path, within_element, fiblog)
         im_sumdf = pd.concat(im_sumdf)
 
         return im_sumdf
 
-    def window_iter(self, props, name, window_size, window_unit, resolution, output_path, test, within_element):
-
+    def window_iter(self, props, name, window_size, window_unit, resolution, output_path, within_element, fiblog):
         tempdf = []
-
-        if not window_size is None:
-            if not window_unit == "px":
+        fiblog.info('c')
+        if window_size:
+            if window_unit != "px":
                 window_size_px = int(window_size * resolution)
             else:
                 window_size_px = int(window_size)
                 window_size = int(window_size)
 
-            name = str(name + "_WindowSize-" +
-                       str(window_size) + str(window_unit))
-
+            name = str(name + "_WindowSize-" + str(window_size) + str(window_unit))
+            fiblog.info('a')
             tempdf = [self.analyze_each_curv(hair, window_size_px, resolution, output_path,
-                                             name, within_element) for hair in props if hair.area > window_size]
+                                             name, within_element, fiblog) for hair in props if hair.area > window_size]
 
-            within_im_curvdf = pd.DataFrame(
-                tempdf, columns=['curv_mean', 'curv_median', 'length'])
+            within_im_curvdf = pd.DataFrame(tempdf, columns=['curv_mean', 'curv_median', 'length'])
 
-            within_im_curvdf2 = pd.DataFrame(within_im_curvdf, columns=[
-                                             'curv_mean', 'curv_median', 'length']).dropna()
+            within_im_curvdf2 = pd.DataFrame(within_im_curvdf, columns=['curv_mean', 'curv_median', 'length']).dropna()
 
-            output_path = self.make_subdirectory(
-                output_path, append_name="analysis")
+            output_path = self.make_directory(output_path, 'analysis', fiblog)
             with pathlib.Path(output_path).joinpath("ImageSum_" + name + ".csv") as save_path:
                 within_im_curvdf2.to_csv(save_path)
 
@@ -629,24 +304,24 @@ class Curvature(Fibermorph):
             im_sumdf = pd.DataFrame(
                 {"ID": [name], "curv_mean_mean": [curv_mean_im_mean], "curv_mean_median": [curv_mean_im_median], "curv_median_mean": [curv_median_im_mean], "curv_median_median": [curv_median_im_median], "length_mean": [length_mean], "length_median": [length_median], "hair_count": [hair_count]})
 
-            if test:
-                return within_im_curvdf2
-            else:
-                return im_sumdf
+            # if test:
+            #     return within_im_curvdf2
+            # else:
+            return im_sumdf
 
-        elif window_size is None:
+        else:
+            fiblog.info('b')
             window_size_px = None
             within_element = None
             minsize = 0.5 * resolution
-            tempdf = [self.analyze_each_curv(hair, window_size_px, resolution, output_path, name, within_element) for hair in
+            tempdf = [self.analyze_each_curv(hair, window_size_px, resolution, output_path, name, within_element, fiblog) for hair in
                       props if hair.area > minsize]
 
             within_im_curvdf = pd.concat(tempdf)
 
             within_im_curvdf2 = within_im_curvdf.dropna()
 
-            output_path = self.make_subdirectory(
-                output_path, append_name="analysis")
+            output_path = self.make_directory(output_path, 'analysis', fiblog)
             with pathlib.Path(output_path).joinpath("ImageSum_" + name + ".csv") as save_path:
                 within_im_curvdf2.to_csv(save_path)
 
@@ -659,96 +334,12 @@ class Curvature(Fibermorph):
             im_sumdf = pd.DataFrame({'ID': name, 'curv_mean': [im_mean], 'curv_median': [im_median], 'length_mean': [
                                     length_mean], 'length_median': [length_median], 'hair_count': [hair_count]})
 
-            if test:
-                return within_im_curvdf2
-            else:
-                return im_sumdf
+            # if test:
+            #     return within_im_curvdf2
+            # else:
+            return im_sumdf
 
-    def make_subdirectory(self, directory, append_name=""):
-        """Makes subdirectories.
-
-        Parameters
-        ----------
-        directory : str or pathlib object
-            A string with the path of directory where subdirectories should be created.
-        append_name : str
-            A string to be appended to the directory path (name of the subdirectory created).
-
-        Returns
-        -------
-        pathlib object
-            A pathlib object for the subdirectory created.
-
-        """
-
-        # Define the path of the directory within which this function will make a subdirectory.
-        directory = pathlib.Path(directory)
-        # The name of the subdirectory.
-        append_name = str(append_name)
-        # Define the output path by the initial directory and join (i.e. "+") the appropriate text.
-        output_path = pathlib.Path(directory).joinpath(str(append_name))
-
-        # Use pathlib to see if the output path exists, if it is there it returns True
-        if pathlib.Path(output_path).exists() == False:
-
-            # Prints a status method to the console using the format option, which fills in the {} with whatever
-            # is in the ().
-            print(
-                "This output path doesn't exist:\n            {} \n Creating...".format(
-                    output_path))
-
-            # Use pathlib to create the folder.
-            pathlib.Path.mkdir(output_path, parents=True, exist_ok=True)
-
-            # Prints a status to let you know that the folder has been created
-            print("Output path has been created")
-
-        # Since it's a boolean return, and True is the only other option we will simply print the output.
-        else:
-
-            # This will print exactly what you tell it, including the space. The backslash n means new line.
-            print("Output path already exists:\n               {}".format(
-                output_path))
-        return output_path
-
-    def imread(self, input_file, use_skimage=False):
-        """Reads in image as grayscale array.
-
-        Parameters
-        ----------
-        input_file : str
-            String with path to input file.
-
-        Returns
-        -------
-        img: array uint8
-            A grayscale array based on the input image.
-        im_name: str
-            A string with the image name.
-
-        """
-        input_path = pathlib.Path(input_file)
-
-        # If True, convert color images to gray-scale (64-bit floats).
-        # Images that are already in gray-scale format are not converted
-
-        if use_skimage:
-            try:
-                # img_float = img_arrayndarray The different color bands/channels are stored in the third dimension, such that a gray-image is MxN, an RGB-image MxNx3 and an RGBA-image MxNx4.
-                img_float = skimage.io.imread(input_file, as_gray=True)
-                # Convert an image to 8-bit unsigned integer format.
-                img = skimage.img_as_ubyte(img_float)
-            except ValueError:
-                # importing imagge into numpy arrays using given path of image
-                img = np.array(Image.open(str(input_path)).convert('L'))
-        else:
-            print(str(input_path))
-            img = np.array(Image.open(str(input_path)).convert('L'))
-        # Returns the filename identified by the generic-format path stripped of its extension.
-        im_name = input_path.stem
-        return img, im_name  # image as np and image name (path) is returned
-
-    def analyze_each_curv(self, element, window_size_px, resolution, output_path, name, within_element):
+    def analyze_each_curv(self, element, window_size_px, resolution, output_path, name, within_element, fiblog):
         """Calculates curvature for each labeled element in an array.
 
         Parameters
@@ -785,8 +376,7 @@ class Curvature(Fibermorph):
         if not window_size_px is None:
             window_size_px = int(window_size_px)
 
-            subset_loop = (self.subset_gen(
-                element_pixel_length, window_size_px, element_label))  # generates subset loop
+            subset_loop = (self.subset_gen(element_pixel_length, window_size_px, element_label))  # generates subset loop
 
             # Safe generator expression in case of errors
             curv = [self.taubin_curv(element_coords, resolution)
@@ -794,32 +384,14 @@ class Curvature(Fibermorph):
 
             taubin_df = pd.Series(curv).astype('float')
 
-            # print("\nCurv dataframe is:")
-            # print(taubin_df)
-            # print(type(taubin_df))
-            # print("\nCurv df min is:{}".format(taubin_df.min()))
-            # print("\nCurv df max is:{}".format(taubin_df.max()))
-
-            # print("\nTrimming outliers...")
             taubin_df2 = taubin_df[taubin_df.between(
                 taubin_df.quantile(.01), taubin_df.quantile(.99))]  # without outliers
 
-            # print("\nAfter trimming outliers...")
-            # print("\nCurv dataframe is:")
-            # print(taubin_df2)
-            # print(type(taubin_df2))
-            # print("\nCurv df min is:{}".format(taubin_df2.min()))
-            # print("\nCurv df max is:{}".format(taubin_df2.max()))
-
             curv_mean = taubin_df2.mean()
-            # print("\nCurv mean is:{}".format(curv_mean))
 
             curv_median = taubin_df2.median()
-            # print("\nCurv median is:{}".format(curv_median))
 
             within_element_df = [curv_mean, curv_median, length_mm]
-            # print("\nThe curvature summary stats for this element are:")
-            # print(within_element_df)
 
             if within_element:
                 label_name = str(element.label)
@@ -827,8 +399,7 @@ class Curvature(Fibermorph):
                 element_df.columns = ['curv']
                 element_df['label'] = label_name
 
-                output_path = self.make_subdirectory(
-                    output_path, append_name="WithinElement")
+                output_path = self.make_directory(output_path, 'within_element', fiblog)
                 with pathlib.Path(output_path).joinpath("WithinElement_" + name + "_Label-" + label_name + ".csv") as save_path:
                     element_df.to_csv(save_path)
 
@@ -872,9 +443,6 @@ class Curvature(Fibermorph):
             If the radius is infinite, it will return 0.
 
         """
-
-        # suppress RuntimeWarnings from dividing by zero
-        warnings.filterwarnings("ignore")
         xy = np.array(coords)
         x = xy[:, 0] - np.mean(xy[:, 0])  # norming points by x avg
         y = xy[:, 1] - np.mean(xy[:, 1])  # norming points by y avg
@@ -935,30 +503,23 @@ class Curvature(Fibermorph):
             subset_end += 1
 
     def pixel_length_correction(self, element):
-
         num_total_points = element.area
         skeleton = element.image
-        diag_points, num_diag_points = self.find_structure(skeleton, 'diag')
-        mid_points, num_mid_points = self.find_structure(skeleton, 'mid')
+        _, num_diag_points = self.find_structure(skeleton, 'diag')
+        _, num_mid_points = self.find_structure(skeleton, 'mid')
         num_adj_points = num_total_points - num_diag_points - num_mid_points
-        corr_element_pixel_length = num_adj_points + \
-            (num_diag_points * np.sqrt(2)) + (num_mid_points * np.sqrt(1.25))
-
+        corr_element_pixel_length = num_adj_points + (num_diag_points * np.sqrt(2)) + (num_mid_points * np.sqrt(1.25))
         return corr_element_pixel_length
 
-    def find_structure(self, skeleton, structure: str):
+    def find_structure(self, skeleton, structure):
         skel_image = self.check_bin(skeleton).astype(int)
-
-        # creating empty array for hit and miss algorithm
         hit_points = np.zeros(skel_image.shape)
-        # defining the structure used in hit-and-miss algorithm
         hit_list = self.generate_hit(structure)
 
         for hit in hit_list:
             target = hit.sum()
             curr = ndimage.convolve(skel_image, hit, mode="constant")
-            hit_points = np.logical_or(
-                hit_points, np.where(curr == target, 1, 0))
+            hit_points = np.logical_or(hit_points, np.where(curr == target, 1, 0))
 
         # Ensuring target image is binary
         hit_points_image = np.where(hit_points, 1, 0)
