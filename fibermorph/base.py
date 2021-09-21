@@ -87,7 +87,7 @@ class Fibermorph:
             raise ValueError('The input filepath is invalid. Please input a valid directory filepath with hair images.')
         
         # *tif & *tiff 
-        ftype = ['*.tif', '*.tiff']
+        ftype = ['*.tif', '*.tiff','*.TIF', '*.TIFF']
         ftype = r'|'.join([fnmatch.translate(x) for x in ftype])
 
         flist = []
