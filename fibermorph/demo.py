@@ -14,29 +14,40 @@ import shutil
 import sys
 from datetime import datetime
 
+import logging
+
 import numpy as np
 import pandas as pd
 import requests
 from tqdm import tqdm
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+
+from base import Fibermorph as fibermorph
+import dummy_data
+"""
 from fibermorph import dummy_data
 from fibermorph import fibermorph
+"""
+
 from joblib import Parallel, delayed
 
 
 # %% functions
 
-def create_results_cache(path):
+def create_results_cache(path, curv):
+
     try:
+
+        fiblog = curv.get_logger('fiblog')
         datadir = pathlib.Path(path)
-        cache = fibermorph.make_subdirectory(datadir, "fibermorph_demo")
+        cache = curv.make_directory(datadir, "fibermorph_demo", fiblog) #HERE
 
         # Designate where fibermorph should make the directory with all your results - this location must exist!
         os.makedirs(cache, exist_ok=True)
         output_directory = os.path.abspath(cache)
         return output_directory
-    
+
     except TypeError:
         tqdm.write("Path is missing.")
 
@@ -82,12 +93,13 @@ def download_im(tmpdir, demo_url):
     return True
 
 
-def get_data(path, im_type):
+def get_data(path, im_type, fibermorph_object):
+    fiblog = fibermorph_object.get_logger('fiblog')
     datadir = pathlib.Path(path)
-    datadir = fibermorph.make_subdirectory(datadir, "tmpdata")
+    datadir = fibermorph_object.make_directory(datadir, "tmpdata", fiblog)
 
     if im_type == "curv" or im_type == "section":
-        tmpdir = fibermorph.make_subdirectory(datadir, im_type)
+        tmpdir = fibermorph.make_directory(datadir, im_type)
         urllist = url_files(im_type)
 
         download_im(tmpdir, urllist)
@@ -96,7 +108,7 @@ def get_data(path, im_type):
     else:
         typelist = ["curv", "section"]
         for im_type in typelist:
-            tmpdir = fibermorph.make_subdirectory(datadir, im_type)
+            tmpdir = fibermorph.make_directory(datadir, im_type)
             urllist = url_files(im_type)
             download_im(tmpdir, urllist)
 
@@ -108,14 +120,14 @@ def validation_curv(output_location, repeats, window_size_px, resolution=1):
     timestamp = jetzt.strftime("%b%d_%H%M_")
     testname = str(timestamp + "ValidationTest_Curv")
 
-    main_output_path = fibermorph.make_subdirectory(output_location, append_name=testname)
+    main_output_path = fibermorph.make_directory(output_location, append_name=testname)
 
-    dummy_dir = fibermorph.make_subdirectory(main_output_path, append_name="ValidationData")
+    dummy_dir = fibermorph.make_directory(main_output_path, append_name="ValidationData")
     shape_list = ["arc", "line"]
 
     replist = [el for el in shape_list for i in range(repeats)]
 
-    output_path = fibermorph.make_subdirectory(main_output_path, append_name="ValidationAnalysis")
+    output_path = fibermorph.make_directory(main_output_path, append_name="ValidationAnalysis")
 
     for shape in tqdm(replist, desc="Generating & analyzing dummy data", position=0, unit="datasets", leave=True):
         # print(shape)
@@ -172,42 +184,42 @@ def sim_ellipse(output_directory, im_width_px, im_height_px, min_diam_um, max_di
     dpi = int(px_per_um * um_per_inch)
     min_rad_um = min_diam_um / 2
     max_rad_um = max_diam_um / 2
-    
+
     # image size in inches
     im_width_inch = (im_width_px / px_per_um) / um_per_inch
     im_height_inch = (im_height_px / px_per_um) / um_per_inch
-    
+
     imsize_inch = im_height_inch, im_width_inch
     imsize_px = im_height_px, im_width_px
-    
+
     min_rad_px = min_rad_um * px_per_um
     max_rad_px = max_rad_um * px_per_um
-    
+
     # generate array of ones (will show up as white background)
     img = np.ones(imsize_px, dtype=np.uint8)
-    
+
     # generate ellipse in center of image
     rr, cc = draw.ellipse(im_height_px / 2, im_width_px / 2, min_rad_px, max_rad_px, shape=img.shape,
                           rotation=np.deg2rad(angle_deg))
     img[rr, cc] = 0
-    
+
     fig = plt.figure(frameon=False)
     fig.set_size_inches(im_width_inch, im_height_inch)
     ax = plt.Axes(fig, [0, 0, 1, 1])
     ax.set_axis_off()
     fig.add_axes(ax)
-    
+
     p1 = geometry.Point((im_height_px / px_per_um) / 2, (im_width_px / px_per_um) / 2)
     e1 = geometry.Ellipse(p1, hradius=max_rad_um, vradius=min_rad_um)
     area = sympy.N(e1.area)
     eccentricity = e1.eccentricity
     ax.imshow(img, cmap="gray", aspect='auto')
-    
+
     jetzt = datetime.now()
     timestamp = jetzt.strftime("%b%d_%H%M_%S_%f")
-    
+
     name = "sim_ellipse_" + str(timestamp)
-    
+
     im_path = pathlib.Path(output_directory).joinpath(name + ".tiff")
     df_path = pathlib.Path(output_directory).joinpath(name + ".csv")
 
@@ -215,27 +227,27 @@ def sim_ellipse(output_directory, im_width_px, im_height_px, min_diam_um, max_di
             'ref_max_diam': [max_diam_um]}
 
     df = pd.DataFrame(data)
-    
+
     df.to_csv(df_path)
-    
+
     plt.ioff()
     fig.savefig(fname=im_path, dpi=dpi)
     plt.cla()
     plt.close()
-    
+
     return df
 
 
 def validation_section(output_location, repeats, jobs=2):
-    
+
     jetzt = datetime.now()
     timestamp = jetzt.strftime("%b%d_%H%M_")
     testname = str(timestamp + "ValidationTest_Section")
 
-    main_output_path = fibermorph.make_subdirectory(output_location, append_name=testname)
+    main_output_path = fibermorph.make_directory(output_location, append_name=testname)
 
-    dummy_dir = fibermorph.make_subdirectory(main_output_path, append_name="ValidationData")
-    
+    dummy_dir = fibermorph.make_directory(main_output_path, append_name="ValidationData")
+
     # create list of random variables from range
     def gen_ellipse_data():
         min_diam_um = random.uniform(30, 120)
@@ -245,11 +257,11 @@ def validation_section(output_location, repeats, jobs=2):
         angle_deg = random.randint(0, 360)
         list = [max_diam_um, min_diam_um, angle_deg]
         return list
-    
+
     tempdf = [gen_ellipse_data() for i in range(repeats)]
-    
+
     gen_ellipse_df = pd.DataFrame(tempdf, columns=['max_diam_um', 'min_diam_um', 'angle_deg'])
-    
+
     df_list = []
     # for index, row in tqdm(gen_ellipse_df.iterrows(), desc="Generating ellipses", position=0, unit="datasets", leave=True):
     #     df = sim_ellipse(dummy_dir, 5200, 3900, row['min_diam_um'], row['max_diam_um'], 4.25, row['angle_deg'])
@@ -258,13 +270,13 @@ def validation_section(output_location, repeats, jobs=2):
     with fibermorph.tqdm_joblib(tqdm(desc="Generating ellipses", position=0, unit="datasets", leave=True, total=len(gen_ellipse_df), miniters=1)) as progress_bar:
         progress_bar.monitor_interval = 1
         df_list = Parallel(n_jobs=jobs, verbose=0)(delayed(sim_ellipse)(dummy_dir, 5200, 3900, row['min_diam_um'], row['max_diam_um'], 4.25, row['angle_deg']) for index, row in gen_ellipse_df.iterrows())
-    
+
     sim_ellipse_sum_df = pd.concat(df_list)
     sim_ellipse_sum_df.set_index('ID', inplace=True)
 
     with pathlib.Path(main_output_path).joinpath("summary_" + testname + ".csv") as savename:
         sim_ellipse_sum_df.to_csv(savename)
-    
+
     return main_output_path
 
 # validation_section(output_location="/Users/tpl5158/2020_HairPheno_manuscript/data/raw/fibermorph_input/validation_simulated_hair/section", repeats=100, jobs=4)
@@ -281,18 +293,19 @@ def real_curv(path):
         True.
 
     """
-    
-    fibermorph_demo_dir = create_results_cache(path)
-    
-    input_directory = get_data(fibermorph_demo_dir, "curv")
+    from curvature import Curvature
+    curv = Curvature()
+    fibermorph_demo_dir = create_results_cache(path, curv)
+
+    input_directory = get_data(fibermorph_demo_dir, "curv", curv)
     jetzt = datetime.now()
     timestamp = jetzt.strftime("%b%d_%H%M_")
     testname = str(timestamp + "DemoTest_Curv")
-    
-    output_dir = fibermorph.make_subdirectory(fibermorph_demo_dir, append_name=testname)
-    
+
+    output_dir = fibermorph.make_directory(fibermorph_demo_dir, append_name=testname)
+
     fibermorph.curvature(input_directory, output_dir, jobs=1, resolution=132, window_size=0.5, window_unit="mm", save_img=True, within_element=False)
-    
+
     tqdm.write("\n\nDemo data for fibermorph curvature are in {}\n\nDemo results are in {}\n\n".format(input_directory, output_dir))
 
     return True
@@ -307,19 +320,19 @@ def real_section(path):
         True.
 
     """
-    
+
     fibermorph_demo_dir = create_results_cache(path)
-    
+
     input_directory = get_data(fibermorph_demo_dir, "section")
 
     jetzt = datetime.now()
     timestamp = jetzt.strftime("%b%d_%H%M_")
     testname = str(timestamp + "DemoTest_Section")
 
-    output_dir = fibermorph.make_subdirectory(fibermorph_demo_dir, append_name=testname)
+    output_dir = fibermorph.make_directory(fibermorph_demo_dir, append_name=testname)
 
     fibermorph.section(input_directory, output_dir, jobs=4, resolution=1.06, minsize=20, maxsize=150, save_img=True)
-    
+
     tqdm.write("\n\nDemo data for fibermorph section are in {}\n\nDemo results are in {}\n\n".format(input_directory, output_dir))
 
     return True
@@ -334,9 +347,9 @@ def dummy_curv(path, repeats=1, window_size_px=10):
         True.
 
     """
-    
+
     output_dir = validation_curv(create_results_cache(path), repeats, window_size_px)
-    
+
     tqdm.write("\n\nValidation data and error analyses for fibermorph curvature are saved in:\n{}\n\n".format(output_dir))
 
     return True
@@ -351,9 +364,9 @@ def dummy_section(path, repeats=1):
         True.
 
     """
-    
+
     output_dir = validation_section(create_results_cache(path), repeats)
-    
+
     tqdm.write("\n\nValidation data and error analyses for fibermorph section are saved in:\n{}\n\n".format(output_dir))
 
     return True
