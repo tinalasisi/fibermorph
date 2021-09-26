@@ -104,11 +104,14 @@ def main():
 
     # Run fibermorph
     if args.demo_real_curv:
-        from demo import real_curv
-        real_curv(args.output_directory)
+        from demo_new import Demo
+        demo_driver = Demo()
+        demo_driver.real_curv(args)
 
     if args.demo_real_section:
-        pass
+        from demo_new import Demo
+        demo_driver = Demo()
+        demo_driver.real_section(args)
 
     if args.raw2gray:
         pass
