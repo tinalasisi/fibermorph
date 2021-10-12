@@ -6,13 +6,13 @@ dist
 .cache
 analyze/__pycache__
 fibermorph/__pycache__
-.log
 logs/
 testdata/
 fibermorph/test/curv
 fibermorph/test/results_cache
 fibermorph/test/section
 fibermorph.egg-info
+*.log
 
 # Created by https://www.gitignore.io/api/pycharm+all
 # Edit at https://www.gitignore.io/?templates=pycharm+all
