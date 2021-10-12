@@ -144,16 +144,3 @@ class Fibermorph:
         logger.addHandler(FHANDLER)
         logger.propagate = False
         return logger
-
-class FibermorphTest:
-    def section_test(self):
-        urllist = [
-            "https://github.com/tinalasisi/fibermorph_DemoData/raw/master/test_input/section/140918_demo_section.tiff",
-            "https://github.com/tinalasisi/fibermorph_DemoData/raw/master/test_input/section/140918_demo_section2.tiff"]
-        pass
-    
-    def curvature_test(self):
-        urllist = [
-            "https://github.com/tinalasisi/fibermorph_DemoData/raw/master/test_input/curv/004_demo_curv.tiff",
-            "https://github.com/tinalasisi/fibermorph_DemoData/raw/master/test_input/curv/027_demo_nocurv.tiff"]
-        pass
