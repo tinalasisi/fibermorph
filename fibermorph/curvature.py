@@ -24,6 +24,7 @@ from scipy import ndimage
 import skimage
 from skimage import io, filters, segmentation
 from tqdm import tqdm
+
 class Curvature(Fibermorph):
 
     def __init__(self):
