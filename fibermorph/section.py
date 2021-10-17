@@ -11,6 +11,7 @@ from joblib import Parallel, delayed
 from timeit import default_timer as timer
 
 import cv2
+import traceback
 from matplotlib import pyplot as plt
 import numpy as np
 import pandas as pd
@@ -62,7 +63,9 @@ class Section(Fibermorph):
             
         except KeyboardInterrupt:
             fiblog.error('KeyboardInterrupt detected.')
-        
+        except RuntimeError as e:
+            traceback.print_exc()
+            fiblog.error(traceback.print_exc())
         finally:
             fiblog.info('Section analysis terminated. \n')
             sys.exit(0)
@@ -132,8 +135,8 @@ class Section(Fibermorph):
         img_df: Pandas.Dataframe
            data 
         '''
-        thresh = skimage.filters.threshold_minimum(img)
-        #thresh = skimage.filters.threshold_otsu(img)
+        #thresh = skimage.filters.threshold_minimum(img)
+        thresh = skimage.filters.threshold_otsu(img)
         bin_ls_set = img < thresh
         seg_im = skimage.segmentation.morphological_chan_vese(np.asarray(img), 40, init_level_set=bin_ls_set, smoothing=4)
         seg_im_inv = np.asarray(seg_im != 0)

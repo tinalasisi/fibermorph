@@ -102,16 +102,11 @@ def main():
     parser = parse_args()
     args = parser.parse_args()
 
-    # Run fibermorph
-    if args.demo_real_curv:
-        from demo_new import Demo
+    # Run fibermorph demo
+    if args.demo_real_curv or args.demo_real_section:
+        from demo import Demo
         demo_driver = Demo()
-        demo_driver.real_curv(args)
-
-    if args.demo_real_section:
-        from demo_new import Demo
-        demo_driver = Demo()
-        demo_driver.real_section(args)
+        demo_driver.run(args)
 
     if args.raw2gray:
         pass

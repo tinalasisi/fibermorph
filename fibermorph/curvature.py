@@ -1,29 +1,30 @@
+from tqdm import tqdm
+from skimage import io, filters, segmentation
+import skimage
+from scipy import ndimage
+import scipy
+import pandas as pd
+import numpy as np
+from matplotlib import pyplot as plt
+import traceback
+import cv2
+from timeit import default_timer as timer
+from joblib import Parallel, delayed
+from logging.handlers import TimedRotatingFileHandler
+import logging
+import unittest
+import joblib
+import contextlib
+import sys
+import re
+import pathlib
+import os
+import multiprocessing
+from datetime import datetime
+from base import Fibermorph
 import warnings
 warnings.filterwarnings("ignore")
-from base import Fibermorph
-from datetime import datetime
-import multiprocessing
-import os
-import pathlib
-import re
-import sys
-import contextlib
-import joblib
-import unittest
-import logging
-from logging.handlers import TimedRotatingFileHandler
-from joblib import Parallel, delayed
-from timeit import default_timer as timer
 
-import cv2
-from matplotlib import pyplot as plt
-import numpy as np
-import pandas as pd
-import scipy
-from scipy import ndimage
-import skimage
-from skimage import io, filters, segmentation
-from tqdm import tqdm
 
 class Curvature(Fibermorph):
 
@@ -36,7 +37,8 @@ class Curvature(Fibermorph):
         '''
         fiblog = self.get_logger('fiblog')
         try:
-            fiblog.info('Curvature analysis initiated with arguments parsed below.')
+            fiblog.info(
+                'Curvature analysis initiated with arguments parsed below.')
             fiblog.info(args)
 
             start = timer()
@@ -46,27 +48,33 @@ class Curvature(Fibermorph):
 
             with self.tqdm_joblib(tqdm(desc="curvature", total=len(files), unit="files", miniters=1)) as progress_bar:
                 progress_bar.monitor_interval = 2
-                num_process = len(files) if args.jobs > len(files) else args.jobs
+                num_process = len(files) if args.jobs > len(
+                    files) else args.jobs
                 curvature_df = (Parallel(n_jobs=num_process, verbose=0)(
                     delayed(self.curvature_seq)(
                         f, od, args.resolution_mm, args.window_size, args.window_unit, args.save_img, args.within_element, fiblog) for f in files))
-            
+
             fiblog.info('Processing data for csv.')
             curvature_df = pd.concat(curvature_df).dropna()
             curvature_df.set_index('ID', inplace=True)
             with pathlib.Path(od).joinpath("summary_curvature_data.csv") as df_output_path:
                 curvature_df.to_csv(df_output_path)
-                fiblog.info('The summary has been written onto a csv file: ' + str(df_output_path))
+                fiblog.info(
+                    'The summary has been written onto a csv file: ' + str(df_output_path))
 
             end = timer()
             m, s = divmod(int(end - start), 60)
             h, m = divmod(m, 60)
-            tqdm.write("\n\nComplete analysis took: {}\n\n".format("%dh: %02dm: %02ds" % (h, m, s)))
-            fiblog.info("\n\nComplete analysis took: {}\n\n".format("%dh: %02dm: %02ds" % (h, m, s)))
+            tqdm.write("\n\nComplete analysis took: {}\n\n".format(
+                "%dh: %02dm: %02ds" % (h, m, s)))
+            fiblog.info("\n\nComplete analysis took: {}\n\n".format(
+                "%dh: %02dm: %02ds" % (h, m, s)))
 
         except KeyboardInterrupt:
             print('terminating...')
-        
+        except RuntimeError as e:
+            traceback.print_exc()
+            fiblog.error(traceback.print_exc())
         finally:
             fiblog.info('Curvature analysis terminated. \n')
             sys.exit(0)
@@ -77,17 +85,23 @@ class Curvature(Fibermorph):
         fiblog = self.get_logger('fiblog')
         fiblog.info('Curvature analysis for {} has been started'.format(fn))
 
-        filter_img, im_name = self.filter_curv(input_file, output_directory, save_img, fiblog)
+        filter_img, im_name = self.filter_curv(
+            input_file, output_directory, save_img, fiblog)
 
-        binary_img = self.binarize_curv(filter_img, im_name, output_directory, save_img, fiblog)
+        binary_img = self.binarize_curv(
+            filter_img, im_name, output_directory, save_img, fiblog)
 
-        clean_im = self.remove_particles(binary_img, output_directory, im_name, int(resolution/2), False, save_img, fiblog)
+        clean_im = self.remove_particles(binary_img, output_directory, im_name, int(
+            resolution/2), False, save_img, fiblog)
 
-        skeleton_im = self.skeletonize(clean_im, im_name, output_directory, save_img, fiblog)
+        skeleton_im = self.skeletonize(
+            clean_im, im_name, output_directory, save_img, fiblog)
 
-        pruned_im = self.prune(skeleton_im, im_name, output_directory, save_img, fiblog)
+        pruned_im = self.prune(skeleton_im, im_name,
+                               output_directory, save_img, fiblog)
 
-        im_df = self.analyze_all_curv(pruned_im, im_name, output_directory, resolution, window_size, window_unit, within_element, fiblog)
+        im_df = self.analyze_all_curv(pruned_im, im_name, output_directory,
+                                      resolution, window_size, window_unit, within_element, fiblog)
 
         return im_df
 
@@ -99,7 +113,8 @@ class Curvature(Fibermorph):
         if save_img:
             img_inv = skimage.util.invert(filter_img)
             imgname = fn.split('.')[0] + '_filtered.jpg'
-            self.save_image(output_directory, 'filtered', imgname, img_inv, fiblog)
+            self.save_image(output_directory, 'filtered',
+                            imgname, img_inv, fiblog)
 
         return filter_img, fn
 
@@ -112,15 +127,18 @@ class Curvature(Fibermorph):
         except:
             thresh_im = skimage.util.invert(filter_img)
         # clear the border of the image (buffer is the px width to be considered as border)
-        cleared_im = skimage.segmentation.clear_border(thresh_im, buffer_size=10)
+        cleared_im = skimage.segmentation.clear_border(
+            thresh_im, buffer_size=10)
         # dilate the hair fibers
         # expands the shapes of the hair in the image sample
-        binary_im = scipy.ndimage.binary_dilation(cleared_im, structure=selem, iterations=2)
+        binary_im = scipy.ndimage.binary_dilation(
+            cleared_im, structure=selem, iterations=2)
 
         if save_img:
             img_inv = skimage.util.invert(binary_im)
             imgname = im_name + '_binarized.jpg'
-            self.save_image(output_directory, 'binarized', imgname, img_inv, fiblog)
+            self.save_image(output_directory, 'binarized',
+                            imgname, img_inv, fiblog)
 
         return binary_im
 
@@ -128,16 +146,19 @@ class Curvature(Fibermorph):
         img_bool = np.asarray(img, dtype=np.bool)
         img = self.check_bin(img_bool)
 
-        clean = skimage.morphology.remove_small_objects(img, connectivity=2, min_size=minpixel)
+        clean = skimage.morphology.remove_small_objects(
+            img, connectivity=2, min_size=minpixel)
 
         if save_img:
             img_inv = skimage.util.invert(clean)
             if prune:
                 imgname = name + '_particles_removed_pruned.jpg'
-                self.save_image(output_directory, 'particles_removed_pruned', imgname, img_inv, fiblog)
+                self.save_image(
+                    output_directory, 'particles_removed_pruned', imgname, img_inv, fiblog)
             else:
                 imgname = name + '_particles_removed_clean.jpg'
-                self.save_image(output_directory, 'particles_removed_clean', imgname, img_inv, fiblog)
+                self.save_image(
+                    output_directory, 'particles_removed_clean', imgname, img_inv, fiblog)
 
         return clean
 
@@ -153,7 +174,8 @@ class Curvature(Fibermorph):
         if save_img:
             img_inv = skimage.util.invert(skeleton)
             imgname = name + '_skeletonized.jpg'
-            self.save_image(output_directory, 'skeletonized', imgname, img_inv, fiblog)
+            self.save_image(output_directory, 'skeletonized',
+                            imgname, img_inv, fiblog)
 
         return skeleton
 
@@ -172,24 +194,29 @@ class Curvature(Fibermorph):
         for hit in hit_list:
             target = hit.sum()
             curr = ndimage.convolve(skel_image, hit, mode="constant")
-            branch_points = np.logical_or(branch_points, np.where(curr == target, 1, 0))
+            branch_points = np.logical_or(
+                branch_points, np.where(curr == target, 1, 0))
 
         branch_points_image = np.where(branch_points, 1, 0)
 
         labels, num_labels = ndimage.label(branch_points_image)
 
-        branch_points = ndimage.center_of_mass(skel_image, labels=labels, index=range(1, num_labels + 1))
-        branch_points = np.array([value for value in branch_points if not np.isnan(value[0]) or not np.isnan(value[1])], dtype=int)
+        branch_points = ndimage.center_of_mass(
+            skel_image, labels=labels, index=range(1, num_labels + 1))
+        branch_points = np.array([value for value in branch_points if not np.isnan(
+            value[0]) or not np.isnan(value[1])], dtype=int)
 
         hit = np.array([[0, 0, 0],
                         [0, 1, 0],
                         [0, 0, 0]], dtype=np.uint8)
 
-        dilated_branches = ndimage.convolve(branch_points_image, hit, mode='constant')
+        dilated_branches = ndimage.convolve(
+            branch_points_image, hit, mode='constant')
         dilated_branches_image = np.where(dilated_branches, 1, 0)
         pruned_image = np.subtract(skel_image, dilated_branches_image)
 
-        pruned_image = self.remove_particles(pruned_image, pruned_dir, name, 5, True, save_img, fiblog)
+        pruned_image = self.remove_particles(
+            pruned_image, pruned_dir, name, 5, True, save_img, fiblog)
 
         return pruned_image
 
@@ -202,8 +229,8 @@ class Curvature(Fibermorph):
         # diagonal hits
         if opt == 'mid':
             base = np.array([
-                [0, 0, 0], 
-                [0, 1, 1], 
+                [0, 0, 0],
+                [0, 1, 1],
                 [1, 0, 0]], dtype=np.uint8)
             base2 = np.flipud(base)
             for i in range(4):
@@ -211,7 +238,7 @@ class Curvature(Fibermorph):
                 out.append(np.rot90(base2, i))
             return out
         if opt == 'diag':
-            base = np.diag([1,1,1])
+            base = np.diag([1, 1, 1])
             base2 = np.fliplr(base)
             out.append(base)
             out.append(base2)
@@ -225,7 +252,7 @@ class Curvature(Fibermorph):
             out.append(base)
             out.append(base2)
             return out
-        
+
         # 3-way branch hits
         if opt == '3way':
             base = np.array([
@@ -245,7 +272,7 @@ class Curvature(Fibermorph):
                 out.append(np.rot90(base2, i))
                 out.append(np.rot90(base3, i))
             return out
-        
+
         # 4-way branch hits
         if opt == '4way':
             base = np.array([
@@ -262,11 +289,13 @@ class Curvature(Fibermorph):
 
     def analyze_all_curv(self, img, name, output_path, resolution, window_size, window_unit, within_element, fiblog):
         img = self.check_bin(img)
-        label_image, _ = skimage.measure.label(img.astype(int), connectivity=2, return_num=True)
+        label_image, _ = skimage.measure.label(
+            img.astype(int), connectivity=2, return_num=True)
         props = skimage.measure.regionprops(label_image)
         fiblog.info('a')
 
-        im_sumdf = self.window_iter(props, name, window_size, window_unit, resolution, output_path, within_element, fiblog)
+        im_sumdf = self.window_iter(
+            props, name, window_size, window_unit, resolution, output_path, within_element, fiblog)
         im_sumdf = pd.concat(im_sumdf)
 
         return im_sumdf
@@ -281,14 +310,17 @@ class Curvature(Fibermorph):
                 window_size_px = int(window_size)
                 window_size = int(window_size)
 
-            name = str(name + "_WindowSize-" + str(window_size) + str(window_unit))
+            name = str(name + "_WindowSize-" +
+                       str(window_size) + str(window_unit))
             fiblog.info('a')
             tempdf = [self.analyze_each_curv(hair, window_size_px, resolution, output_path,
                                              name, within_element, fiblog) for hair in props if hair.area > window_size]
 
-            within_im_curvdf = pd.DataFrame(tempdf, columns=['curv_mean', 'curv_median', 'length'])
+            within_im_curvdf = pd.DataFrame(
+                tempdf, columns=['curv_mean', 'curv_median', 'length'])
 
-            within_im_curvdf2 = pd.DataFrame(within_im_curvdf, columns=['curv_mean', 'curv_median', 'length']).dropna()
+            within_im_curvdf2 = pd.DataFrame(within_im_curvdf, columns=[
+                                             'curv_mean', 'curv_median', 'length']).dropna()
 
             output_path = self.make_directory(output_path, 'analysis', fiblog)
             with pathlib.Path(output_path).joinpath("ImageSum_" + name + ".csv") as save_path:
@@ -377,7 +409,8 @@ class Curvature(Fibermorph):
         if not window_size_px is None:
             window_size_px = int(window_size_px)
 
-            subset_loop = (self.subset_gen(element_pixel_length, window_size_px, element_label))  # generates subset loop
+            subset_loop = (self.subset_gen(
+                element_pixel_length, window_size_px, element_label))  # generates subset loop
 
             # Safe generator expression in case of errors
             curv = [self.taubin_curv(element_coords, resolution)
@@ -400,7 +433,8 @@ class Curvature(Fibermorph):
                 element_df.columns = ['curv']
                 element_df['label'] = label_name
 
-                output_path = self.make_directory(output_path, 'within_element', fiblog)
+                output_path = self.make_directory(
+                    output_path, 'within_element', fiblog)
                 with pathlib.Path(output_path).joinpath("WithinElement_" + name + "_Label-" + label_name + ".csv") as save_path:
                     element_df.to_csv(save_path)
 
@@ -509,7 +543,8 @@ class Curvature(Fibermorph):
         _, num_diag_points = self.find_structure(skeleton, 'diag')
         _, num_mid_points = self.find_structure(skeleton, 'mid')
         num_adj_points = num_total_points - num_diag_points - num_mid_points
-        corr_element_pixel_length = num_adj_points + (num_diag_points * np.sqrt(2)) + (num_mid_points * np.sqrt(1.25))
+        corr_element_pixel_length = num_adj_points + \
+            (num_diag_points * np.sqrt(2)) + (num_mid_points * np.sqrt(1.25))
         return corr_element_pixel_length
 
     def find_structure(self, skeleton, structure):
@@ -520,7 +555,8 @@ class Curvature(Fibermorph):
         for hit in hit_list:
             target = hit.sum()
             curr = ndimage.convolve(skel_image, hit, mode="constant")
-            hit_points = np.logical_or(hit_points, np.where(curr == target, 1, 0))
+            hit_points = np.logical_or(
+                hit_points, np.where(curr == target, 1, 0))
 
         # Ensuring target image is binary
         hit_points_image = np.where(hit_points, 1, 0)
