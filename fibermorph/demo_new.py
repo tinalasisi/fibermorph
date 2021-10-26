@@ -21,7 +21,7 @@ import pandas as pd
 import requests
 from tqdm import tqdm
 
-from base import Fibermorph 
+from fibermorph.base import Fibermorph 
 
 class Demo(Fibermorph):
 
@@ -302,7 +302,7 @@ class Demo(Fibermorph):
 
         output_dir = self.make_directory(fibermorph_demo_dir, testname, fiblog)
 
-        from curvature import Curvature
+        from fibermorph.curvature import Curvature
         curv = Curvature()
         args.input_directory = input_directory
         curv.run(args)
@@ -333,7 +333,7 @@ class Demo(Fibermorph):
 
         output_dir = self.make_directory(fibermorph_demo_dir, testname, fiblog)
         
-        from section import Section
+        from fibermorph.section import Section
         sect = Section()
         args.input_directory = input_directory
         sect.run(args)

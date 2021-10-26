@@ -1,4 +1,4 @@
-from base import Fibermorph
+from fibermorph.base import Fibermorph
 
 import multiprocessing
 import os

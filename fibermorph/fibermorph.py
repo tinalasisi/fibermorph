@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+
 from argparse import ArgumentParser as ap
 import os
 
@@ -104,7 +105,7 @@ def main():
 
     # Run fibermorph demo
     if args.demo_real_curv or args.demo_real_section:
-        from demo import Demo
+        from fibermorph.demo import Demo
         demo_driver = Demo()
         demo_driver.run(args)
 
@@ -112,12 +113,12 @@ def main():
         pass
 
     if args.curvature:
-        from curvature import Curvature
+        from fibermorph.curvature import Curvature
         curv = Curvature()
         curv.run(args)
 
     if args.section:
-        from section import Section
+        from fibermorph.section import Section
         sect = Section()
         sect.run(args)
 

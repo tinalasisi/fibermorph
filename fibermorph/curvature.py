@@ -21,7 +21,7 @@ import pathlib
 import os
 import multiprocessing
 from datetime import datetime
-from base import Fibermorph
+from fibermorph.base import Fibermorph
 import warnings
 warnings.filterwarnings("ignore")
 
