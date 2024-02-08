@@ -117,3 +117,14 @@ data
 .DS_Store
 *.pyc
 .Rhistory
+
+
+# pytest cache
+.pytest_cache/
+__pycache__
+
+# pytest test results
+.testmondata
+.coverage
+.htmlcov/
+*.cover
