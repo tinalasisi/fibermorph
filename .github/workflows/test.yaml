@@ -1,14 +1,6 @@
-name: Python package tests
+name: Test
 
-on:
-  push:
-    branches:
-      - main
-      - develop
-  pull_request:
-    branches:
-      - main
-      - develop
+on: [push]
 
 env:
   PYTHON_VERSION: "3.11"
