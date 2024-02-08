@@ -1,8 +1,11 @@
 # %% Import
 import os
+import shutil
 import sys
 import pathlib
 import numpy as np
+import pytest
+
 
 from skimage import io
 
@@ -169,11 +172,20 @@ def test_sim_ellipse():
     
     px_per_um = 4.25
     angle_deg = 30
+
+    # create output directory if not exists
+    output_directory = 'test_sim_ellipse'
+    if not os.path.exists(output_directory):
+        os.makedirs(output_directory)
     
-    output_directory = '/Users/tinalasisi/Desktop'
-    
-    df = demo.sim_ellipse(output_directory, im_width_px, im_height_px, min_diam_um, max_diam_um, px_per_um, angle_deg)
-    pass
+    try:
+        df = demo.sim_ellipse(output_directory, im_width_px, im_height_px, min_diam_um, max_diam_um, px_per_um, angle_deg)
+        pass
+
+    finally:
+        # cleanup
+        if os.path.exists(output_directory):
+            shutil.rmtree(output_directory)
 
 #%%
 def section_props(props, im_name, resolution, minpixel, maxpixel, im_center):
@@ -203,7 +215,9 @@ def section_props(props, im_name, resolution, minpixel, maxpixel, im_center):
     bbox = section.bbox
             
     return section_data, gray_im, bin_im, bbox
+
 #%%
+@pytest.mark.skip(reason="Skipping this test case until we get the data")
 def test_segment_section():
     
     
@@ -211,7 +225,7 @@ def test_segment_section():
     # input_directory = pathlib.Path("/Users/tinalasisi/Desktop/Nov01_2338_ValidationTest_Section/ValidationData")
     input_directory = pathlib.Path("/Users/tinalasisi/Box/01_TPL5158/Box_Dissertation/HairPhenotyping_Methods/data/fibermorph_input/admixed_real_hair/section/AfrEu_SectionImages_RawJPG/AfrEu_SectionImages_GrayTIFF/tiff")
     file_list = fibermorph.list_images(input_directory)
-    main_output_path = "/Users/tinalasisi/Desktop"
+    main_output_path = "."
     output_path = main_output_path
     minsize = 20
     maxsize = 150

@@ -703,7 +703,7 @@ def remove_particles(img, output_path, name, minpixel, prune, save_img):
         An array with the noise particles removed.
 
     """
-    img_bool = np.asarray(img, dtype=np.bool)
+    img_bool = np.asarray(img, dtype=bool)
     img = check_bin(img_bool)
 
     minimum = minpixel
@@ -739,7 +739,7 @@ def check_bin(img):
         A binary array of the image.
 
     """
-    img_bool = np.asarray(img, dtype=np.bool)
+    img_bool = np.asarray(img, dtype=bool)
     
     # Gets the unique values in the image matrix. Since it is binary, there should only be 2.
     unique, counts = np.unique(img_bool, return_counts=True)
